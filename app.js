@@ -1,165 +1,107 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#12365f" />
-  <title>Project Pilot | Plan smarter. Build with confidence.</title>
-  <meta name="description" content="Create a personalized roadmap for permits, documents, inspections, and local professional help." />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="#top" aria-label="Project Pilot home">
-      <span class="brand-mark">P</span>
-      <span>Project Pilot</span>
-    </a>
-    <nav>
-      <a href="#planner">Start a project</a>
-      <a href="#how">How it works</a>
-      <a href="#pros">Find pros</a>
-    </nav>
-    <a class="button button-small" href="#planner">Build my roadmap</a>
-  </header>
+const guides={
+  Fence:{summary:"Fence projects often require zoning review even when a building permit is not required.",documents:["Property survey or site plan","Fence height and material details","HOA approval, when applicable"],steps:["Confirm the property jurisdiction and zoning district.","Check height, setback, corner-visibility, and easement restrictions.","Prepare a site plan showing property lines and the proposed fence location.","Submit the zoning or building application required by the local authority.","Pay applicable fees and wait for approval before construction.","Schedule any required final inspection."]},
+  Deck:{summary:"Decks commonly require a building permit, structural plans, and inspections.",documents:["Site plan","Framing and footing plan","Material specifications","Contractor details"],steps:["Confirm setbacks, lot coverage, and flood-zone requirements.","Prepare structural drawings showing footings, framing, stairs, and guards.","Submit the building permit application and supporting documents.","Pay review and permit fees.","Complete footing, framing, and final inspections as required.","Keep final approval with your property records."]},
+  Shed:{summary:"Permit requirements often depend on shed size, foundation, utilities, and placement.",documents:["Site plan","Shed dimensions","Foundation details","Electrical plans if applicable"],steps:["Confirm whether the shed size qualifies for an exemption.","Check setbacks, easements, lot coverage, and flood-zone restrictions.","Prepare a site plan and manufacturer drawings.","Submit zoning and building applications when required.","Schedule inspections for foundation, electrical, or final approval."]},
+  "Roof replacement":{summary:"Roof-replacement requirements vary by project scope, structural changes, and local licensing rules.",documents:["Scope of work","Roofing material specifications","Contractor license and insurance"],steps:["Confirm whether the work is a repair or full replacement.","Verify local permit and contractor licensing requirements.","Document roof covering, underlayment, flashing, and ventilation.","Submit the permit application when required.","Schedule required inspections and retain closeout documents."]},
+  "HVAC replacement":{summary:"HVAC work commonly requires mechanical permits and licensed installation.",documents:["Equipment specifications","Load calculations when required","Contractor license information"],steps:["Confirm equipment type, size, and location.","Verify mechanical, electrical, and fuel-gas permit requirements.","Select a properly licensed contractor.","Submit applications and equipment documentation.","Complete startup, safety, and final inspections."]},
+  "Kitchen remodel":{summary:"Permit needs depend on structural, electrical, plumbing, gas, and ventilation changes.",documents:["Floor plan","Electrical layout","Plumbing scope","Structural details if walls change"],steps:["Define whether walls, plumbing, electrical, or gas lines will move.","Confirm required building and trade permits.","Prepare plans and contractor information.","Submit applications before demolition begins.","Complete rough-in and final inspections for each permitted trade."]},
+  "Bathroom remodel":{summary:"Bathroom permits commonly depend on plumbing, electrical, ventilation, and structural changes.",documents:["Floor plan","Plumbing scope","Electrical layout","Ventilation specifications"],steps:["Define fixture, plumbing, electrical, and wall changes.","Confirm required building and trade permits.","Prepare drawings and contractor information.","Submit applications before demolition begins.","Complete rough-in, waterproofing, and final inspections when required."]}
+};
 
-  <main id="top">
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">YOUR HOME PROJECT, GUIDED</p>
-        <h1>Plan it right.<br />Build it with confidence.</h1>
-        <p class="lead">Project Pilot turns your home-improvement idea into a clear roadmap with permit considerations, application steps, document checklists, and professional help.</p>
-        <div class="hero-actions">
-          <a class="button" href="#planner">Start my project</a>
-          <a class="button button-secondary" href="#how">See how it works</a>
-        </div>
-        <div class="trust-row"><span>✓ Personalized steps</span><span>✓ Local guidance</span><span>✓ Contractor matching</span></div>
-      </div>
+const form=document.getElementById("planner-form");
 
-      <div class="preview-card" aria-label="Example project roadmap">
-        <div class="preview-top"><span>PROJECT ROADMAP</span><strong>READY</strong></div>
-        <h2>Build a backyard deck</h2>
-        <div class="progress"><span></span></div>
-        <div class="preview-step done"><b>1</b><div><strong>Project details</strong><small>Scope and location confirmed</small></div></div>
-        <div class="preview-step active"><b>2</b><div><strong>Permit review</strong><small>Requirements and forms identified</small></div></div>
-        <div class="preview-step"><b>3</b><div><strong>Compare professionals</strong><small>Request local quotes</small></div></div>
-        <div class="preview-step"><b>4</b><div><strong>Track completion</strong><small>Inspections and approvals</small></div></div>
-      </div>
-    </section>
+form.addEventListener("submit",async(event)=>{
+  event.preventDefault();
 
-    <section class="planner-section" id="planner">
-      <div class="section-heading">
-        <p class="eyebrow">START HERE</p>
-        <h2>Tell us what you’re planning.</h2>
-        <p>We’ll organize the next steps into one clear project roadmap.</p>
-      </div>
+  const submit=document.getElementById("submit-label");
+  submit.textContent="Verifying address and official sources…";
 
-      <form id="planner-form" class="planner-card">
-        <label>
-          Property address
-          <input id="address" name="address" placeholder="123 Main Street" required />
-          <small>Used to identify the correct permitting authority.</small>
-        </label>
-        <label>
-          ZIP code
-          <input id="zip" name="zip" placeholder="19963" inputmode="numeric" maxlength="5" required />
-        </label>
-        <label>
-          Project type
-          <select id="project" name="project">
-            <option value="Fence">Fence</option>
-            <option value="Deck">Deck</option>
-            <option value="Shed">Shed</option>
-            <option value="Roof replacement">Roof replacement</option>
-            <option value="HVAC replacement">HVAC replacement</option>
-            <option value="Kitchen remodel">Kitchen remodel</option>
-            <option value="Bathroom remodel">Bathroom remodel</option>
-          </select>
-        </label>
-        <label>
-          How will the work be completed?
-          <select id="approach" name="approach">
-            <option value="Hiring a contractor">I plan to hire a contractor</option>
-            <option value="DIY">I plan to do it myself</option>
-            <option value="Undecided">I am not sure yet</option>
-          </select>
-        </label>
-        <label class="full-width">
-          Describe the project
-          <textarea id="description" name="description" placeholder="Example: 16 × 20 attached deck, about 30 inches above grade."></textarea>
-        </label>
-        <button class="button full-width" type="submit"><span id="submit-label">Build my project roadmap</span></button>
-      </form>
-    </section>
+  const payload={
+    address:document.getElementById("address").value.trim(),
+    zip:document.getElementById("zip").value.trim(),
+    project:document.getElementById("project").value,
+    approach:document.getElementById("approach").value,
+    description:document.getElementById("description").value.trim()
+  };
 
-    <section id="results" class="results-section hidden" aria-live="polite">
-      <div class="result-head">
-        <div>
-          <p class="eyebrow">YOUR PROJECT PILOT ROADMAP</p>
-          <h2 id="result-title">Project roadmap</h2>
-          <p id="result-summary"></p>
-        </div>
-        <div class="jurisdiction-card">
-          <small>Likely governing area</small>
-          <strong id="result-city">Verification required</strong>
-          <span id="result-county">Confirm with the local authority</span>
-        </div>
-      </div>
+  try{
+    const response=await fetch("/api/lookup",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
 
-      <div class="notice"><strong>Important:</strong> Project Pilot provides informational guidance. Permit and code requirements must be verified with the governing authority before work begins.</div>
+    const data=await response.json();
 
-      <div class="result-grid">
-        <article class="panel">
-          <h3>Recommended next steps</h3>
-          <ol id="steps-list" class="steps-list"></ol>
-        </article>
-        <aside class="panel">
-          <h3>Documents to prepare</h3>
-          <ul id="documents-list" class="check-list"></ul>
-          <div class="source-box">
-            <strong>Source status</strong>
-            <p id="source-status">This launch version uses general guidance. Official municipal sources will be added jurisdiction by jurisdiction.</p>
-          </div>
-        </aside>
-      </div>
-      <div class="ai-box">
-        <div><strong>Project Pilot AI</strong><p id="ai-note">The roadmap will use live AI after an OpenAI API key is added in Vercel.</p></div>
-        <span id="mode-badge">SMART FALLBACK MODE</span>
-      </div>
-    </section>
+    if(!response.ok){
+      throw new Error(data.error||"The address lookup failed.");
+    }
 
-    <section class="how-section" id="how">
-      <div class="section-heading"><p class="eyebrow">HOW IT WORKS</p><h2>From idea to finished project.</h2></div>
-      <div class="feature-grid">
-        <article><b>01</b><h3>Describe your project</h3><p>Enter the property and explain what you want to build or improve.</p></article>
-        <article><b>02</b><h3>Get a clear roadmap</h3><p>See permit considerations, documents, application steps, and inspections.</p></article>
-        <article><b>03</b><h3>Connect with local pros</h3><p>Compare professionals suited to your project and service area.</p></article>
-        <article><b>04</b><h3>Keep work moving</h3><p>Track tasks, approvals, quotes, inspections, and progress.</p></article>
-      </div>
-    </section>
+    render(data,true,"Official-source data mode");
+  }catch(error){
+    const guide=guides[payload.project];
 
-    <section class="pros-section" id="pros">
-      <div class="section-heading left"><p class="eyebrow">LOCAL PROFESSIONALS</p><h2>Find help for the work ahead.</h2><p>The live marketplace will show verified professionals by service area and specialty.</p></div>
-      <div class="pro-grid">
-        <article><span class="avatar">F</span><div><small>DEMO LISTING</small><h3>Fence & Deck Professional</h3><p>Outdoor projects · Sussex County</p></div></article>
-        <article><span class="avatar">R</span><div><small>DEMO LISTING</small><h3>Remodeling Professional</h3><p>Kitchens and bathrooms · Kent County</p></div></article>
-        <article><span class="avatar">H</span><div><small>DEMO LISTING</small><h3>HVAC Professional</h3><p>Mechanical projects · Delaware</p></div></article>
-      </div>
-      <button id="quote-button" class="button">Request contractor matches</button>
-      <p id="quote-message" class="success-message hidden">Quote-request capture is ready for the database phase.</p>
-    </section>
+    render({
+      title:`${payload.project} — lookup unavailable`,
+      summary:guide.summary,
+      city:"Jurisdiction verification required",
+      county:"The real-data service could not be reached",
+      steps:guide.steps,
+      documents:guide.documents,
+      facts:["The address lookup did not complete. Try again or open the official government sources directly."],
+      sources:[],
+      sourceStatus:"Real address and government-source lookup failed."
+    },false,error.message);
+  }finally{
+    submit.textContent="Build my project roadmap";
+  }
+});
 
-    <section class="cta">
-      <div><p class="eyebrow">PROJECT PILOT</p><h2>Your project deserves a better starting point.</h2><p>Plan smarter, understand the process, and move forward with confidence.</p></div>
-      <a class="button button-light" href="#planner">Start my project</a>
-    </section>
-  </main>
+function render(data,realData,note){
+  document.getElementById("result-title").textContent=data.title||"Project roadmap";
+  document.getElementById("result-summary").textContent=data.summary||"";
+  document.getElementById("result-city").textContent=data.city||"Verification required";
+  document.getElementById("result-county").textContent=data.matchedAddress
+    ?`${data.county} · Matched address: ${data.matchedAddress}`
+    :(data.county||"Confirm with the local authority");
 
-  <footer>
-    <div class="brand"><span class="brand-mark">P</span><span>Project Pilot</span></div>
-    <p>Plan smarter. Build with confidence.</p>
-    <small>© 2026 Project Pilot. Guidance is informational and must be verified with the governing authority.</small>
-  </footer>
+  document.getElementById("steps-list").innerHTML=(data.steps||[])
+    .map((x,i)=>`<li><span>${i+1}</span><p>${escapeHtml(x)}</p></li>`).join("");
 
-  <script src="app.js"></script>
-</body>
-</html>
+  document.getElementById("documents-list").innerHTML=(data.documents||[])
+    .map(x=>`<li>✓ ${escapeHtml(x)}</li>`).join("");
+
+  document.getElementById("facts-list").innerHTML=(data.facts||[])
+    .map(x=>`<li>✓ ${escapeHtml(x)}</li>`).join("");
+
+  document.getElementById("official-links").innerHTML=(data.sources||[])
+    .map(source=>`<a href="${escapeAttribute(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.label)} ↗</a>`).join("");
+
+  document.getElementById("source-status").textContent=data.sourceStatus||"Source status unavailable.";
+  document.getElementById("mode-badge").textContent=realData?"REAL DATA MODE":"FALLBACK MODE";
+  document.getElementById("ai-note").textContent=realData
+    ?"The address was checked and the roadmap includes official government links. Final permit decisions still belong to the governing authority."
+    :(note||"The real-data lookup is not active.");
+
+  const section=document.getElementById("results");
+  section.classList.remove("hidden");
+  setTimeout(()=>section.scrollIntoView({behavior:"smooth"}),60);
+}
+
+function escapeHtml(value){
+  return String(value).replace(/[&<>'"]/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    "'":"&#39;",
+    '"':"&quot;"
+  }[c]));
+}
+
+function escapeAttribute(value){
+  return String(value).replace(/"/g,"&quot;");
+}
+
+document.getElementById("quote-button").addEventListener("click",()=>{
+  document.getElementById("quote-message").classList.remove("hidden");
+});
