@@ -1,0 +1,172 @@
+import { NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const CONTRACTOR_SOURCES = [
+  { label: 'Delaware registered construction contractor lookup', url: 'https://contractorregistry.delaware.gov/' },
+  { label: 'Delaware professional license lookup', url: 'https://delpros.delaware.gov/OH_VerifyLicense' },
+  { label: 'Delaware business license search', url: 'https://revenue.delaware.gov/business-license-search/' }
+];
+
+const RECORDS = {
+  milford: {
+    jurisdiction: 'City of Milford',
+    county: 'Kent / Sussex County, Delaware',
+    zips: ['19963'],
+    facts: [
+      'The City of Milford Building Inspections & Permitting Division administers construction and renovation permits.',
+      'Milford provides online building, inspection, licensing, and land-use services through Civic Access.',
+      'Setbacks and placement rules depend on the property zoning district and site conditions.'
+    ],
+    projectFacts: {
+      Fence: ['Milford’s official permit FAQ lists fences among projects requiring permits.'],
+      Shed: ['Milford’s official permit FAQ lists sheds among projects requiring permits.'],
+      'Roof replacement': ['Milford’s official permit FAQ lists roofs among projects requiring permits.']
+    },
+    sources: [
+      { label: 'Milford Building Inspections & Permitting', url: 'https://www.cityofmilford.com/15/Building-Inspections-Permitting' },
+      { label: 'Milford permit FAQ', url: 'https://www.cityofmilford.com/faq' },
+      { label: 'Milford Land Use Applications', url: 'https://www.cityofmilford.com/234/Land-Use-Applications' },
+      { label: 'Milford Planning & Zoning', url: 'https://www.cityofmilford.com/78/Planning-Zoning' }
+    ]
+  },
+  dover: {
+    jurisdiction: 'City of Dover',
+    county: 'Kent County, Delaware',
+    zips: ['19901', '19904'],
+    facts: [
+      'Dover Planning & Inspection handles permit, inspection, and zoning questions.',
+      'Dover publishes permit applications, residential submission materials, and guidance online.',
+      'Property owners should confirm whether a permit is required before construction or modification begins.'
+    ],
+    projectFacts: {
+      Fence: ['Dover’s official permit guidance states that fences generally require building permits.']
+    },
+    sources: [
+      { label: 'Dover Planning and Inspections', url: 'https://www.cityofdover.com/planning-and-inspections' },
+      { label: 'Dover forms and brochures', url: 'https://www.cityofdover.com/pi-forms-and-brochures' },
+      { label: 'Dover building permit application', url: 'https://www.cityofdover.com/media/Planning%20and%20Inspections/Forms%20and%20Brochures/Forms/Building%20Permit%20Application.pdf' }
+    ]
+  },
+  sussex: {
+    jurisdiction: 'Sussex County',
+    county: 'Sussex County, Delaware',
+    zips: ['19930','19939','19944','19945','19947','19950','19956','19958','19960','19966','19967','19968','19970','19971','19973','19975'],
+    facts: [
+      'Sussex County maintains separate Building Permit and Building Code offices.',
+      'The County publishes permit information, forms, inspection information, and contact details online.',
+      'A mailing ZIP code does not prove county jurisdiction; incorporated towns may administer their own permits.'
+    ],
+    projectFacts: {},
+    sources: [
+      { label: 'Sussex County building permits', url: 'https://sussexcountyde.gov/building-permits' },
+      { label: 'Sussex County permits and licenses', url: 'https://sussexcountyde.gov/building-permits-and-licenses' },
+      { label: 'Sussex County Building Code Office', url: 'https://sussexcountyde.gov/building-code' },
+      { label: 'Sussex County forms', url: 'https://sussexcountyde.gov/application-forms' }
+    ]
+  }
+};
+
+function chooseRecord(zip, matchedAddress = '') {
+  const upper = matchedAddress.toUpperCase();
+  if (zip === '19963' && upper.includes('MILFORD')) return RECORDS.milford;
+  if (RECORDS.dover.zips.includes(zip) && upper.includes('DOVER')) return RECORDS.dover;
+  if (RECORDS.sussex.zips.includes(zip)) return RECORDS.sussex;
+  if (RECORDS.milford.zips.includes(zip)) return RECORDS.milford;
+  if (RECORDS.dover.zips.includes(zip)) return RECORDS.dover;
+  return null;
+}
+
+function documents(project) {
+  return [
+    'Property address and parcel information',
+    'Written project scope',
+    'Site plan or property survey when placement or setbacks matter',
+    `${project} plans, dimensions, and material details`,
+    'Contractor registration, licensing, and insurance information when hiring'
+  ];
+}
+
+function steps(project) {
+  return [
+    'Confirm the exact city, town, or county with authority over the property.',
+    `Ask the authority whether the proposed ${project.toLowerCase()} needs building, zoning, or trade permits.`,
+    'Open the official application and current document checklist.',
+    'Prepare a site plan or survey when setbacks, lot coverage, or placement matter.',
+    'Submit the application and wait for approval before regulated work begins.',
+    'Schedule every required inspection and keep the final approval records.'
+  ];
+}
+
+async function geocode(address, zip) {
+  const query = `${address}, Delaware ${zip}`;
+  const url = new URL('https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress');
+  url.searchParams.set('address', query);
+  url.searchParams.set('benchmark', 'Public_AR_Current');
+  url.searchParams.set('vintage', 'Current_Current');
+  url.searchParams.set('format', 'json');
+
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'ProjectPilot/1.0' },
+    cache: 'no-store'
+  });
+
+  if (!response.ok) throw new Error('The address verification service is unavailable.');
+  const data = await response.json();
+  const match = data?.result?.addressMatches?.[0];
+  return match ? { matched: true, matchedAddress: match.matchedAddress } : { matched: false, matchedAddress: '' };
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const address = String(body.address || '').trim();
+    const zip = String(body.zip || '').trim();
+    const project = String(body.project || '').trim();
+
+    if (!address || !zip || !project) {
+      return NextResponse.json({ error: 'Address, ZIP code, and project type are required.' }, { status: 400 });
+    }
+
+    let addressResult = { matched: false, matchedAddress: '' };
+    try {
+      addressResult = await geocode(address, zip);
+    } catch {
+      // Continue with ZIP-based routing so the app still returns official sources.
+    }
+
+    const record = chooseRecord(zip, addressResult.matchedAddress);
+
+    if (!record) {
+      return NextResponse.json({
+        title: `${project} — jurisdiction verification needed`,
+        summary: 'Project Pilot processed the request, but a verified local record has not yet been loaded for this jurisdiction.',
+        jurisdiction: 'Unsupported jurisdiction',
+        county: 'Add this jurisdiction to the Project Pilot database',
+        matchedAddress: addressResult.matchedAddress,
+        steps: steps(project),
+        documents: documents(project),
+        facts: [
+          'The entered jurisdiction is not yet included in this starter release.',
+          'Use the full property address—not only the ZIP code—to confirm the governing authority.'
+        ],
+        sources: CONTRACTOR_SOURCES
+      });
+    }
+
+    return NextResponse.json({
+      title: `${project} in ${record.jurisdiction}`,
+      summary: `Project Pilot matched this request to the ${record.jurisdiction} starter record. Open the official links before applying.`,
+      jurisdiction: record.jurisdiction,
+      county: record.county,
+      matchedAddress: addressResult.matchedAddress,
+      steps: steps(project),
+      documents: documents(project),
+      facts: [...record.facts, ...(record.projectFacts[project] || [])],
+      sources: [...record.sources, ...CONTRACTOR_SOURCES]
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || 'Unable to complete the lookup.' }, { status: 500 });
+  }
+}
