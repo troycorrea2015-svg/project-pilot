@@ -1521,3 +1521,79 @@
     height: 220px;
   }
 }
+
+/* Sprint 2.7.1 — fullscreen and responsive image-quality hotfix */
+.signedInVisualHero > img,
+.signedInCategoryGrid img,
+.projectImageWrap img,
+.visualWorkspaceCard > img {
+  image-rendering: auto !important;
+  backface-visibility: visible !important;
+  transform: none !important;
+  filter: none !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+.signedInVisualHero {
+  overflow: hidden;
+}
+
+.signedInVisualHero > img {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+}
+
+.signedInCategoryGrid img {
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 16 / 10;
+}
+
+.projectImageWrap img {
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 16 / 10;
+}
+
+.visualWorkspaceCard > img {
+  width: 100%;
+  height: auto;
+  min-height: 0 !important;
+  aspect-ratio: 4 / 5;
+}
+
+@media (min-width: 1440px) {
+  .signedInVisualHero > img,
+  .signedInCategoryGrid img,
+  .projectImageWrap img,
+  .visualWorkspaceCard > img {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .signedInVisualHero > img {
+    max-height: 360px;
+    aspect-ratio: 16 / 8.5;
+  }
+}
+
+@media (max-width: 650px) {
+  .signedInCategoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .signedInCategoryGrid img,
+  .projectImageWrap img {
+    aspect-ratio: 4 / 3;
+  }
+
+  .visualWorkspaceCard > img {
+    aspect-ratio: 16 / 9;
+  }
+}
