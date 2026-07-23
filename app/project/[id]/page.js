@@ -5,50 +5,113 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import "./project.css";
 
-const stages = [
-  ["Concept", "Define the project goal and scope."],
-  ["Planning", "Capture budget, timeline, and responsibilities."],
-  ["Location", "Confirm the project property and jurisdiction."],
-  ["Permits", "Research approvals, forms, and official requirements."],
-  ["Documents", "Collect plans, estimates, photos, and contracts."],
-  ["Construction", "Track work, decisions, and project changes."],
-  ["Inspections", "Prepare for required reviews and corrections."],
-  ["Completion", "Close permits and organize final records."],
+const STAGES = [
+  { key: "concept", label: "Concept", description: "Define the project goal, scope, and desired result." },
+  { key: "planning", label: "Planning", description: "Capture budget, timeline, responsibilities, and constraints." },
+  { key: "location", label: "Location", description: "Confirm the project property and governing jurisdiction." },
+  { key: "permits", label: "Permits", description: "Research approvals, forms, fees, and official requirements." },
+  { key: "documents", label: "Documents", description: "Collect plans, estimates, photos, contracts, and records." },
+  { key: "construction", label: "Construction", description: "Track work, decisions, changes, and key milestones." },
+  { key: "inspections", label: "Inspections", description: "Prepare for required reviews, corrections, and sign-offs." },
+  { key: "completion", label: "Completion", description: "Close permits and organize final project records." },
 ];
+
+const NAV_ITEMS = [
+  ["overview", "Command Center"],
+  ["flight", "Flight Plan"],
+  ["pilot", "Pilot"],
+  ["documents", "Project Binder"],
+  ["notes", "Notes"],
+];
+
+function clamp(value, minimum, maximum) {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+function formatDate(value) {
+  if (!value) return "No target date";
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime())
+    ? "No target date"
+    : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function fileLabel(document) {
+  const type = document.file_type || "";
+  if (type.includes("image")) return "IMG";
+  if (type.includes("pdf")) return "PDF";
+  if (type.includes("word")) return "DOC";
+  return "FILE";
+}
 
 export default function ProjectWorkspacePage() {
   const { id } = useParams();
   const router = useRouter();
   const bottomRef = useRef(null);
   const fileRef = useRef(null);
+
   const [user, setUser] = useState(null);
   const [project, setProject] = useState(null);
   const [messages, setMessages] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [waypoints, setWaypoints] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [openWaypoint, setOpenWaypoint] = useState(null);
   const [draft, setDraft] = useState("");
   const [noteDraft, setNoteDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingWaypoint, setSavingWaypoint] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  useEffect(() => { loadWorkspace(); }, [id]);
-  useEffect(() => { if (activeTab === "pilot") bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending, activeTab]);
+  useEffect(() => {
+    loadWorkspace();
+  }, [id]);
+
+  useEffect(() => {
+    if (activeTab === "pilot") {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, sending, activeTab]);
 
   async function loadWorkspace() {
     setLoading(true);
     setError("");
+    setNotice("");
+
     const { data: authData } = await supabase.auth.getUser();
     const currentUser = authData?.user;
-    if (!currentUser) { router.push("/"); return; }
+
+    if (!currentUser) {
+      router.replace("/");
+      return;
+    }
+
     setUser(currentUser);
 
-    const [projectResult, messageResult, documentResult] = await Promise.all([
+    const [projectResult, messageResult, documentResult, waypointResult] = await Promise.all([
       supabase.from("projects").select("*").eq("id", id).eq("user_id", currentUser.id).single(),
-      supabase.from("conversations").select("id,role,message,created_at").eq("project_id", id).eq("user_id", currentUser.id).order("created_at", { ascending: true }),
-      supabase.from("project_documents").select("*").eq("project_id", id).eq("user_id", currentUser.id).order("created_at", { ascending: false }),
+      supabase
+        .from("conversations")
+        .select("id,role,message,created_at")
+        .eq("project_id", id)
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("project_documents")
+        .select("*")
+        .eq("project_id", id)
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("project_waypoints")
+        .select("*")
+        .eq("project_id", id)
+        .eq("user_id", currentUser.id)
+        .order("stage_order", { ascending: true }),
     ]);
 
     if (projectResult.error || !projectResult.data) {
@@ -56,156 +119,757 @@ export default function ProjectWorkspacePage() {
       setLoading(false);
       return;
     }
+
     setProject(projectResult.data);
     setNoteDraft(projectResult.data.notes || "");
     setMessages(messageResult.data || []);
     setDocuments(documentResult.data || []);
+
+    if (waypointResult.error) {
+      setError("The Flight Plan database update is missing. Run the included Sprint 2.2–2.3 SQL migration in Supabase, then refresh this page.");
+      setWaypoints([]);
+    } else if (!waypointResult.data?.length) {
+      const seeded = await seedWaypoints(projectResult.data, currentUser);
+      setWaypoints(seeded);
+    } else {
+      setWaypoints(waypointResult.data);
+    }
+
     setLoading(false);
+  }
+
+  async function seedWaypoints(currentProject, currentUser) {
+    const estimatedCompleted = clamp(Math.floor((currentProject.progress || 0) / (100 / STAGES.length)), 0, STAGES.length);
+    const payload = STAGES.map((stage, index) => ({
+      project_id: id,
+      user_id: currentUser.id,
+      stage_key: stage.key,
+      stage_label: stage.label,
+      stage_order: index,
+      notes: "",
+      due_date: null,
+      completed: index < estimatedCompleted,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { data, error: seedError } = await supabase
+      .from("project_waypoints")
+      .upsert(payload, { onConflict: "project_id,stage_key" })
+      .select("*")
+      .order("stage_order", { ascending: true });
+
+    if (seedError) {
+      setError(seedError.message);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  function waypointFor(index, source = waypoints) {
+    const stage = STAGES[index];
+    return (
+      source.find((item) => item.stage_key === stage.key) || {
+        stage_key: stage.key,
+        stage_label: stage.label,
+        stage_order: index,
+        notes: "",
+        due_date: null,
+        completed: false,
+      }
+    );
   }
 
   async function sendMessage(event) {
     event.preventDefault();
     const cleanDraft = draft.trim();
     if (!cleanDraft || sending || !user) return;
-    setDraft(""); setError(""); setSending(true);
-    const optimistic = { id: `local-${Date.now()}`, role: "user", message: cleanDraft, created_at: new Date().toISOString() };
+
+    setDraft("");
+    setError("");
+    setSending(true);
+
+    const optimistic = {
+      id: `local-${Date.now()}`,
+      role: "user",
+      message: cleanDraft,
+      created_at: new Date().toISOString(),
+    };
+
     setMessages((current) => [...current, optimistic]);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const response = await fetch("/api/pilot", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData?.session?.access_token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData?.session?.access_token}`,
+        },
         body: JSON.stringify({ projectId: id, message: cleanDraft }),
       });
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Pilot could not respond.");
+
       setMessages((current) => [...current, data.message]);
       if (data.project) setProject(data.project);
     } catch (requestError) {
       setError(requestError.message);
       setMessages((current) => current.filter((message) => message.id !== optimistic.id));
       setDraft(cleanDraft);
-    } finally { setSending(false); }
+    } finally {
+      setSending(false);
+    }
   }
 
   async function saveNotes() {
-    setSaving(true); setError("");
-    const { data, error: saveError } = await supabase.from("projects")
+    if (!user) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+
+    const { data, error: saveError } = await supabase
+      .from("projects")
       .update({ notes: noteDraft, updated_at: new Date().toISOString() })
-      .eq("id", id).eq("user_id", user.id).select().single();
-    if (saveError) setError(saveError.message); else setProject(data);
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (saveError) {
+      setError(saveError.message);
+    } else {
+      setProject(data);
+      setNotice("Project notes saved.");
+    }
+
     setSaving(false);
+  }
+
+  async function saveWaypoint(index, updates, successMessage = "Flight Plan updated.") {
+    if (!user || !project) return;
+
+    const current = waypointFor(index);
+    const stage = STAGES[index];
+    const key = stage.key;
+
+    setSavingWaypoint(key);
+    setError("");
+    setNotice("");
+
+    const payload = {
+      project_id: id,
+      user_id: user.id,
+      stage_key: stage.key,
+      stage_label: stage.label,
+      stage_order: index,
+      notes: current.notes || "",
+      due_date: current.due_date || null,
+      completed: Boolean(current.completed),
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error: waypointError } = await supabase
+      .from("project_waypoints")
+      .upsert(payload, { onConflict: "project_id,stage_key" })
+      .select()
+      .single();
+
+    if (waypointError) {
+      setError(waypointError.message);
+      setSavingWaypoint("");
+      return;
+    }
+
+    const nextWaypoints = [...waypoints.filter((item) => item.stage_key !== key), data].sort(
+      (a, b) => a.stage_order - b.stage_order
+    );
+    setWaypoints(nextWaypoints);
+
+    const completedCount = nextWaypoints.filter((item) => item.completed).length;
+    const firstIncompleteIndex = STAGES.findIndex(
+      (stageItem) => !nextWaypoints.find((item) => item.stage_key === stageItem.key)?.completed
+    );
+    const nextIndex = firstIncompleteIndex === -1 ? STAGES.length - 1 : firstIncompleteIndex;
+    const allComplete = completedCount === STAGES.length;
+    const progress = Math.round((completedCount / STAGES.length) * 100);
+
+    const projectUpdate = {
+      progress,
+      status: allComplete ? "Completion" : STAGES[nextIndex].label,
+      next_step: allComplete
+        ? "Review final records and close the project."
+        : STAGES[nextIndex].description,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: updatedProject, error: projectError } = await supabase
+      .from("projects")
+      .update(projectUpdate)
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (projectError) {
+      setError(projectError.message);
+    } else {
+      setProject(updatedProject);
+      setNotice(successMessage);
+    }
+
+    setSavingWaypoint("");
   }
 
   async function uploadDocument(event) {
     const file = event.target.files?.[0];
     event.target.value = "";
+
     if (!file || !user) return;
-    if (file.size > 15 * 1024 * 1024) { setError("Files must be 15 MB or smaller."); return; }
-    setUploading(true); setError("");
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Files must be 15 MB or smaller.");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    setNotice("");
+
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
     const filePath = `${user.id}/${id}/${Date.now()}-${safeName}`;
+
     try {
-      const { error: uploadError } = await supabase.storage.from("project-documents").upload(filePath, file, { upsert: false });
+      const { error: uploadError } = await supabase.storage
+        .from("project-documents")
+        .upload(filePath, file, { upsert: false });
       if (uploadError) throw uploadError;
-      const { data, error: recordError } = await supabase.from("project_documents").insert({
-        project_id: id, user_id: user.id, file_name: file.name, file_path: filePath, file_type: file.type, file_size: file.size,
-      }).select().single();
+
+      const { data, error: recordError } = await supabase
+        .from("project_documents")
+        .insert({
+          project_id: id,
+          user_id: user.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_type: file.type,
+          file_size: file.size,
+        })
+        .select()
+        .single();
       if (recordError) throw recordError;
+
       setDocuments((current) => [data, ...current]);
-      if ((project.progress || 0) < 55) {
-        const { data: updated } = await supabase.from("projects").update({ progress: 55, status: "Documents", next_step: "Review permit requirements and confirm the project course" }).eq("id", id).select().single();
-        if (updated) setProject(updated);
-      }
-    } catch (uploadError) { setError(uploadError.message); }
+      setNotice(`${file.name} added to the Project Binder.`);
+    } catch (uploadError) {
+      setError(uploadError.message);
+    }
+
     setUploading(false);
   }
 
   async function openDocument(document) {
-    const { data, error: signedError } = await supabase.storage.from("project-documents").createSignedUrl(document.file_path, 60);
-    if (signedError) setError(signedError.message); else window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    const { data, error: signedError } = await supabase.storage
+      .from("project-documents")
+      .createSignedUrl(document.file_path, 60);
+
+    if (signedError) {
+      setError(signedError.message);
+    } else {
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    }
   }
 
   async function deleteDocument(document) {
     if (!window.confirm(`Remove ${document.file_name}?`)) return;
-    const { error: storageError } = await supabase.storage.from("project-documents").remove([document.file_path]);
-    if (storageError) { setError(storageError.message); return; }
-    await supabase.from("project_documents").delete().eq("id", document.id).eq("user_id", user.id);
+
+    setError("");
+    setNotice("");
+
+    const { error: storageError } = await supabase.storage
+      .from("project-documents")
+      .remove([document.file_path]);
+
+    if (storageError) {
+      setError(storageError.message);
+      return;
+    }
+
+    const { error: recordError } = await supabase
+      .from("project_documents")
+      .delete()
+      .eq("id", document.id)
+      .eq("user_id", user.id);
+
+    if (recordError) {
+      setError(recordError.message);
+      return;
+    }
+
     setDocuments((current) => current.filter((item) => item.id !== document.id));
+    setNotice(`${document.file_name} removed.`);
   }
 
-  const activeStep = useMemo(() => Math.min(Math.floor((project?.progress || 5) / 13), stages.length - 1), [project]);
-  const setupItems = useMemo(() => [
-    ["Project type", project?.project_type], ["Description", project?.description], ["Location", project?.address],
-    ["Project role", project?.project_role], ["Timeline", project?.target_timeline], ["Budget", project?.budget ? `$${Number(project.budget).toLocaleString()}` : ""],
-  ], [project]);
-  const setupCount = setupItems.filter(([, value]) => value).length;
+  const setupItems = useMemo(
+    () => [
+      ["Project type", project?.project_type],
+      ["Description", project?.description],
+      ["Location", project?.address],
+      ["Project role", project?.project_role],
+      ["Timeline", project?.target_timeline],
+      ["Budget", project?.budget ? `$${Number(project.budget).toLocaleString()}` : ""],
+    ],
+    [project]
+  );
 
-  if (loading) return <main className="workspaceLoading">Opening your project…</main>;
-  if (!project) return <main className="workspaceLoading">{error || "Project unavailable."}</main>;
+  const setupCount = setupItems.filter(([, value]) => value).length;
+  const completedCount = waypoints.filter((item) => item.completed).length;
+  const currentStageIndex = useMemo(() => {
+    const index = STAGES.findIndex(
+      (stage) => !waypoints.find((item) => item.stage_key === stage.key)?.completed
+    );
+    return index === -1 ? STAGES.length - 1 : index;
+  }, [waypoints]);
+
+  const nextWaypoint = STAGES[currentStageIndex];
+  const nextWaypointRecord = waypointFor(currentStageIndex);
+  const readiness = clamp(project?.progress || 0, 0, 100);
+
+  if (loading) {
+    return <main className="workspaceLoading">Opening your project…</main>;
+  }
+
+  if (!project) {
+    return <main className="workspaceLoading">{error || "Project unavailable."}</main>;
+  }
 
   return (
     <main className="projectWorkspace">
       <aside className="projectRail">
         <button className="backButton" onClick={() => router.push("/dashboard")}>← Dashboard</button>
-        <div className="pilotMark"><span>P</span><strong>Project Pilot</strong></div>
-        <div className="projectSummary">
-          <small>CURRENT PROJECT</small><h1>{project.title}</h1><p>{project.address || project.location_label}</p><span>{project.status}</span>
+
+        <div className="pilotMark">
+          <span>P</span>
+          <strong>Project Pilot</strong>
         </div>
-        <nav className="workspaceNav">
-          {[['overview','Command Center'],['pilot','Pilot'],['flight','Flight Plan'],['documents','Project Binder'],['notes','Notes']].map(([key,label]) => (
-            <button className={activeTab === key ? "active" : ""} onClick={() => setActiveTab(key)} key={key}>{label}</button>
+
+        <div className="projectSummary">
+          <small>CURRENT PROJECT</small>
+          <h1>{project.title}</h1>
+          <p>{project.address || project.location_label || "Location not added"}</p>
+          <span>{project.status}</span>
+        </div>
+
+        <nav className="workspaceNav" aria-label="Project workspace navigation">
+          {NAV_ITEMS.map(([key, label]) => (
+            <button
+              className={activeTab === key ? "active" : ""}
+              onClick={() => setActiveTab(key)}
+              key={key}
+            >
+              {label}
+            </button>
           ))}
         </nav>
-        <div className="railProgress"><small>PROJECT READINESS</small><strong>{project.progress || 0}%</strong><div><span style={{ width: `${project.progress || 0}%` }} /></div></div>
+
+        <div className="railProgress">
+          <small>PROJECT READINESS</small>
+          <strong>{readiness}%</strong>
+          <div><span style={{ width: `${readiness}%` }} /></div>
+          <p>{completedCount} of {STAGES.length} waypoints complete</p>
+        </div>
       </aside>
 
       <section className="workspaceMain">
         <header className="workspaceHeader">
-          <div><p>PROJECT WORKSPACE</p><h2>{project.title}</h2><span>{project.next_step}</span></div>
-          <button onClick={() => setActiveTab("pilot")}>Continue with Pilot</button>
+          <div>
+            <p>PROJECT WORKSPACE</p>
+            <h2>{project.title}</h2>
+            <span>{project.next_step}</span>
+          </div>
+          <div className="workspaceHeaderActions">
+            <button className="secondaryAction" onClick={() => setActiveTab("flight")}>Open Flight Plan</button>
+            <button onClick={() => setActiveTab("pilot")}>Continue with Pilot</button>
+          </div>
         </header>
-        {error && <div className="workspaceError">{error}</div>}
+
+        {error && <div className="workspaceAlert errorAlert">{error}</div>}
+        {notice && <div className="workspaceAlert successAlert">{notice}</div>}
 
         {activeTab === "overview" && (
           <div className="workspaceContent overviewContent">
             <section className="commandHero">
-              <div><p>YOUR NEXT WAYPOINT</p><h1>{project.next_step}</h1><span>Pilot is building a clear record of your project while you move through each stage.</span><button onClick={() => setActiveTab("pilot")}>Continue Project Setup</button></div>
-              <div className="readinessRing" style={{ '--progress': `${project.progress || 0}%` }}><strong>{project.progress || 0}%</strong><span>ready</span></div>
+              <div className="commandHeroCopy">
+                <p>CURRENT OBJECTIVE</p>
+                <h1>{project.next_step}</h1>
+                <span>
+                  Pilot keeps the project course, documents, decisions, and next actions connected in one workspace.
+                </span>
+                <div className="commandHeroActions">
+                  <button onClick={() => setActiveTab("flight")}>Review Flight Plan</button>
+                  <button className="heroSecondary" onClick={() => setActiveTab("pilot")}>Ask Pilot</button>
+                </div>
+              </div>
+              <div className="readinessRing" style={{ "--progress": `${readiness}%` }}>
+                <strong>{readiness}%</strong>
+                <span>mission ready</span>
+              </div>
             </section>
-            <section className="workspaceCards">
-              <article><p>SETUP CHECK</p><h3>{setupCount} of 6 details captured</h3><div className="checkList">{setupItems.map(([label,value]) => <div className={value ? "done" : ""} key={label}><span>{value ? "✓" : "○"}</span><strong>{label}</strong><small>{value || "Still needed"}</small></div>)}</div></article>
-              <article><p>FLIGHT PLAN</p><h3>Current stage: {stages[activeStep][0]}</h3><div className="miniFlight">{stages.slice(0,5).map(([label],index) => <div className={index <= activeStep ? "done" : ""} key={label}><span>{index < activeStep ? "✓" : index + 1}</span><small>{label}</small></div>)}</div><button onClick={() => setActiveTab("flight")}>View Full Flight Plan</button></article>
-              <article><p>PROJECT BINDER</p><h3>{documents.length} document{documents.length === 1 ? "" : "s"} saved</h3><span>Keep plans, permits, estimates, photos, contracts, and inspection records attached to this project.</span><button onClick={() => setActiveTab("documents")}>Open Project Binder</button></article>
-              <article><p>PERMIT INTELLIGENCE</p><h3>Jurisdiction research is in beta.</h3><span>Official permit and zoning requirements must still be confirmed with the governing authority.</span><button disabled>Expanded Coverage Coming Soon</button></article>
+
+            <section className="missionGrid">
+              <article className="missionCard flightCard">
+                <div className="cardHeadingRow">
+                  <div>
+                    <p>INTERACTIVE FLIGHT PLAN</p>
+                    <h3>{completedCount} of {STAGES.length} waypoints complete</h3>
+                  </div>
+                  <button onClick={() => setActiveTab("flight")}>Manage Plan</button>
+                </div>
+
+                <div className="flightStrip" aria-label="Project Flight Plan progress">
+                  {STAGES.map((stage, index) => {
+                    const waypoint = waypointFor(index);
+                    const current = index === currentStageIndex && !waypoint.completed;
+                    return (
+                      <button
+                        className={`${waypoint.completed ? "complete" : ""} ${current ? "current" : ""}`}
+                        key={stage.key}
+                        onClick={() => {
+                          setOpenWaypoint(index);
+                          setActiveTab("flight");
+                        }}
+                      >
+                        <span>{waypoint.completed ? "✓" : index + 1}</span>
+                        <small>{stage.label}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="nextWaypointCard">
+                  <div>
+                    <small>NEXT WAYPOINT</small>
+                    <strong>{nextWaypoint.label}</strong>
+                    <span>{nextWaypoint.description}</span>
+                  </div>
+                  <div>
+                    <small>TARGET DATE</small>
+                    <strong>{formatDate(nextWaypointRecord.due_date)}</strong>
+                  </div>
+                </div>
+              </article>
+
+              <article className="missionCard pilotBriefCard">
+                <div className="pilotBriefTop">
+                  <span>P</span>
+                  <div>
+                    <p>PILOT BRIEFING</p>
+                    <h3>Stay focused on the next decision.</h3>
+                  </div>
+                </div>
+                <blockquote>{project.next_step}</blockquote>
+                <div className="briefStats">
+                  <div><small>SETUP</small><strong>{setupCount}/6</strong></div>
+                  <div><small>FILES</small><strong>{documents.length}</strong></div>
+                  <div><small>MESSAGES</small><strong>{messages.length}</strong></div>
+                </div>
+                <button onClick={() => setActiveTab("pilot")}>Continue with Pilot</button>
+              </article>
+
+              <article className="missionCard binderCard">
+                <div className="cardHeadingRow">
+                  <div>
+                    <p>PROJECT BINDER</p>
+                    <h3>{documents.length} saved document{documents.length === 1 ? "" : "s"}</h3>
+                  </div>
+                  <button onClick={() => setActiveTab("documents")}>Open Binder</button>
+                </div>
+                {documents.length ? (
+                  <div className="recentDocuments">
+                    {documents.slice(0, 3).map((document) => (
+                      <button key={document.id} onClick={() => openDocument(document)}>
+                        <span>{fileLabel(document)}</span>
+                        <div>
+                          <strong>{document.file_name}</strong>
+                          <small>{new Date(document.created_at).toLocaleDateString()}</small>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="emptyMiniCard">
+                    <strong>No files attached yet.</strong>
+                    <span>Add plans, photos, estimates, permits, or contracts.</span>
+                    <button onClick={() => setActiveTab("documents")}>Add First Document</button>
+                  </div>
+                )}
+              </article>
+
+              <article className="missionCard projectFactsCard">
+                <div className="cardHeadingRow">
+                  <div>
+                    <p>PROJECT SNAPSHOT</p>
+                    <h3>{setupCount} of 6 setup details captured</h3>
+                  </div>
+                  <button onClick={() => setActiveTab("pilot")}>Complete Setup</button>
+                </div>
+                <div className="projectFacts">
+                  {setupItems.map(([label, value]) => (
+                    <div className={value ? "complete" : ""} key={label}>
+                      <span>{value ? "✓" : "○"}</span>
+                      <small>{label}</small>
+                      <strong>{value || "Still needed"}</strong>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="missionCard notesPreviewCard">
+                <div className="cardHeadingRow">
+                  <div>
+                    <p>PROJECT NOTES</p>
+                    <h3>Decisions and reminders</h3>
+                  </div>
+                  <button onClick={() => setActiveTab("notes")}>Edit Notes</button>
+                </div>
+                <p className="notePreview">
+                  {project.notes?.trim() || "No project notes have been added yet. Use this space for measurements, contacts, decisions, questions, and reminders."}
+                </p>
+              </article>
             </section>
+          </div>
+        )}
+
+        {activeTab === "flight" && (
+          <div className="workspaceContent flightContent">
+            <div className="sectionIntro splitIntro">
+              <div>
+                <p>INTERACTIVE FLIGHT PLAN</p>
+                <h1>A clear course from concept to completion.</h1>
+                <span>Open a waypoint to add notes, set a target date, or mark it complete.</span>
+              </div>
+              <div className="flightSummaryPill">
+                <strong>{completedCount}/{STAGES.length}</strong>
+                <span>waypoints complete</span>
+              </div>
+            </div>
+
+            <div className="fullFlightPlan">
+              {STAGES.map((stage, index) => {
+                const waypoint = waypointFor(index);
+                const expanded = openWaypoint === index;
+                const current = index === currentStageIndex && !waypoint.completed;
+                const savingThis = savingWaypoint === stage.key;
+
+                return (
+                  <article
+                    className={`${waypoint.completed ? "complete" : ""} ${current ? "current" : ""}`}
+                    key={stage.key}
+                  >
+                    <button
+                      className="waypointHead"
+                      onClick={() => setOpenWaypoint(expanded ? null : index)}
+                      aria-expanded={expanded}
+                    >
+                      <div className="waypointNumber">{waypoint.completed ? "✓" : index + 1}</div>
+                      <div className="waypointCopy">
+                        <small>{waypoint.completed ? "COMPLETED" : current ? "CURRENT WAYPOINT" : "UPCOMING"}</small>
+                        <h3>{stage.label}</h3>
+                        <p>{stage.description}</p>
+                      </div>
+                      <div className="waypointMeta">
+                        <span>{formatDate(waypoint.due_date)}</span>
+                        <b>{expanded ? "−" : "+"}</b>
+                      </div>
+                    </button>
+
+                    {expanded && (
+                      <div className="waypointEditor">
+                        <label className="waypointNotesField">
+                          <span>Waypoint notes</span>
+                          <textarea
+                            value={waypoint.notes || ""}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setWaypoints((currentItems) => {
+                                const existing = waypointFor(index, currentItems);
+                                const replacement = { ...existing, notes: value };
+                                return [...currentItems.filter((item) => item.stage_key !== stage.key), replacement].sort(
+                                  (a, b) => a.stage_order - b.stage_order
+                                );
+                              });
+                            }}
+                            onBlur={(event) => saveWaypoint(index, { notes: event.target.value }, `${stage.label} notes saved.`)}
+                            placeholder="Add requirements, decisions, contacts, questions, or next actions…"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Target date</span>
+                          <input
+                            type="date"
+                            value={waypoint.due_date || ""}
+                            onChange={(event) => saveWaypoint(index, { due_date: event.target.value || null }, `${stage.label} target date saved.`)}
+                          />
+                        </label>
+
+                        <button
+                          className={waypoint.completed ? "undoWaypoint" : "completeWaypoint"}
+                          onClick={() => saveWaypoint(
+                            index,
+                            { completed: !waypoint.completed },
+                            waypoint.completed ? `${stage.label} reopened.` : `${stage.label} completed.`
+                          )}
+                          disabled={savingThis}
+                        >
+                          {savingThis ? "Saving…" : waypoint.completed ? "Mark Incomplete" : "Mark Waypoint Complete"}
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {activeTab === "pilot" && (
           <div className="pilotPanel">
-            <header className="pilotHeader"><div className="pilotAvatar">P</div><div><p>PILOT</p><h2>Guided project setup</h2></div><span className="onlineStatus">Free guided mode</span></header>
+            <header className="pilotHeader">
+              <div className="pilotAvatar">P</div>
+              <div>
+                <p>PILOT</p>
+                <h2>Guided project setup</h2>
+              </div>
+              <span className="onlineStatus">Guided beta mode</span>
+            </header>
+
             <div className="messageList">
-              {!messages.length && <article className="message assistant"><div className="messageAvatar">P</div><div><strong>Pilot</strong><p>Welcome aboard. Let’s start with the project itself. What are you planning to build, repair, or renovate?</p></div></article>}
-              {messages.map((entry) => <article className={`message ${entry.role === "assistant" ? "assistant" : "user"}`} key={entry.id}><div className="messageAvatar">{entry.role === "assistant" ? "P" : "Y"}</div><div><strong>{entry.role === "assistant" ? "Pilot" : "You"}</strong><p>{entry.message}</p></div></article>)}
-              {sending && <article className="message assistant"><div className="messageAvatar">P</div><div><strong>Pilot</strong><p className="thinking">Charting the next step…</p></div></article>}
+              {!messages.length && (
+                <article className="message assistant">
+                  <div className="messageAvatar">P</div>
+                  <div>
+                    <strong>Pilot</strong>
+                    <p>Welcome aboard. What are you planning to build, repair, or renovate?</p>
+                  </div>
+                </article>
+              )}
+
+              {messages.map((entry) => (
+                <article className={`message ${entry.role === "assistant" ? "assistant" : "user"}`} key={entry.id}>
+                  <div className="messageAvatar">{entry.role === "assistant" ? "P" : "Y"}</div>
+                  <div>
+                    <strong>{entry.role === "assistant" ? "Pilot" : "You"}</strong>
+                    <p>{entry.message}</p>
+                  </div>
+                </article>
+              ))}
+
+              {sending && (
+                <article className="message assistant">
+                  <div className="messageAvatar">P</div>
+                  <div>
+                    <strong>Pilot</strong>
+                    <p className="thinking">Charting the next step…</p>
+                  </div>
+                </article>
+              )}
               <div ref={bottomRef} />
             </div>
-            <div className="composerArea"><form onSubmit={sendMessage}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="Tell Pilot about your project…" rows={2}/><button disabled={sending || !draft.trim()}>{sending ? "Sending…" : "Send"}</button></form><small>Guided beta mode saves your answers without paid AI usage.</small></div>
+
+            <div className="composerArea">
+              <form onSubmit={sendMessage}>
+                <textarea
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                  placeholder="Tell Pilot about your project…"
+                  rows={2}
+                />
+                <button disabled={sending || !draft.trim()}>
+                  {sending ? "Sending…" : "Send"}
+                </button>
+              </form>
+              <small>Guided beta mode saves your project details without paid AI usage.</small>
+            </div>
           </div>
         )}
 
-        {activeTab === "flight" && (
-          <div className="workspaceContent"><div className="sectionIntro"><p>YOUR FLIGHT PLAN</p><h1>A clear course from concept to completion.</h1><span>Each waypoint shows what the project needs before moving forward.</span></div><div className="fullFlightPlan">{stages.map(([label,description],index) => <article className={index < activeStep ? "complete" : index === activeStep ? "current" : ""} key={label}><div>{index < activeStep ? "✓" : index + 1}</div><span><small>{index < activeStep ? "COMPLETED" : index === activeStep ? "CURRENT WAYPOINT" : "UPCOMING"}</small><h3>{label}</h3><p>{description}</p></span></article>)}</div></div>
-        )}
-
         {activeTab === "documents" && (
-          <div className="workspaceContent"><div className="sectionIntro splitIntro"><div><p>PROJECT BINDER</p><h1>Every important file in one place.</h1><span>Upload PDFs, plans, photos, estimates, contracts, or notes up to 15 MB.</span></div><button onClick={() => fileRef.current?.click()}>{uploading ? "Uploading…" : "+ Add Document"}</button><input ref={fileRef} type="file" hidden onChange={uploadDocument} accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.docx" /></div>{!documents.length ? <div className="emptyBinder"><strong>No documents added yet.</strong><span>Add a plan, photo, estimate, or project file to start the binder.</span><button onClick={() => fileRef.current?.click()}>Upload First Document</button></div> : <div className="documentGrid">{documents.map((document) => <article key={document.id}><div className="fileIcon">{document.file_type?.includes("image") ? "IMG" : document.file_type?.includes("pdf") ? "PDF" : "FILE"}</div><h3>{document.file_name}</h3><p>{(document.file_size / 1024 / 1024).toFixed(2)} MB · {new Date(document.created_at).toLocaleDateString()}</p><div><button onClick={() => openDocument(document)}>Open</button><button className="deleteFile" onClick={() => deleteDocument(document)}>Remove</button></div></article>)}</div>}</div>
+          <div className="workspaceContent">
+            <div className="sectionIntro splitIntro">
+              <div>
+                <p>PROJECT BINDER</p>
+                <h1>Every important file in one place.</h1>
+                <span>Upload PDFs, plans, photos, estimates, contracts, or notes up to 15 MB.</span>
+              </div>
+              <button onClick={() => fileRef.current?.click()} disabled={uploading}>
+                {uploading ? "Uploading…" : "+ Add Document"}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                hidden
+                onChange={uploadDocument}
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.docx"
+              />
+            </div>
+
+            {!documents.length ? (
+              <div className="emptyBinder">
+                <div className="emptyBinderIcon">+</div>
+                <strong>No documents added yet.</strong>
+                <span>Add a plan, photo, estimate, contract, or project record to start the binder.</span>
+                <button onClick={() => fileRef.current?.click()}>Upload First Document</button>
+              </div>
+            ) : (
+              <div className="documentGrid">
+                {documents.map((document) => (
+                  <article key={document.id}>
+                    <div className="fileIcon">{fileLabel(document)}</div>
+                    <h3>{document.file_name}</h3>
+                    <p>
+                      {(document.file_size / 1024 / 1024).toFixed(2)} MB · {new Date(document.created_at).toLocaleDateString()}
+                    </p>
+                    <div>
+                      <button onClick={() => openDocument(document)}>Open</button>
+                      <button className="deleteFile" onClick={() => deleteDocument(document)}>Remove</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {activeTab === "notes" && (
-          <div className="workspaceContent"><div className="sectionIntro"><p>PROJECT NOTES</p><h1>Keep decisions and reminders attached to the project.</h1><span>These notes save to your account and remain available when you return.</span></div><div className="notesEditor"><textarea value={noteDraft} onChange={(event) => setNoteDraft(event.target.value)} placeholder="Add project decisions, questions, contacts, measurements, or reminders…"/><div><small>{noteDraft.length} characters</small><button onClick={saveNotes} disabled={saving}>{saving ? "Saving…" : "Save Notes"}</button></div></div></div>
+          <div className="workspaceContent">
+            <div className="sectionIntro">
+              <p>PROJECT NOTES</p>
+              <h1>Keep decisions and reminders attached to the project.</h1>
+              <span>These notes save to your account and remain available when you return.</span>
+            </div>
+
+            <div className="notesEditor">
+              <textarea
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                placeholder="Add project decisions, questions, contacts, measurements, or reminders…"
+              />
+              <div>
+                <small>{noteDraft.length} characters</small>
+                <button onClick={saveNotes} disabled={saving}>
+                  {saving ? "Saving…" : "Save Notes"}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </section>
     </main>
