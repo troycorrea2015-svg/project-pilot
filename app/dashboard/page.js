@@ -14,6 +14,31 @@ const FLIGHT_STAGES = [
   { label: "Completion", threshold: 100 },
 ];
 
+const PROJECT_CATEGORIES = [
+  { key: "deck", label: "Decks & Patios", projectType: "Deck", title: "New Deck Project", image: "/category-deck.jpg" },
+  { key: "kitchen", label: "Kitchens", projectType: "Kitchen", title: "Kitchen Renovation", image: "/category-kitchen.jpg" },
+  { key: "bathroom", label: "Bathrooms", projectType: "Bathroom", title: "Bathroom Renovation", image: "/category-bathroom.jpg" },
+  { key: "addition", label: "Additions", projectType: "Addition", title: "Home Addition", image: "/category-addition.jpg" },
+  { key: "fence", label: "Fences", projectType: "Fence", title: "New Fence Project", image: "/category-fence.jpg" },
+  { key: "shed", label: "Sheds & Garages", projectType: "Shed", title: "Shed or Garage Project", image: "/category-shed.jpg" },
+];
+
+function projectImage(project) {
+  const text = `
+    ${project?.project_type || ""}
+    ${project?.title || ""}
+    ${project?.description || ""}
+  `.toLowerCase();
+
+  if (text.includes("deck") || text.includes("patio")) return "/category-deck.jpg";
+  if (text.includes("kitchen")) return "/category-kitchen.jpg";
+  if (text.includes("bath")) return "/category-bathroom.jpg";
+  if (text.includes("addition")) return "/category-addition.jpg";
+  if (text.includes("fence")) return "/category-fence.jpg";
+  if (text.includes("shed") || text.includes("garage")) return "/category-shed.jpg";
+  return "/home-planning-people.jpg";
+}
+
 function clampProgress(value) {
   const number = Number(value) || 0;
   return Math.min(100, Math.max(0, number));
@@ -105,6 +130,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [deletingProject, setDeletingProject] = useState("");
   const [dashboardError, setDashboardError] = useState("");
 
   useEffect(() => {
@@ -196,7 +222,7 @@ export default function DashboardPage() {
     }));
   }, [projects]);
 
-  async function addProject() {
+  async function createProject(template = {}) {
     if (!user || creating) return;
 
     setCreating(true);
@@ -206,11 +232,15 @@ export default function DashboardPage() {
       .from("projects")
       .insert({
         user_id: user.id,
-        title: "Untitled Project",
+        title: template.title || "Untitled Project",
+        project_type: template.projectType || null,
+        description: template.description || null,
         location_label: "Location not added",
         status: "Getting Started",
         progress: 5,
-        next_step: "Tell Pilot what you are planning",
+        next_step: template.projectType
+          ? `Tell Pilot about the ${template.projectType.toLowerCase()} project and desired result`
+          : "Tell Pilot what you are planning",
       })
       .select()
       .single();
@@ -225,6 +255,61 @@ export default function DashboardPage() {
 
     setProjects((current) => [data, ...current]);
     router.push(`/project/${data.id}`);
+  }
+
+  async function addProject() {
+    return createProject();
+  }
+
+  async function deleteProject(project) {
+    if (!user || !project?.id || deletingProject) return;
+
+    const confirmed = window.confirm(
+      `Delete “${project.title || "Untitled Project"}”? This permanently removes its Flight Plan, messages, notes, permit research, and Project Binder records.`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingProject(project.id);
+    setDashboardError("");
+
+    try {
+      const { data: documentRows, error: documentError } = await supabase
+        .from("project_documents")
+        .select("file_path")
+        .eq("project_id", project.id)
+        .eq("user_id", user.id);
+
+      if (documentError) throw documentError;
+
+      const filePaths = (documentRows || [])
+        .map((document) => document.file_path)
+        .filter(Boolean);
+
+      if (filePaths.length) {
+        const { error: storageError } = await supabase.storage
+          .from("project-documents")
+          .remove(filePaths);
+
+        if (storageError) throw storageError;
+      }
+
+      const { error: deleteError } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", project.id)
+        .eq("user_id", user.id);
+
+      if (deleteError) throw deleteError;
+
+      setProjects((current) => current.filter((item) => item.id !== project.id));
+    } catch (deleteError) {
+      setDashboardError(
+        deleteError?.message || "Project Pilot could not delete this project."
+      );
+    } finally {
+      setDeletingProject("");
+    }
   }
 
   async function launchDemo() {
@@ -422,6 +507,44 @@ export default function DashboardPage() {
           </div>
         )}
 
+        <section className="signedInVisualHero">
+          <div className="signedInVisualCopy">
+            <p>YOUR PROJECT JOURNEY</p>
+            <h2>See the work, understand the path, and make the next move with confidence.</h2>
+            <span>Project Pilot pairs every workspace with visual project context, cost guidance, permit preparation, and a clearer DIY or professional route.</span>
+            <div>
+              <button type="button" onClick={addProject} disabled={creating}>
+                {creating ? "Creating…" : "Start a New Project"}
+              </button>
+              <a href="#category-launchpad">Browse project categories</a>
+            </div>
+          </div>
+          <img src="/home-planning-people.jpg" alt="Homeowners reviewing renovation plans together" />
+        </section>
+
+        <section className="categoryLaunchpad" id="category-launchpad">
+          <div className="categoryLaunchpadHeading">
+            <div>
+              <p>WHAT ARE YOU PLANNING?</p>
+              <h2>Start with a project you can picture.</h2>
+            </div>
+            <span>Select a category to open a prefilled workspace.</span>
+          </div>
+          <div className="signedInCategoryGrid">
+            {PROJECT_CATEGORIES.map((category) => (
+              <button
+                type="button"
+                key={category.key}
+                onClick={() => createProject(category)}
+                disabled={creating}
+              >
+                <img src={category.image} alt={category.label} />
+                <span>{category.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="missionControlGrid" aria-label="Mission Control overview">
           <article className="missionReadinessCard">
             <div className="missionCardHeading">
@@ -575,6 +698,11 @@ export default function DashboardPage() {
 
                 return (
                   <article className="projectCard" key={project.id}>
+                    <div className="projectImageWrap">
+                      <img src={projectImage(project)} alt={`${project.title || "Project"} visual`} />
+                      <span>{project.project_type || "Guided project"}</span>
+                    </div>
+
                     <div className="projectTop">
                       <div className="projectIcon">P</div>
                       <span>{project.status || getProjectStage(project)}</span>
@@ -609,12 +737,24 @@ export default function DashboardPage() {
                       <strong>{project.next_step || "Review the next waypoint"}</strong>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/project/${project.id}`)}
-                    >
-                      Open Workspace <span aria-hidden="true">→</span>
-                    </button>
+                    <div className="projectCardActions">
+                      <button
+                        type="button"
+                        className="openProjectButton"
+                        onClick={() => router.push(`/project/${project.id}`)}
+                      >
+                        Open Workspace <span aria-hidden="true">→</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="deleteProjectButton"
+                        onClick={() => deleteProject(project)}
+                        disabled={deletingProject === project.id}
+                        aria-label={`Delete ${project.title || "project"}`}
+                      >
+                        {deletingProject === project.id ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
                   </article>
                 );
               })}
@@ -623,36 +763,80 @@ export default function DashboardPage() {
         </section>
 
         <section className="workspaceGrid">
-          <article id="documents">
-            <div className="workspaceCardTop">
-              <span>01</span>
-              <b>AVAILABLE</b>
+          <article id="documents" className="visualWorkspaceCard">
+            <img src="/home-cost-planning.jpg" alt="Homeowner reviewing project planning information" />
+            <div>
+              <div className="workspaceCardTop">
+                <span>01</span>
+                <b>AVAILABLE</b>
+              </div>
+              <p>PROJECT BINDER</p>
+              <h3>Keep every important document together.</h3>
+              <span>
+                Store permits, plans, estimates, contracts, receipts, inspection
+                reports, and warranties inside the project workspace.
+              </span>
+              <button type="button" onClick={openPrimaryProject} disabled={creating}>
+                {primaryProject ? "Open Project Binder" : "Create a Project First"}
+              </button>
             </div>
-            <p>PROJECT BINDER</p>
-            <h3>Keep every important document together.</h3>
-            <span>
-              Store permits, plans, estimates, contracts, receipts, inspection
-              reports, and warranties inside the project workspace.
-            </span>
-            <button type="button" onClick={openPrimaryProject} disabled={creating}>
-              {primaryProject ? "Open Project Binder" : "Create a Project First"}
-            </button>
           </article>
 
-          <article id="professionals">
-            <div className="workspaceCardTop">
-              <span>02</span>
-              <b className="developmentPill">IN DEVELOPMENT</b>
+          <article className="visualWorkspaceCard">
+            <img src="/home-diy-builder.jpg" alt="DIY builder working on an outdoor home project" />
+            <div>
+              <div className="workspaceCardTop">
+                <span>02</span>
+                <b>AVAILABLE</b>
+              </div>
+              <p>DIY PROJECTS</p>
+              <h3>Learn the work before doing it yourself.</h3>
+              <span>
+                Compare DIY cost ranges, materials, tools, planning reminders,
+                and project-specific learning links.
+              </span>
+              <button type="button" onClick={openPrimaryProject} disabled={creating}>
+                {primaryProject ? "Explore DIY Route" : "Create a Project First"}
+              </button>
             </div>
-            <p>PROFESSIONAL NETWORK</p>
-            <h3>Bring the right help into the mission.</h3>
-            <span>
-              Contractor discovery and credential comparison are being prepared
-              for a future beta release.
-            </span>
-            <button type="button" disabled>
-              Network Coming Soon
-            </button>
+          </article>
+
+          <article className="visualWorkspaceCard">
+            <img src="/pilot-guide.jpg" alt="Project Pilot guide ready to help" />
+            <div>
+              <div className="workspaceCardTop">
+                <span>03</span>
+                <b>AVAILABLE</b>
+              </div>
+              <p>PILOT GUIDANCE</p>
+              <h3>Keep the next decision visible.</h3>
+              <span>
+                Return to a guided workspace with the project scope, current
+                waypoint, permit research, costs, and files connected.
+              </span>
+              <button type="button" onClick={openPrimaryProject} disabled={creating}>
+                {primaryProject ? "Ask Pilot" : "Start First Project"}
+              </button>
+            </div>
+          </article>
+
+          <article id="professionals" className="visualWorkspaceCard">
+            <img src="/category-addition.jpg" alt="Completed home addition project" />
+            <div>
+              <div className="workspaceCardTop">
+                <span>04</span>
+                <b className="developmentPill">IN DEVELOPMENT</b>
+              </div>
+              <p>PROFESSIONAL NETWORK</p>
+              <h3>Bring the right help into the mission.</h3>
+              <span>
+                Contractor discovery and credential comparison are being prepared
+                for a future beta release.
+              </span>
+              <button type="button" disabled>
+                Network Coming Soon
+              </button>
+            </div>
           </article>
         </section>
       </section>

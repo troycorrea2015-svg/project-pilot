@@ -5,30 +5,21 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import "./page.css";
 
-const roles = ["Homeowner", "Contractor", "Property Manager", "Developer", "Investor", "Designer"];
+const roles = ["Homeowner", "Contractor", "Property Manager", "Developer", "Investor", "DIY Builder"];
 
-const audience = [
-  "Homeowners",
-  "Contractors",
-  "Property Managers",
-  "Developers",
-  "Investors",
-  "DIY Builders",
+const categories = [
+  { title: "Decks & Patios", image: "/category-deck.jpg" },
+  { title: "Kitchens", image: "/category-kitchen.jpg" },
+  { title: "Bathrooms", image: "/category-bathroom.jpg" },
+  { title: "Additions", image: "/category-addition.jpg" },
+  { title: "Fences", image: "/category-fence.jpg" },
+  { title: "Sheds & Garages", image: "/category-shed.jpg" },
 ];
 
-const plannerSteps = [
-  ["01", "Map the idea", "Start with the project type, goals, address, and rough budget."],
-  ["02", "Understand the path", "See permits, estimated costs, materials, and next steps in one place."],
-  ["03", "Choose your route", "Move forward with a DIY plan or prepare to hire the right professional."],
-];
-
-const featureCards = [
-  ["Mission Control", "A guided workspace that keeps the project moving from first idea to completion."],
-  ["Cost Estimator", "View low, expected, and high ranges with materials, labor, permits, and contingency."],
-  ["DIY Mode", "Explore material costs, tool suggestions, and training links if you want to build it yourself."],
-  ["Permit Intelligence", "Organize your location, documents, and official government links before regulated work begins."],
-  ["Project Binder", "Keep photos, plans, estimates, permits, and project notes connected to the same workspace."],
-  ["Investor-Friendly Demo", "Show a polished product that feels approachable to users and credible to backers."],
+const steps = [
+  ["01", "Describe the project", "Tell Pilot what you want to build, repair, or renovate."],
+  ["02", "See the full path", "Review permit guidance, costs, documents, and the next waypoint."],
+  ["03", "Choose DIY or professional", "Compare routes and move forward with fewer surprises."],
 ];
 
 export default function HomePage() {
@@ -66,9 +57,7 @@ export default function HomePage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: { full_name: name, role },
-          },
+          options: { data: { full_name: name, role } },
         });
 
         if (error) throw error;
@@ -115,123 +104,105 @@ export default function HomePage() {
       <header className="homeNav">
         <a className="homeBrand" href="#top" aria-label="Project Pilot home">
           <span>P</span>
-          <strong>Project Pilot</strong>
+          <div>
+            <strong>Project Pilot</strong>
+            <small>Plan. Verify. Build.</small>
+          </div>
         </a>
         <nav>
+          <a href="#projects">Projects</a>
           <a href="#how-it-works">How It Works</a>
-          <a href="#features">Features</a>
           <a href="#diy">DIY</a>
-          <a href="#beta">Beta</a>
+          <a href="#access">Sign In</a>
         </nav>
-        <a className="navCta" href="#access">Sign In</a>
+        <a className="navCta" href="#access">Get Started</a>
       </header>
 
       <section className="heroSection" id="top">
         <div className="heroCopy">
-          <p className="eyebrow">PLAN SMARTER. MOVE FASTER.</p>
-          <h1>Piloting your project from concept to completion.</h1>
+          <p className="eyebrow">YOUR PROJECT JOURNEY, SMARTER FROM THE START</p>
+          <h1>Plan with confidence before the first tool comes out.</h1>
           <p className="heroLead">
-            Project Pilot keeps planning, permitting, cost guidance, and next actions together in one workspace for property owners, professionals, and DIY builders.
+            Project Pilot brings project planning, permit guidance, cost estimates, DIY resources, and saved progress into one welcoming workspace.
           </p>
-
-          <div className="heroTrust">
-            <span>Guided project setup</span>
-            <span>Estimated costs and materials</span>
-            <span>DIY learning links</span>
-            <span>Saved project progress</span>
+          <div className="heroActions">
+            <a href="#access" className="primaryAction">Start a Project</a>
+            <a href="#how-it-works" className="secondaryAction">See How It Works</a>
           </div>
-
-          <div className="heroActionRow">
-            <a href="#access" className="primaryHeroButton">Open your workspace</a>
-            <a href="#how-it-works" className="secondaryHeroButton">See how it works</a>
-          </div>
-
-          <div className="heroMiniStats">
-            <article>
-              <strong>One place</strong>
-              <span>for planning, permits, costs, and documents</span>
-            </article>
-            <article>
-              <strong>DIY + Pro paths</strong>
-              <span>so users can choose the route that fits them best</span>
-            </article>
-            <article>
-              <strong>Beta ready</strong>
-              <span>for early users, demos, and investor conversations</span>
-            </article>
+          <div className="heroBenefits">
+            <span>✓ Estimated project costs</span>
+            <span>✓ DIY and professional paths</span>
+            <span>✓ Permit preparation</span>
+            <span>✓ Saved documents and progress</span>
           </div>
         </div>
 
-        <div className="heroVisualStack">
-          <section className="accessCard" id="access">
-            <div className="pilotBadge">
-              <span>P</span>
-              <div>
-                <strong>Welcome aboard.</strong>
-                <small>Sign in right from the homepage</small>
-              </div>
-            </div>
-
-            <div className="authTabs">
-              <button type="button" className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setStatus(""); }}>Sign In</button>
-              <button type="button" className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setStatus(""); }}>Create Account</button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              {mode === "signup" && (
-                <>
-                  <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label>
-                  <label>I am a<select value={role} onChange={(event) => setRole(event.target.value)}>{roles.map((item) => <option key={item}>{item}</option>)}</select></label>
-                </>
-              )}
-              <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
-              <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 6 characters" minLength="6" required /></label>
-
-              {mode === "signin" && <button className="forgotButton" type="button" onClick={resetPassword}>Forgot password?</button>}
-
-              <button className="authSubmit" type="submit" disabled={loading}>
-                {loading ? "Working…" : mode === "signin" ? "Open My Projects" : "Create My Free Account"}
-              </button>
-            </form>
-
-            {status && <p className="authStatus">{status}</p>}
-            <p className="accessNote">Free during beta. No payment information required.</p>
-          </section>
-
-          <div className="heroSceneCard heroScenePrimary">
-            <div className="sceneHeader">
-              <p>PLANNING VISUAL</p>
-              <span>Concept → completion</span>
-            </div>
-            <img src="/scene-planning.svg" alt="Illustration of people planning a project together" />
-          </div>
-
-          <div className="heroSceneGrid">
-            <article className="heroSceneCard">
-              <div className="sceneHeader"><p>COSTS</p><span>Estimate before you start</span></div>
-              <img src="/scene-estimator.svg" alt="Illustration of project cost planning" />
-            </article>
-            <article className="heroSceneCard">
-              <div className="sceneHeader"><p>DIY</p><span>Learn as you build</span></div>
-              <img src="/scene-diy.svg" alt="Illustration of a DIY home improvement project" />
-            </article>
+        <div className="heroPhoto">
+          <img src="/home-planning-people.jpg" alt="Homeowners reviewing project plans together" />
+          <div className="heroPhotoLabel">
+            <strong>One workspace</strong>
+            <span>from the first idea to the final inspection</span>
           </div>
         </div>
+
+        <section className="accessCard" id="access">
+          <div className="pilotBadge">
+            <span>P</span>
+            <div>
+              <strong>Welcome aboard.</strong>
+              <small>Open your Project Pilot workspace</small>
+            </div>
+          </div>
+
+          <div className="authTabs">
+            <button type="button" className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setStatus(""); }}>Sign In</button>
+            <button type="button" className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setStatus(""); }}>Create Account</button>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {mode === "signup" && (
+              <>
+                <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label>
+                <label>I am a<select value={role} onChange={(event) => setRole(event.target.value)}>{roles.map((item) => <option key={item}>{item}</option>)}</select></label>
+              </>
+            )}
+            <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
+            <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 6 characters" minLength="6" required /></label>
+
+            {mode === "signin" && <button className="forgotButton" type="button" onClick={resetPassword}>Forgot password?</button>}
+
+            <button className="authSubmit" type="submit" disabled={loading}>
+              {loading ? "Working…" : mode === "signin" ? "Open My Projects" : "Create My Free Account"}
+            </button>
+          </form>
+
+          {status && <p className="authStatus">{status}</p>}
+          <p className="accessNote">Free during beta. No payment information required.</p>
+        </section>
       </section>
 
-      <section className="valueStrip">
-        <p>Built for</p>
-        {audience.map((item) => <span key={item}>{item}</span>)}
+      <section className="categorySection" id="projects">
+        <div className="sectionHeading compactHeading">
+          <p className="eyebrow">WHAT ARE YOU PLANNING?</p>
+          <h2>Start with the project that is already on your mind.</h2>
+        </div>
+        <div className="categoryGrid">
+          {categories.map((category) => (
+            <article key={category.title}>
+              <img src={category.image} alt={`${category.title} project example`} />
+              <strong>{category.title}</strong>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="howSection" id="how-it-works">
         <div className="sectionHeading">
           <p className="eyebrow">HOW IT WORKS</p>
-          <h2>One guided path instead of scattered tabs, guesswork, and lost notes.</h2>
+          <h2>A clear plan instead of tabs, notes, and guesswork.</h2>
         </div>
-
-        <div className="plannerTimeline">
-          {plannerSteps.map(([number, title, copy]) => (
+        <div className="howGrid">
+          {steps.map(([number, title, copy]) => (
             <article key={title}>
               <span>{number}</span>
               <h3>{title}</h3>
@@ -241,61 +212,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="imageFeatureSection" id="diy">
-        <div className="imageFeatureCopy">
-          <p className="eyebrow">DIY + PROFESSIONAL PATHS</p>
-          <h2>Choose the route that fits your project.</h2>
-          <p>
-            Some users want to hire help. Others want to do the work themselves. Project Pilot supports both with cost guidance, material planning, and a clearer next step.
-          </p>
-          <ul>
-            <li>Compare professional and DIY estimates</li>
-            <li>See material cost breakdowns before buying</li>
-            <li>Open trusted learning links for self-guided projects</li>
-            <li>Keep documents and decisions in the same workspace</li>
-          </ul>
-        </div>
-        <div className="imageFeatureVisual">
-          <img src="/scene-diy.svg" alt="DIY project illustration" />
-        </div>
+      <section className="peopleFeatureSection">
+        <article>
+          <img src="/home-cost-planning.jpg" alt="Homeowner reviewing project costs" />
+          <div>
+            <p className="eyebrow">PROJECT COST ESTIMATOR</p>
+            <h2>Understand the likely range before you spend.</h2>
+            <p>Compare low, expected, and high ranges with materials, labor, fees, tools, and contingency shown separately.</p>
+          </div>
+        </article>
+
+        <article id="diy">
+          <img src="/home-diy-builder.jpg" alt="Person completing a do-it-yourself outdoor project" />
+          <div>
+            <p className="eyebrow">DIY PROJECTS</p>
+            <h2>Learn the project before you decide to do it yourself.</h2>
+            <p>See material costs, tool allowances, planning tips, and links to step-by-step learning resources for common projects.</p>
+          </div>
+        </article>
       </section>
 
-      <section className="featuresSection" id="features">
+      <section className="featureSection">
         <div className="sectionHeading">
-          <p className="eyebrow">SPRINT 2.6 FEATURES</p>
-          <h2>A more inviting beta experience with practical planning tools.</h2>
+          <p className="eyebrow">EVERYTHING CONNECTED</p>
+          <h2>The useful parts of project planning, together.</h2>
         </div>
         <div className="featureGrid">
-          {featureCards.map(([title, copy], index) => (
-            <article key={title}>
-              <b>{String(index + 1).padStart(2, "0")}</b>
-              <h3>{title}</h3>
-              <p>{copy}</p>
-            </article>
-          ))}
+          <article><strong>Mission Control</strong><p>See priorities, readiness, current stages, and the next action at a glance.</p></article>
+          <article><strong>Permit Intelligence</strong><p>Organize address matching, jurisdiction questions, documents, and official links.</p></article>
+          <article><strong>Cost Estimator</strong><p>Compare professional and DIY paths using a practical planning range.</p></article>
+          <article><strong>DIY Resources</strong><p>Open project-specific learning links, materials, and safety reminders.</p></article>
+          <article><strong>Project Binder</strong><p>Keep plans, photos, quotes, permits, receipts, and approvals with the project.</p></article>
+          <article><strong>Pilot Guidance</strong><p>Return to the project without losing track of the next decision.</p></article>
         </div>
       </section>
 
-      <section className="pricingSection" id="beta">
+      <section className="betaSection">
         <div>
           <p className="eyebrow">BETA ACCESS</p>
-          <h2>Start free and help shape the final product.</h2>
-          <p>
-            Beta users can explore the workspace, create projects, review cost guidance, test DIY planning, and help validate the experience before public launch.
-          </p>
+          <h2>Start free and help shape what comes next.</h2>
+          <p>Project Pilot is ready for early users, product demonstrations, contractor conversations, and investor feedback.</p>
         </div>
-        <div className="pricingCard">
-          <span>BETA</span>
-          <strong>$0</strong>
-          <small>during early access</small>
-          <a href="#access">Create Free Account</a>
-        </div>
+        <a href="#access">Create Free Account</a>
       </section>
 
       <footer className="homeFooter">
-        <a className="homeBrand" href="#top"><span>P</span><strong>Project Pilot</strong></a>
+        <a className="homeBrand" href="#top"><span>P</span><div><strong>Project Pilot</strong><small>Plan. Verify. Build.</small></div></a>
         <p>Piloting your project from concept to completion.</p>
-        <small>Beta software. Permit guidance, cost guidance, and DIY education should always be confirmed before work begins.</small>
+        <small>Beta software. Permit, cost, and DIY guidance should be confirmed before work begins.</small>
       </footer>
     </main>
   );

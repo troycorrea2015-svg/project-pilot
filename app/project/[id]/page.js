@@ -163,6 +163,17 @@ function fileLabel(document) {
   return "FILE";
 }
 
+function projectVisual(project) {
+  const text = `${project?.project_type || ""} ${project?.title || ""} ${project?.description || ""}`.toLowerCase();
+  if (text.includes("deck") || text.includes("patio")) return "/category-deck.jpg";
+  if (text.includes("kitchen")) return "/category-kitchen.jpg";
+  if (text.includes("bath")) return "/category-bathroom.jpg";
+  if (text.includes("addition")) return "/category-addition.jpg";
+  if (text.includes("fence")) return "/category-fence.jpg";
+  if (text.includes("shed") || text.includes("garage")) return "/category-shed.jpg";
+  return "/home-planning-people.jpg";
+}
+
 function currency(value) {
   return `$${Math.round(value || 0).toLocaleString()}`;
 }
@@ -789,9 +800,12 @@ export default function ProjectWorkspacePage() {
                   <button className="heroSecondary" onClick={() => setActiveTab("pilot")}>Ask Pilot</button>
                 </div>
               </div>
-              <div className="readinessRing" style={{ "--progress": `${readiness}%` }}>
-                <strong>{readiness}%</strong>
-                <span>mission ready</span>
+              <div className="commandHeroVisual">
+                <img src={projectVisual(project)} alt={`${project.title} project visual`} />
+                <div className="readinessRing" style={{ "--progress": `${readiness}%` }}>
+                  <strong>{readiness}%</strong>
+                  <span>mission ready</span>
+                </div>
               </div>
             </section>
 
@@ -1032,7 +1046,7 @@ export default function ProjectWorkspacePage() {
         {activeTab === "pilot" && (
           <div className="pilotPanel">
             <header className="pilotHeader">
-              <div className="pilotAvatar">P</div>
+              <img className="pilotVisualAvatar" src="/pilot-guide.jpg" alt="Project Pilot guide" />
               <div>
                 <p>PILOT</p>
                 <h2>Guided project setup</h2>
@@ -1098,13 +1112,16 @@ export default function ProjectWorkspacePage() {
 
         {activeTab === "permits" && (
           <div className="workspaceContent permitContent">
-            <div className="sectionIntro splitIntro">
+            <div className="sectionIntro splitIntro permitVisualIntro">
               <div>
                 <p>PERMIT INTELLIGENCE</p>
                 <h1>Build a verified path before regulated work begins.</h1>
                 <span>Project Pilot organizes the address match, jurisdiction questions, document checklist, and official resources. Final requirements must be confirmed with the governing authority.</span>
               </div>
-              {permitChecked && <span className="permitSavedBadge">✓ CHECK SAVED</span>}
+              <div className="permitGuideVisual">
+                <img src="/permit-guide.jpg" alt="Project planning guide holding a tablet" />
+                {permitChecked && <span className="permitSavedBadge">✓ CHECK SAVED</span>}
+              </div>
             </div>
 
             <div className="permitWorkspaceGrid">
@@ -1274,6 +1291,7 @@ export default function ProjectWorkspacePage() {
                 </article>
 
                 <article className="estimateCard estimateSummaryCard professionalSummaryCard">
+                  <img className="estimatePeopleImage" src="/home-cost-planning.jpg" alt="Homeowner reviewing project costs" />
                   <div className="estimateCardHeading">
                     <span>04</span>
                     <div><small>PROFESSIONAL ROUTE</small><h2>{currency(professionalEstimate.total)} expected</h2></div>
@@ -1292,6 +1310,7 @@ export default function ProjectWorkspacePage() {
                 </article>
 
                 <article className="estimateCard estimateSummaryCard diySummaryCard">
+                  <img className="estimatePeopleImage" src="/home-diy-builder.jpg" alt="DIY builder working on a home project" />
                   <div className="estimateCardHeading">
                     <span>05</span>
                     <div><small>DIY ROUTE</small><h2>{currency(diyEstimate.total)} expected</h2></div>

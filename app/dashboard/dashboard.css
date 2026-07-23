@@ -1150,3 +1150,270 @@
 .demoProjectButton{color:#1f5bdb;background:#edf4ff;border:1px solid #b9cdf8}.demoProjectButton:hover{background:#e2edff}.demoProjectButton:disabled{opacity:.65;cursor:wait}.betaBadge{letter-spacing:.13em}
 @media(max-width:760px){.dashboardActions{display:grid;grid-template-columns:1fr 1fr;width:100%}.dashboardActions .demoProjectButton{grid-column:1/-1}.dashboardActions button{width:100%}.missionControlGrid{grid-template-columns:1fr}.readinessBody{align-items:flex-start;flex-direction:column}.recentActivityList{grid-template-columns:1fr}.dashboardMain{overflow:hidden}.projectCard{min-width:0}.projectMeta{grid-template-columns:1fr 1fr}}
 @media(max-width:460px){.dashboardActions{grid-template-columns:1fr}.dashboardActions .demoProjectButton{grid-column:auto}.dashboardHeader h1{font-size:37px}.flightPlanStages{padding-bottom:8px}.dashboardSidebar nav{grid-template-columns:1fr 1fr}}
+
+/* Sprint 2.6 revised visual experience */
+.signedInVisualHero {
+  margin-top: 28px;
+  min-height: 300px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+  overflow: hidden;
+  border: 1px solid #dce5ef;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 22px 58px rgba(20, 48, 84, 0.09);
+}
+
+.signedInVisualCopy {
+  padding: clamp(28px, 4vw, 46px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(145deg, #fff, #f5fbf8);
+}
+
+.signedInVisualCopy > p,
+.categoryLaunchpadHeading p {
+  margin: 0;
+  color: #138f7d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.signedInVisualCopy h2,
+.categoryLaunchpadHeading h2 {
+  margin: 10px 0 0;
+  color: #142642;
+  letter-spacing: -0.05em;
+  line-height: 1.02;
+}
+
+.signedInVisualCopy h2 {
+  font-size: clamp(32px, 4vw, 52px);
+}
+
+.signedInVisualCopy > span {
+  margin-top: 16px;
+  color: #66768b;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.signedInVisualCopy > div {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.signedInVisualCopy > div button {
+  color: #fff;
+  background: linear-gradient(135deg, #169b87, #0d7f70);
+  border: 0;
+}
+
+.signedInVisualCopy > div a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid #d3deea;
+  border-radius: 11px;
+  background: #fff;
+  color: #173056;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.signedInVisualHero > img {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.categoryLaunchpad {
+  margin-top: 26px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dce5ef;
+  border-radius: 22px;
+}
+
+.categoryLaunchpadHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.categoryLaunchpadHeading h2 {
+  font-size: 30px;
+}
+
+.categoryLaunchpadHeading > span {
+  color: #738196;
+  font-size: 13px;
+}
+
+.signedInCategoryGrid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.signedInCategoryGrid button {
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+  display: block;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #dce5ef;
+  border-radius: 16px;
+}
+
+.signedInCategoryGrid button:hover:not(:disabled) {
+  border-color: #8fc9bd;
+  box-shadow: 0 12px 26px rgba(20, 82, 73, 0.1);
+}
+
+.signedInCategoryGrid img {
+  width: 100%;
+  height: 112px;
+  display: block;
+  object-fit: cover;
+}
+
+.signedInCategoryGrid span {
+  display: block;
+  padding: 12px;
+  color: #193250;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.projectImageWrap {
+  position: relative;
+  margin: -24px -24px 20px;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+}
+
+.projectImageWrap img {
+  width: 100%;
+  height: 180px;
+  display: block;
+  object-fit: cover;
+}
+
+.projectImageWrap > span {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(12, 34, 59, 0.82);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 850;
+  backdrop-filter: blur(8px);
+}
+
+.projectCardActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.projectCardActions .openProjectButton {
+  width: 100%;
+  color: #2f6df6;
+  background: #fff;
+  border: 1px solid #b9cdf8;
+}
+
+.projectCardActions .deleteProjectButton {
+  min-width: 82px;
+  color: #a84444;
+  background: #fff8f8;
+  border: 1px solid #efc5c5;
+}
+
+.projectCardActions .deleteProjectButton:hover:not(:disabled) {
+  background: #fff0f0;
+  border-color: #de9999;
+}
+
+.workspaceGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.visualWorkspaceCard {
+  padding: 0 !important;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+}
+
+.visualWorkspaceCard > img {
+  width: 100%;
+  height: 100%;
+  min-height: 310px;
+  object-fit: cover;
+}
+
+.visualWorkspaceCard > div {
+  padding: 24px;
+}
+
+@media (max-width: 1240px) {
+  .signedInCategoryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .signedInVisualHero {
+    grid-template-columns: 1fr;
+  }
+
+  .signedInVisualHero > img {
+    min-height: 240px;
+    max-height: 340px;
+  }
+}
+
+@media (max-width: 650px) {
+  .signedInCategoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .categoryLaunchpadHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .visualWorkspaceCard {
+    grid-template-columns: 1fr;
+  }
+
+  .visualWorkspaceCard > img {
+    min-height: 210px;
+    max-height: 260px;
+  }
+
+  .projectCardActions {
+    grid-template-columns: 1fr;
+  }
+}

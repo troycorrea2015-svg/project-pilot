@@ -255,3 +255,103 @@
     grid-column: auto;
   }
 }
+
+/* Sprint 2.6 revised signed-in visuals */
+.commandHeroVisual {
+  position: relative;
+  min-width: 280px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.commandHeroVisual > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.56;
+}
+
+.commandHeroVisual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(13, 31, 56, 0.2), rgba(13, 31, 56, 0.72));
+}
+
+.commandHeroVisual .readinessRing {
+  position: relative;
+  z-index: 2;
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(9, 31, 60, 0.22);
+}
+
+.pilotVisualAvatar {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 2px solid #fff;
+  box-shadow: 0 10px 24px rgba(24, 61, 103, 0.18);
+}
+
+.permitVisualIntro {
+  align-items: center;
+}
+
+.permitGuideVisual {
+  position: relative;
+  width: 190px;
+  min-height: 138px;
+  overflow: hidden;
+  border: 1px solid #dce5ef;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.permitGuideVisual img {
+  width: 100%;
+  height: 138px;
+  object-fit: cover;
+  object-position: center 22%;
+}
+
+.permitGuideVisual .permitSavedBadge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: rgba(235, 250, 242, 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.estimateSummaryCard {
+  overflow: hidden;
+}
+
+.estimatePeopleImage {
+  width: calc(100% + 48px);
+  height: 170px;
+  margin: -24px -24px 22px;
+  display: block;
+  object-fit: cover;
+}
+
+@media (max-width: 880px) {
+  .commandHeroVisual {
+    min-height: 260px;
+    min-width: 0;
+  }
+
+  .permitGuideVisual {
+    width: 100%;
+  }
+
+  .permitGuideVisual img {
+    height: 210px;
+  }
+}
