@@ -61,11 +61,11 @@ export default function DashboardPage() {
       .from("projects")
       .insert({
         user_id: user.id,
-        title: "New Home Project",
+        title: "Untitled Project",
         location_label: "Location not added",
         status: "Getting Started",
         progress: 5,
-        next_step: "Describe the project you are planning",
+        next_step: "Tell Pilot what you are planning",
       })
       .select()
       .single();
@@ -116,7 +116,7 @@ export default function DashboardPage() {
           <div>
             <p>PROJECT WORKSPACE</p>
             <h1>Welcome back, {displayName}.</h1>
-            <span>Here is what needs your attention next.</span>
+            <span>Your projects, priorities, and next waypoints in one place.</span>
           </div>
 
           <div className="dashboardActions">
@@ -144,6 +144,27 @@ export default function DashboardPage() {
             <small>{projects[0]?.next_step || "Start your first project roadmap"}</small>
           </article>
         </div>
+
+        <section className="flightPlanBanner">
+          <div>
+            <p>YOUR FLIGHT PLAN</p>
+            <h2>Every project follows a clear course.</h2>
+            <span>Concept → Planning → Location → Permits → Documents → Construction → Inspection → Completion</span>
+          </div>
+          <div className="flightPlanStages" aria-label="Flight Plan stages">
+            {[
+              ["Concept", true],
+              ["Planning", projects.length > 0],
+              ["Location", false],
+              ["Permits", false],
+              ["Completion", false],
+            ].map(([label, active], index) => (
+              <div className={active ? "active" : ""} key={label}>
+                <span>{index + 1}</span><small>{label}</small>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <section className="dashboardSection" id="projects">
           <div className="sectionTitleRow">
