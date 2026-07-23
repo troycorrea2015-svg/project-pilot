@@ -1145,3 +1145,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Sprint 2.4 + 2.5 — beta demo and release polish */
+.demoProjectButton{color:#1f5bdb;background:#edf4ff;border:1px solid #b9cdf8}.demoProjectButton:hover{background:#e2edff}.demoProjectButton:disabled{opacity:.65;cursor:wait}.betaBadge{letter-spacing:.13em}
+@media(max-width:760px){.dashboardActions{display:grid;grid-template-columns:1fr 1fr;width:100%}.dashboardActions .demoProjectButton{grid-column:1/-1}.dashboardActions button{width:100%}.missionControlGrid{grid-template-columns:1fr}.readinessBody{align-items:flex-start;flex-direction:column}.recentActivityList{grid-template-columns:1fr}.dashboardMain{overflow:hidden}.projectCard{min-width:0}.projectMeta{grid-template-columns:1fr 1fr}}
+@media(max-width:460px){.dashboardActions{grid-template-columns:1fr}.dashboardActions .demoProjectButton{grid-column:auto}.dashboardHeader h1{font-size:37px}.flightPlanStages{padding-bottom:8px}.dashboardSidebar nav{grid-template-columns:1fr 1fr}}

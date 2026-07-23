@@ -104,6 +104,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState("");
 
   useEffect(() => {
@@ -226,6 +227,109 @@ export default function DashboardPage() {
     router.push(`/project/${data.id}`);
   }
 
+  async function launchDemo() {
+    if (!user || demoLoading) return;
+
+    setDemoLoading(true);
+    setDashboardError("");
+    let createdProject = null;
+
+    try {
+      const permitResearch = {
+        title: "Deck — Milton / Sussex County area",
+        jurisdiction: "Town of Milton / Sussex County boundary review",
+        summary: "A Milton mailing address does not by itself establish whether town or county requirements govern the property.",
+        matchedAddress: "101 FEDERAL ST, MILTON, DE, 19968",
+        addressMatched: true,
+        coordinates: { latitude: 38.7776, longitude: -75.3099 },
+        jurisdictionStatus: "Town-boundary and governing-authority confirmation required",
+        steps: [
+          "Confirm whether the property is inside Town of Milton limits.",
+          "Ask whether zoning, building, or trade approvals apply to the deck replacement.",
+          "Obtain the current application checklist and fee schedule.",
+          "Prepare the site plan, framing plan, and stair or guard details.",
+          "Save approvals and inspection records in the Project Binder.",
+        ],
+        documents: ["Site plan", "Footing and framing plans", "Guard, stair, and attachment details"],
+        sources: [
+          { label: "Town of Milton", url: "https://milton.delaware.gov/" },
+          { label: "Sussex County Building Permits", url: "https://sussexcountyde.gov/building-permits" },
+        ],
+        checkedAt: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({
+          user_id: user.id,
+          title: "Backyard Deck Replacement — Demo",
+          description: "Replace an aging rear deck with a safer, larger outdoor living area including new stairs and guards.",
+          project_type: "Deck",
+          project_role: "Owner",
+          target_timeline: "This fall",
+          budget: 18500,
+          address: permitResearch.matchedAddress,
+          location_label: permitResearch.matchedAddress,
+          latitude: permitResearch.coordinates.latitude,
+          longitude: permitResearch.coordinates.longitude,
+          jurisdiction: permitResearch.jurisdiction,
+          permit_research: permitResearch,
+          permit_checked_at: new Date().toISOString(),
+          status: "Documents",
+          progress: 50,
+          next_step: "Collect plans, estimates, photos, contracts, and records.",
+          notes: "Investor demo project. Confirm contractor availability, material lead times, and inspection sequencing.",
+        })
+        .select()
+        .single();
+
+      if (error || !data) throw error || new Error("Demo project could not be created.");
+      createdProject = data;
+
+      const stageLabels = ["Concept", "Planning", "Location", "Permits", "Documents", "Construction", "Inspections", "Completion"];
+      const stageKeys = ["concept", "planning", "location", "permits", "documents", "construction", "inspections", "completion"];
+      const { error: waypointError } = await supabase.from("project_waypoints").insert(
+        stageKeys.map((stageKey, index) => ({
+          project_id: data.id,
+          user_id: user.id,
+          stage_key: stageKey,
+          stage_label: stageLabels[index],
+          stage_order: index,
+          notes: index === 3 ? "Permit Intelligence check saved. Confirm the governing authority before submission." : "",
+          due_date: null,
+          completed: index < 4,
+          updated_at: new Date().toISOString(),
+        }))
+      );
+      if (waypointError) throw waypointError;
+
+      const { error: conversationError } = await supabase.from("conversations").insert([
+        {
+          project_id: data.id,
+          user_id: user.id,
+          role: "user",
+          message: "I want to replace the unsafe deck behind my home with a larger deck for entertaining.",
+        },
+        {
+          project_id: data.id,
+          user_id: user.id,
+          role: "assistant",
+          message: "The project setup and permit check are saved. The next waypoint is collecting the site plan, framing details, estimates, and product information in the Project Binder.",
+        },
+      ]);
+      if (conversationError) throw conversationError;
+
+      setProjects((current) => [data, ...current]);
+      router.push(`/project/${data.id}`);
+    } catch (demoError) {
+      if (createdProject?.id) {
+        await supabase.from("projects").delete().eq("id", createdProject.id).eq("user_id", user.id);
+      }
+      setDashboardError(demoError?.message || "Project Pilot could not create the demo project.");
+      setDemoLoading(false);
+    }
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.replace("/");
@@ -257,7 +361,7 @@ export default function DashboardPage() {
             <span>P</span>
             <strong>Project Pilot</strong>
           </a>
-          <span className="betaBadge">BETA RC1</span>
+          <span className="betaBadge">BETA</span>
         </div>
 
         <nav aria-label="Dashboard navigation">
@@ -294,6 +398,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="dashboardActions">
+            <button className="demoProjectButton" type="button" onClick={launchDemo} disabled={demoLoading || creating}>
+              {demoLoading ? "Loading Demo…" : "Launch Demo"}
+            </button>
             <button className="signOutButton" type="button" onClick={signOut}>
               Sign Out
             </button>

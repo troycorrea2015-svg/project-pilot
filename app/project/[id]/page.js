@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   ["overview", "Command Center"],
   ["flight", "Flight Plan"],
   ["pilot", "Pilot"],
+  ["permits", "Permit Intelligence"],
   ["documents", "Project Binder"],
   ["notes", "Notes"],
 ];
@@ -34,6 +35,20 @@ function formatDate(value) {
   return Number.isNaN(date.getTime())
     ? "No target date"
     : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function extractZip(value) {
+  const match = String(value || "").match(/\b(19\d{3})\b/);
+  return match?.[1] || "";
+}
+
+function mapEmbedUrl(latitude, longitude) {
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "";
+  const offset = 0.012;
+  const bbox = [lon - offset, lat - offset, lon + offset, lat + offset].join(",");
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${lat}%2C${lon}`;
 }
 
 function fileLabel(document) {
@@ -66,6 +81,10 @@ export default function ProjectWorkspacePage() {
   const [savingWaypoint, setSavingWaypoint] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [permitForm, setPermitForm] = useState({ address: "", zip: "", project: "" });
+  const [permitResult, setPermitResult] = useState(null);
+  const [permitLoading, setPermitLoading] = useState(false);
+  const [permitError, setPermitError] = useState("");
 
   useEffect(() => {
     loadWorkspace();
@@ -122,6 +141,12 @@ export default function ProjectWorkspacePage() {
 
     setProject(projectResult.data);
     setNoteDraft(projectResult.data.notes || "");
+    setPermitResult(projectResult.data.permit_research || null);
+    setPermitForm({
+      address: projectResult.data.address || "",
+      zip: extractZip(projectResult.data.address || projectResult.data.location_label),
+      project: projectResult.data.project_type || "",
+    });
     setMessages(messageResult.data || []);
     setDocuments(documentResult.data || []);
 
@@ -411,6 +436,72 @@ export default function ProjectWorkspacePage() {
     setNotice(`${document.file_name} removed.`);
   }
 
+  async function runPermitLookup(event) {
+    event?.preventDefault();
+    if (!user || !project || permitLoading) return;
+
+    const address = permitForm.address.trim();
+    const zip = permitForm.zip.trim();
+    const projectType = permitForm.project.trim();
+
+    if (!address || !zip || !projectType) {
+      setPermitError("Enter the project address, five-digit ZIP code, and project type.");
+      return;
+    }
+
+    setPermitLoading(true);
+    setPermitError("");
+    setError("");
+    setNotice("");
+
+    try {
+      const response = await fetch("/api/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, zip, project: projectType }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Permit Intelligence could not complete the lookup.");
+
+      const checkedAt = new Date().toISOString();
+      const projectUpdate = {
+        address: result.matchedAddress || address,
+        location_label: result.matchedAddress || address,
+        project_type: projectType,
+        jurisdiction: result.jurisdiction || result.title,
+        latitude: result.coordinates?.latitude ?? project.latitude ?? null,
+        longitude: result.coordinates?.longitude ?? project.longitude ?? null,
+        permit_research: result,
+        permit_checked_at: checkedAt,
+        next_step: "Review the permit checklist and confirm requirements with the governing authority.",
+        status: project.status === "Getting Started" ? "Permits" : project.status,
+        updated_at: checkedAt,
+      };
+
+      const { data: updatedProject, error: updateError } = await supabase
+        .from("projects")
+        .update(projectUpdate)
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      setProject(updatedProject);
+      setPermitResult(result);
+      setPermitForm((current) => ({
+        ...current,
+        address: result.matchedAddress || address,
+      }));
+      setNotice("Permit Intelligence saved to this project.");
+    } catch (lookupError) {
+      setPermitError(lookupError.message || "Permit Intelligence is temporarily unavailable.");
+    } finally {
+      setPermitLoading(false);
+    }
+  }
+
   const setupItems = useMemo(
     () => [
       ["Project type", project?.project_type],
@@ -435,6 +526,11 @@ export default function ProjectWorkspacePage() {
   const nextWaypoint = STAGES[currentStageIndex];
   const nextWaypointRecord = waypointFor(currentStageIndex);
   const readiness = clamp(project?.progress || 0, 0, 100);
+  const permitChecked = Boolean(permitResult?.jurisdictionStatus);
+  const permitMap = mapEmbedUrl(
+    permitResult?.coordinates?.latitude ?? project?.latitude,
+    permitResult?.coordinates?.longitude ?? project?.longitude
+  );
 
   if (loading) {
     return <main className="workspaceLoading">Opening your project…</main>;
@@ -625,6 +721,23 @@ export default function ProjectWorkspacePage() {
                 </div>
               </article>
 
+              <article className="missionCard permitPreviewCard">
+                <div className="cardHeadingRow">
+                  <div>
+                    <p>PERMIT INTELLIGENCE</p>
+                    <h3>{permitChecked ? "Jurisdiction check saved" : "Confirm the permit path"}</h3>
+                  </div>
+                  <button onClick={() => setActiveTab("permits")}>{permitChecked ? "Review Check" : "Run Check"}</button>
+                </div>
+                <div className={`permitStatusPreview ${permitChecked ? "ready" : "pending"}`}>
+                  <span>{permitChecked ? "✓" : "!"}</span>
+                  <div>
+                    <strong>{permitChecked ? permitResult.title : "Location verification required"}</strong>
+                    <p>{permitChecked ? permitResult.jurisdictionStatus : "Use the project address and ZIP code to build a permit-preparation checklist and open official resources."}</p>
+                  </div>
+                </div>
+              </article>
+
               <article className="missionCard notesPreviewCard">
                 <div className="cardHeadingRow">
                   <div>
@@ -798,6 +911,113 @@ export default function ProjectWorkspacePage() {
               </form>
               <small>Guided beta mode saves your project details without paid AI usage.</small>
             </div>
+          </div>
+        )}
+
+        {activeTab === "permits" && (
+          <div className="workspaceContent permitContent">
+            <div className="sectionIntro splitIntro">
+              <div>
+                <p>PERMIT INTELLIGENCE</p>
+                <h1>Build a verified path before regulated work begins.</h1>
+                <span>Project Pilot organizes the address match, jurisdiction questions, document checklist, and official resources. Final requirements must be confirmed with the governing authority.</span>
+              </div>
+              {permitChecked && <span className="permitSavedBadge">✓ CHECK SAVED</span>}
+            </div>
+
+            <div className="permitWorkspaceGrid">
+              <form className="permitLookupCard" onSubmit={runPermitLookup}>
+                <div className="permitCardHeading">
+                  <span>01</span>
+                  <div><small>PROPERTY CHECK</small><h2>Confirm the project location.</h2></div>
+                </div>
+
+                <label>
+                  <span>Street address</span>
+                  <input
+                    value={permitForm.address}
+                    onChange={(event) => setPermitForm((current) => ({ ...current, address: event.target.value }))}
+                    placeholder="101 Main Street, Milton, DE"
+                  />
+                </label>
+
+                <div className="permitFormRow">
+                  <label>
+                    <span>ZIP code</span>
+                    <input
+                      inputMode="numeric"
+                      maxLength={5}
+                      value={permitForm.zip}
+                      onChange={(event) => setPermitForm((current) => ({ ...current, zip: event.target.value.replace(/\D/g, "").slice(0, 5) }))}
+                      placeholder="19968"
+                    />
+                  </label>
+                  <label>
+                    <span>Project type</span>
+                    <input
+                      value={permitForm.project}
+                      onChange={(event) => setPermitForm((current) => ({ ...current, project: event.target.value }))}
+                      placeholder="Deck"
+                    />
+                  </label>
+                </div>
+
+                {permitError && <div className="permitInlineError">{permitError}</div>}
+
+                <button className="permitLookupButton" disabled={permitLoading}>
+                  {permitLoading ? "Checking address and resources…" : permitChecked ? "Refresh Permit Check" : "Run Permit Check"}
+                </button>
+                <small className="permitDisclaimer">Beta research support only. Always confirm current forms, fees, approvals, and inspections with the responsible authority.</small>
+              </form>
+
+              <article className="permitMapCard">
+                <div className="permitCardHeading">
+                  <span>02</span>
+                  <div><small>LOCATION MAP</small><h2>{permitResult?.matchedAddress || project.address || "Map pending"}</h2></div>
+                </div>
+                {permitMap ? (
+                  <iframe title="Project location map" src={permitMap} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                ) : (
+                  <div className="mapPlaceholder"><strong>No mapped location yet.</strong><span>Run the permit check to match the address and display the project area.</span></div>
+                )}
+              </article>
+            </div>
+
+            {permitResult ? (
+              <section className="permitResults">
+                <header>
+                  <div><p>CHECK RESULT</p><h2>{permitResult.title}</h2></div>
+                  <span>{permitResult.jurisdictionStatus}</span>
+                </header>
+
+                <p className="permitSummary">{permitResult.summary}</p>
+
+                <div className="permitResultGrid">
+                  <article>
+                    <small>RECOMMENDED COURSE</small>
+                    <ol>{permitResult.steps?.map((step) => <li key={step}>{step}</li>)}</ol>
+                  </article>
+                  <article>
+                    <small>PREPARE THESE DOCUMENTS</small>
+                    <ul>{permitResult.documents?.map((document) => <li key={document}>{document}</li>)}</ul>
+                  </article>
+                </div>
+
+                <div className="officialResources">
+                  <div><small>OFFICIAL RESOURCES</small><strong>Open the governing authority's current information.</strong></div>
+                  <div>
+                    {permitResult.sources?.map((source) => (
+                      <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <section className="permitEmptyResult">
+                <span>P</span>
+                <div><h2>Permit Intelligence is ready.</h2><p>Enter the property address, ZIP code, and project type. Project Pilot will organize a practical checklist and official starting points.</p></div>
+              </section>
+            )}
           </div>
         )}
 

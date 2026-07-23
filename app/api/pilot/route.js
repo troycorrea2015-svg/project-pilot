@@ -84,7 +84,12 @@ function buildGuidedReply(project, extracted) {
     return "Do you have a working budget range? You can give a rough number, and it can be changed later.";
   }
 
-  return `Your project setup is now on course. I’ve captured the project type, location, role, timeline, and budget. The next waypoint is permit research and document collection. Add any plans, photos, estimates, or sketches in the Project Binder, then review the Flight Plan for the next actions.`;
+  if (!project.permit_research) {
+    return `Your project setup is now on course. I’ve captured the project type, location, role, timeline, and budget. Open Permit Intelligence next to match the address, organize the jurisdiction questions, and build the permit-preparation checklist.`;
+  }
+
+  const jurisdiction = project.permit_research?.jurisdiction || project.jurisdiction || "the governing authority";
+  return `The permit check is saved for ${jurisdiction}. Review the official resources, prepare the listed documents, and confirm current requirements directly with the governing authority. Then keep plans, approvals, and inspection records in the Project Binder.`;
 }
 
 export async function POST(request) {
@@ -135,6 +140,7 @@ export async function POST(request) {
     const completed = [extracted.project_type, description, extracted.address, extracted.project_role, extracted.target_timeline, extracted.budget].filter(Boolean).length;
     const progress = Math.max(project.progress || 5, Math.min(48, 8 + completed * 7));
     const ready = completed >= 6;
+    const permitChecked = Boolean(project.permit_research?.jurisdictionStatus);
     const update = {
       project_type: extracted.project_type || null,
       description: description || null,
@@ -145,7 +151,11 @@ export async function POST(request) {
       budget: extracted.budget || null,
       progress,
       status: ready ? "Planning" : "Getting Started",
-      next_step: ready ? "Add plans, photos, estimates, or project documents" : "Continue setup with Pilot",
+      next_step: ready
+        ? permitChecked
+          ? "Review the permit checklist and add supporting project documents"
+          : "Run Permit Intelligence for the project location"
+        : "Continue setup with Pilot",
       updated_at: new Date().toISOString(),
     };
 
