@@ -5,3 +5,253 @@
 
 @media(max-width:980px){.permitWorkspaceGrid,.permitResultGrid{grid-template-columns:1fr}.permitResults>header{flex-direction:column}.permitResults>header>span{max-width:none}.officialResources{align-items:flex-start;flex-direction:column}.officialResources>div:last-child{justify-content:flex-start}.permitMapCard iframe,.mapPlaceholder{height:300px}}
 @media(max-width:680px){.permitFormRow{grid-template-columns:1fr}.permitLookupCard,.permitMapCard,.permitResults,.permitEmptyResult{padding:20px}.permitMapCard iframe,.mapPlaceholder{height:245px}.permitEmptyResult{align-items:flex-start}.workspaceHeaderActions{width:100%}.workspaceHeaderActions button{flex:1}.projectRail{position:relative;height:auto}.projectWorkspace{grid-template-columns:1fr}.workspaceNav{grid-template-columns:repeat(3,minmax(0,1fr));overflow-x:auto}.railProgress{margin-top:24px}.flightStrip{overflow-x:auto;justify-content:flex-start}.flightStrip button{min-width:66px}.commandHero{padding:25px}.commandHero h1{font-size:32px}.readinessRing{width:132px;height:132px}}
+
+/* Sprint 2.6 — Cost estimator + DIY planning */
+.estimatePlannerSection {
+  margin-top: 28px;
+}
+
+.estimatePlannerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.estimateCard {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dce6f1;
+  border-radius: 24px;
+  box-shadow: 0 18px 48px rgba(20, 48, 87, 0.08);
+}
+
+.estimateCardHeading {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.estimateCardHeading > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #edf4ff;
+  color: #2f6df6;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.estimateCardHeading small,
+.estimateCardHeading h2 {
+  display: block;
+}
+
+.estimateCardHeading small {
+  color: #5f7ea8;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.estimateCardHeading h2 {
+  margin: 6px 0 0;
+  font-size: clamp(24px, 2vw, 34px);
+  line-height: 1.05;
+  color: #143057;
+}
+
+.estimateControlsCard,
+.estimateResourcesCard {
+  grid-column: span 2;
+}
+
+.estimateControlGrid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.estimateControlGrid label {
+  display: grid;
+  gap: 7px;
+}
+
+.estimateControlGrid span,
+.estimateInputFootnote span {
+  color: #6a7f9b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.estimateControlGrid input,
+.estimateControlGrid select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #cfdae7;
+  border-radius: 12px;
+  background: #fff;
+  color: #173056;
+  font: inherit;
+  outline: none;
+}
+
+.estimateControlGrid input:focus,
+.estimateControlGrid select:focus {
+  border-color: #7ea4ff;
+  box-shadow: 0 0 0 3px rgba(47, 109, 246, 0.1);
+}
+
+.estimateInputFootnote {
+  margin-top: 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 16px;
+  background: #f5f8fd;
+}
+
+.estimateInputFootnote strong {
+  color: #173056;
+  font-size: 15px;
+}
+
+.professionalSummaryCard {
+  background: linear-gradient(145deg, #ffffff, #f6f9ff);
+}
+
+.diySummaryCard {
+  background: linear-gradient(145deg, #ffffff, #f4fbf8);
+}
+
+.estimateRangeRow {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.estimateRangeRow div {
+  padding: 14px;
+  border-radius: 16px;
+  background: #f5f8fd;
+}
+
+.estimateRangeRow small {
+  display: block;
+  color: #6f829b;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-weight: 900;
+}
+
+.estimateRangeRow strong {
+  display: block;
+  margin-top: 8px;
+  color: #143057;
+  font-size: 21px;
+}
+
+.estimateBreakdownList {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.estimateBreakdownList div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e2eaf4;
+}
+
+.estimateBreakdownList div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.estimateBreakdownList span {
+  color: #617792;
+}
+
+.estimateBreakdownList strong {
+  color: #173056;
+}
+
+.estimateMaterialList {
+  margin: 20px 0 0;
+  padding-left: 20px;
+  color: #4b6584;
+  line-height: 1.9;
+}
+
+.diyTipList {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.diyTipList div {
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  border-radius: 16px;
+  background: #f5f8fd;
+}
+
+.diyTipList strong {
+  color: #2f6df6;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.diyTipList span {
+  color: #5c748f;
+  line-height: 1.6;
+}
+
+.diyResourceList {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.diyResourceList a {
+  min-height: 64px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #15335b, #234a81);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.estimateDisclaimer {
+  margin: 18px 0 0;
+  color: #6a7d96;
+  line-height: 1.7;
+}
+
+@media (max-width: 980px) {
+  .estimatePlannerGrid,
+  .diyResourceList,
+  .estimateControlGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .estimateControlsCard,
+  .estimateResourcesCard {
+    grid-column: auto;
+  }
+}

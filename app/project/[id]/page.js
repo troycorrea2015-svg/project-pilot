@@ -25,6 +25,110 @@ const NAV_ITEMS = [
   ["notes", "Notes"],
 ];
 
+const ESTIMATOR_LIBRARY = {
+  generic: {
+    label: "General Project",
+    unit: "sq ft",
+    defaultMeasure: 180,
+    sizes: { small: 120, medium: 180, large: 300 },
+    materialRates: { budget: 18, standard: 28, premium: 42 },
+    laborRates: { budget: 12, standard: 20, premium: 30 },
+    permitRange: [100, 450],
+    toolBudget: [150, 600],
+    materials: ["Project materials", "Fasteners or hardware", "Safety gear", "Touch-up supplies"],
+    tutorials: [
+      { label: "YouTube project how-to search", url: "https://www.youtube.com/results?search_query=home+improvement+project+tutorial" },
+      { label: "This Old House project guides", url: "https://www.thisoldhouse.com/search?q=home%20improvement" },
+      { label: "Family Handyman project ideas", url: "https://www.familyhandyman.com/" },
+    ],
+    diyTips: ["Confirm your measurements before buying materials.", "Check local approvals before starting regulated work.", "Reserve 10% to 15% extra for waste and rework."],
+  },
+  deck: {
+    label: "Deck", unit: "sq ft", defaultMeasure: 240, sizes: { small: 144, medium: 240, large: 400 },
+    materialRates: { budget: 20, standard: 30, premium: 45 }, laborRates: { budget: 15, standard: 25, premium: 40 },
+    permitRange: [150, 650], toolBudget: [250, 900],
+    materials: ["Deck boards", "Joists and beams", "Concrete footings", "Fasteners and connectors", "Railings and stairs"],
+    tutorials: [
+      { label: "YouTube: how to build a deck", url: "https://www.youtube.com/results?search_query=how+to+build+a+deck" },
+      { label: "This Old House deck guides", url: "https://www.thisoldhouse.com/search?q=deck" },
+      { label: "Deck planning articles", url: "https://www.familyhandyman.com/project-category/deck-patio/" },
+    ],
+    diyTips: ["Verify footing depth requirements.", "Confirm guard and stair requirements before construction.", "Budget extra for hidden structural repairs."],
+  },
+  fence: {
+    label: "Fence", unit: "linear ft", defaultMeasure: 180, sizes: { small: 80, medium: 180, large: 320 },
+    materialRates: { budget: 14, standard: 21, premium: 34 }, laborRates: { budget: 10, standard: 16, premium: 24 },
+    permitRange: [50, 250], toolBudget: [120, 420],
+    materials: ["Posts", "Panels or pickets", "Concrete mix", "Gate hardware", "Exterior fasteners"],
+    tutorials: [
+      { label: "YouTube: install a fence", url: "https://www.youtube.com/results?search_query=how+to+install+a+fence" },
+      { label: "Fence project search", url: "https://www.thisoldhouse.com/search?q=fence" },
+      { label: "Family Handyman fence guides", url: "https://www.familyhandyman.com/project-category/outdoor/fences/" },
+    ],
+    diyTips: ["Check property lines before digging.", "Call utility locate services before setting posts.", "Plan for gate swing and slope changes."],
+  },
+  shed: {
+    label: "Shed", unit: "sq ft", defaultMeasure: 120, sizes: { small: 80, medium: 120, large: 200 },
+    materialRates: { budget: 28, standard: 40, premium: 58 }, laborRates: { budget: 18, standard: 28, premium: 42 },
+    permitRange: [75, 350], toolBudget: [200, 650],
+    materials: ["Foundation materials", "Wall framing lumber", "Roofing", "Siding", "Doors and hardware"],
+    tutorials: [
+      { label: "YouTube: build a shed", url: "https://www.youtube.com/results?search_query=how+to+build+a+shed" },
+      { label: "Shed planning articles", url: "https://www.thisoldhouse.com/search?q=shed" },
+      { label: "Family Handyman shed projects", url: "https://www.familyhandyman.com/project-category/outdoor/sheds/" },
+    ],
+    diyTips: ["Confirm setback rules and size thresholds.", "Use pressure-treated framing near ground contact.", "Plan ventilation and water management."],
+  },
+  kitchen: {
+    label: "Kitchen", unit: "sq ft", defaultMeasure: 180, sizes: { small: 120, medium: 180, large: 280 },
+    materialRates: { budget: 85, standard: 140, premium: 240 }, laborRates: { budget: 45, standard: 80, premium: 130 },
+    permitRange: [150, 900], toolBudget: [250, 900],
+    materials: ["Cabinetry", "Countertops", "Flooring", "Fixtures and appliances", "Electrical and plumbing supplies"],
+    tutorials: [
+      { label: "YouTube: kitchen remodel guides", url: "https://www.youtube.com/results?search_query=DIY+kitchen+remodel" },
+      { label: "Kitchen planning articles", url: "https://www.thisoldhouse.com/search?q=kitchen%20remodel" },
+      { label: "Family Handyman kitchen projects", url: "https://www.familyhandyman.com/project-category/kitchen/" },
+    ],
+    diyTips: ["Electrical and plumbing work may require licensed trades.", "Build a clear appliance and cabinet schedule early.", "Keep a larger contingency for hidden wall issues."],
+  },
+  bathroom: {
+    label: "Bathroom", unit: "sq ft", defaultMeasure: 90, sizes: { small: 50, medium: 90, large: 150 },
+    materialRates: { budget: 95, standard: 150, premium: 235 }, laborRates: { budget: 50, standard: 82, premium: 128 },
+    permitRange: [120, 700], toolBudget: [220, 800],
+    materials: ["Tile and backer board", "Fixtures", "Vanity or storage", "Waterproofing", "Plumbing and electrical supplies"],
+    tutorials: [
+      { label: "YouTube: bathroom remodel guides", url: "https://www.youtube.com/results?search_query=DIY+bathroom+remodel" },
+      { label: "Bathroom project articles", url: "https://www.thisoldhouse.com/search?q=bathroom%20remodel" },
+      { label: "Family Handyman bathroom projects", url: "https://www.familyhandyman.com/project-category/bathroom/" },
+    ],
+    diyTips: ["Waterproofing details matter as much as finish materials.", "Plan ventilation, moisture control, and fixture clearances.", "Expect additional time for tile layout and drying."],
+  },
+  roof: {
+    label: "Roofing", unit: "sq ft", defaultMeasure: 1800, sizes: { small: 1200, medium: 1800, large: 2600 },
+    materialRates: { budget: 4.5, standard: 6.5, premium: 10 }, laborRates: { budget: 3.5, standard: 5.5, premium: 8.5 },
+    permitRange: [120, 600], toolBudget: [300, 900],
+    materials: ["Shingles or roofing membrane", "Underlayment", "Flashing", "Fasteners", "Ventilation components"],
+    tutorials: [
+      { label: "YouTube: roof replacement guides", url: "https://www.youtube.com/results?search_query=DIY+roof+replacement" },
+      { label: "Roofing information", url: "https://www.thisoldhouse.com/search?q=roof" },
+      { label: "Family Handyman roofing articles", url: "https://www.familyhandyman.com/project-category/roof/" },
+    ],
+    diyTips: ["Roof work has high fall risk; safety gear is essential.", "Coordinate tear-off, weather windows, and disposal.", "Check warranty requirements before self-installation."],
+  },
+  addition: {
+    label: "Addition", unit: "sq ft", defaultMeasure: 320, sizes: { small: 180, medium: 320, large: 600 },
+    materialRates: { budget: 120, standard: 175, premium: 275 }, laborRates: { budget: 70, standard: 115, premium: 180 },
+    permitRange: [250, 1500], toolBudget: [350, 1200],
+    materials: ["Foundation", "Framing", "Windows and doors", "Roofing and siding", "Electrical, HVAC, and plumbing"],
+    tutorials: [
+      { label: "YouTube: room addition overview", url: "https://www.youtube.com/results?search_query=home+addition+planning" },
+      { label: "Home addition articles", url: "https://www.thisoldhouse.com/search?q=addition" },
+      { label: "General addition planning", url: "https://www.familyhandyman.com/" },
+    ],
+    diyTips: ["Most additions require full permit coordination.", "Expect design, structural, and mechanical review.", "Use extra contingency for scope growth."],
+  },
+};
+
 function clamp(value, minimum, maximum) {
   return Math.min(Math.max(value, minimum), maximum);
 }
@@ -59,6 +163,68 @@ function fileLabel(document) {
   return "FILE";
 }
 
+function currency(value) {
+  return `$${Math.round(value || 0).toLocaleString()}`;
+}
+
+function normalizeProjectType(value) {
+  const clean = String(value || "").trim().toLowerCase();
+  if (!clean) return "generic";
+  if (clean.includes("deck")) return "deck";
+  if (clean.includes("fence")) return "fence";
+  if (clean.includes("shed")) return "shed";
+  if (clean.includes("kitchen")) return "kitchen";
+  if (clean.includes("bath")) return "bathroom";
+  if (clean.includes("roof")) return "roof";
+  if (clean.includes("addition")) return "addition";
+  return "generic";
+}
+
+function resolveMeasure(form, item) {
+  const custom = Number(form.customMeasure);
+  if (Number.isFinite(custom) && custom > 0) return custom;
+  return item.sizes?.[form.size] || item.defaultMeasure;
+}
+
+function calculateProjectEstimate(item, form, mode) {
+  const quality = form.quality || "standard";
+  const measure = resolveMeasure(form, item);
+  const materials = measure * (item.materialRates?.[quality] || item.materialRates.standard || 0);
+  const permitAllowance = ((item.permitRange?.[0] || 0) + (item.permitRange?.[1] || 0)) / 2;
+
+  if (mode === "diy") {
+    const toolAllowance = ((item.toolBudget?.[0] || 0) + (item.toolBudget?.[1] || 0)) / 2;
+    const contingency = (materials + permitAllowance + toolAllowance) * 0.1;
+    const total = materials + permitAllowance + toolAllowance + contingency;
+    return {
+      total,
+      low: total * 0.9,
+      high: total * 1.15,
+      materials,
+      permits: permitAllowance,
+      tools: toolAllowance,
+      labor: 0,
+      contingency,
+      measure,
+    };
+  }
+
+  const labor = measure * (item.laborRates?.[quality] || item.laborRates.standard || 0);
+  const contingency = (materials + labor + permitAllowance) * 0.12;
+  const total = materials + labor + permitAllowance + contingency;
+  return {
+    total,
+    low: total * 0.88,
+    high: total * 1.18,
+    materials,
+    permits: permitAllowance,
+    tools: 0,
+    labor,
+    contingency,
+    measure,
+  };
+}
+
 export default function ProjectWorkspacePage() {
   const { id } = useParams();
   const router = useRouter();
@@ -85,6 +251,12 @@ export default function ProjectWorkspacePage() {
   const [permitResult, setPermitResult] = useState(null);
   const [permitLoading, setPermitLoading] = useState(false);
   const [permitError, setPermitError] = useState("");
+  const [estimateForm, setEstimateForm] = useState({
+    projectType: "",
+    size: "medium",
+    quality: "standard",
+    customMeasure: "",
+  });
 
   useEffect(() => {
     loadWorkspace();
@@ -147,6 +319,10 @@ export default function ProjectWorkspacePage() {
       zip: extractZip(projectResult.data.address || projectResult.data.location_label),
       project: projectResult.data.project_type || "",
     });
+    setEstimateForm((current) => ({
+      ...current,
+      projectType: projectResult.data.project_type || current.projectType || "",
+    }));
     setMessages(messageResult.data || []);
     setDocuments(documentResult.data || []);
 
@@ -531,6 +707,12 @@ export default function ProjectWorkspacePage() {
     permitResult?.coordinates?.latitude ?? project?.latitude,
     permitResult?.coordinates?.longitude ?? project?.longitude
   );
+  const estimateType = estimateForm.projectType || permitForm.project || project?.project_type || "generic";
+  const estimateKey = normalizeProjectType(estimateType);
+  const estimateProject = ESTIMATOR_LIBRARY[estimateKey] || ESTIMATOR_LIBRARY.generic;
+  const estimateMeasure = resolveMeasure(estimateForm, estimateProject);
+  const professionalEstimate = calculateProjectEstimate(estimateProject, estimateForm, "pro");
+  const diyEstimate = calculateProjectEstimate(estimateProject, estimateForm, "diy");
 
   if (loading) {
     return <main className="workspaceLoading">Opening your project…</main>;
@@ -956,7 +1138,11 @@ export default function ProjectWorkspacePage() {
                     <span>Project type</span>
                     <input
                       value={permitForm.project}
-                      onChange={(event) => setPermitForm((current) => ({ ...current, project: event.target.value }))}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        setPermitForm((current) => ({ ...current, project: nextValue }));
+                        setEstimateForm((current) => ({ ...current, projectType: nextValue }));
+                      }}
                       placeholder="Deck"
                     />
                   </label>
@@ -1018,6 +1204,140 @@ export default function ProjectWorkspacePage() {
                 <div><h2>Permit Intelligence is ready.</h2><p>Enter the property address, ZIP code, and project type. Project Pilot will organize a practical checklist and official starting points.</p></div>
               </section>
             )}
+
+            <section className="estimatePlannerSection">
+              <div className="sectionIntro splitIntro">
+                <div>
+                  <p>COST ESTIMATOR + DIY</p>
+                  <h1>Price the project before you commit to the next move.</h1>
+                  <span>Use Project Pilot to compare a professional path and a do-it-yourself path. Estimates are planning ranges only and should be validated before purchasing or signing contracts.</span>
+                </div>
+                <span className="permitSavedBadge">DIY + PRO</span>
+              </div>
+
+              <div className="estimatePlannerGrid">
+                <article className="estimateCard estimateControlsCard">
+                  <div className="estimateCardHeading">
+                    <span>03</span>
+                    <div><small>ESTIMATE INPUTS</small><h2>Set the project scope.</h2></div>
+                  </div>
+
+                  <div className="estimateControlGrid">
+                    <label>
+                      <span>Project type</span>
+                      <input
+                        value={estimateForm.projectType || permitForm.project || project.project_type || ""}
+                        onChange={(event) => setEstimateForm((current) => ({ ...current, projectType: event.target.value }))}
+                        placeholder="Deck"
+                      />
+                    </label>
+
+                    <label>
+                      <span>Scope size</span>
+                      <select
+                        value={estimateForm.size}
+                        onChange={(event) => setEstimateForm((current) => ({ ...current, size: event.target.value }))}
+                      >
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </label>
+
+                    <label>
+                      <span>Finish level</span>
+                      <select
+                        value={estimateForm.quality}
+                        onChange={(event) => setEstimateForm((current) => ({ ...current, quality: event.target.value }))}
+                      >
+                        <option value="budget">Budget</option>
+                        <option value="standard">Standard</option>
+                        <option value="premium">Premium</option>
+                      </select>
+                    </label>
+
+                    <label>
+                      <span>Custom {estimateProject.unit} (optional)</span>
+                      <input
+                        inputMode="decimal"
+                        value={estimateForm.customMeasure}
+                        onChange={(event) => setEstimateForm((current) => ({ ...current, customMeasure: event.target.value.replace(/[^0-9.]/g, "") }))}
+                        placeholder={String(estimateProject.defaultMeasure)}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="estimateInputFootnote">
+                    <strong>{estimateProject.label}</strong>
+                    <span>Estimate basis: {estimateMeasure.toLocaleString()} {estimateProject.unit}</span>
+                  </div>
+                </article>
+
+                <article className="estimateCard estimateSummaryCard professionalSummaryCard">
+                  <div className="estimateCardHeading">
+                    <span>04</span>
+                    <div><small>PROFESSIONAL ROUTE</small><h2>{currency(professionalEstimate.total)} expected</h2></div>
+                  </div>
+                  <div className="estimateRangeRow">
+                    <div><small>LOW</small><strong>{currency(professionalEstimate.low)}</strong></div>
+                    <div><small>EXPECTED</small><strong>{currency(professionalEstimate.total)}</strong></div>
+                    <div><small>HIGH</small><strong>{currency(professionalEstimate.high)}</strong></div>
+                  </div>
+                  <div className="estimateBreakdownList">
+                    <div><span>Materials</span><strong>{currency(professionalEstimate.materials)}</strong></div>
+                    <div><span>Labor</span><strong>{currency(professionalEstimate.labor)}</strong></div>
+                    <div><span>Permits / fees</span><strong>{currency(professionalEstimate.permits)}</strong></div>
+                    <div><span>Contingency</span><strong>{currency(professionalEstimate.contingency)}</strong></div>
+                  </div>
+                </article>
+
+                <article className="estimateCard estimateSummaryCard diySummaryCard">
+                  <div className="estimateCardHeading">
+                    <span>05</span>
+                    <div><small>DIY ROUTE</small><h2>{currency(diyEstimate.total)} expected</h2></div>
+                  </div>
+                  <div className="estimateRangeRow">
+                    <div><small>LOW</small><strong>{currency(diyEstimate.low)}</strong></div>
+                    <div><small>EXPECTED</small><strong>{currency(diyEstimate.total)}</strong></div>
+                    <div><small>HIGH</small><strong>{currency(diyEstimate.high)}</strong></div>
+                  </div>
+                  <div className="estimateBreakdownList">
+                    <div><span>Materials</span><strong>{currency(diyEstimate.materials)}</strong></div>
+                    <div><span>Tools / equipment</span><strong>{currency(diyEstimate.tools)}</strong></div>
+                    <div><span>Permits / fees</span><strong>{currency(diyEstimate.permits)}</strong></div>
+                    <div><span>Contingency</span><strong>{currency(diyEstimate.contingency)}</strong></div>
+                  </div>
+                </article>
+
+                <article className="estimateCard estimateMaterialsCard">
+                  <div className="estimateCardHeading">
+                    <span>06</span>
+                    <div><small>MATERIALS + PLANNING NOTES</small><h2>What this project usually needs.</h2></div>
+                  </div>
+                  <ul className="estimateMaterialList">
+                    {estimateProject.materials.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                  <div className="diyTipList">
+                    {estimateProject.diyTips.map((tip) => (
+                      <div key={tip}><strong>Tip</strong><span>{tip}</span></div>
+                    ))}
+                  </div>
+                </article>
+
+                <article className="estimateCard estimateResourcesCard">
+                  <div className="estimateCardHeading">
+                    <span>07</span>
+                    <div><small>DIY LEARNING LINKS</small><h2>Open training before you build.</h2></div>
+                  </div>
+                  <div className="diyResourceList">
+                    {estimateProject.tutorials.map((resource) => (
+                      <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer">{resource.label} ↗</a>
+                    ))}
+                  </div>
+                  <p className="estimateDisclaimer">DIY resources are starting points only. Confirm local code, product instructions, and safety requirements before doing the work yourself.</p>
+                </article>
+              </div>
+            </section>
           </div>
         )}
 
