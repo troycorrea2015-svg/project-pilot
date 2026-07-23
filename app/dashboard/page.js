@@ -184,7 +184,7 @@ export default function DashboardPage() {
                     <strong>{project.next_step}</strong>
                   </div>
 
-                  <button>Open Project</button>
+                  <button onClick={() => router.push(`/project/${project.id}`)}>Open Project</button>
                 </article>
               ))}
             </div>
