@@ -1,1 +1,1147 @@
-.dashboardPage{min-height:100vh;display:grid;grid-template-columns:245px 1fr;background:#f5f8fc;color:#192336;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.dashboardSidebar{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:28px 20px;color:#aebbd0;background:#10203a}.dashboardBrand{display:flex;align-items:center;gap:11px;color:white;text-decoration:none;font-size:19px}.dashboardBrand>span{width:40px;height:40px;display:grid;place-items:center;border-radius:13px 13px 19px 13px;background:linear-gradient(145deg,#3d7cff,#28a96f);font-weight:900}.dashboardSidebar nav{display:grid;gap:7px;margin-top:46px}.dashboardSidebar nav a{padding:12px 14px;color:#adbbcf;text-decoration:none;border-radius:11px;font-size:14px;font-weight:700}.dashboardSidebar nav a:hover,.dashboardSidebar nav a.active{color:white;background:rgba(255,255,255,.1)}.sidebarUser{display:flex;align-items:center;gap:11px;margin-top:auto;padding-top:20px;border-top:1px solid rgba(255,255,255,.12)}.sidebarUser>div{width:40px;height:40px;display:grid;place-items:center;color:white;background:#2f6df6;border-radius:12px;font-weight:900}.sidebarUser span strong,.sidebarUser span small{display:block}.sidebarUser span strong{color:white}.sidebarUser span small{max-width:145px;margin-top:3px;overflow:hidden;color:#8fa0b8;text-overflow:ellipsis}.dashboardMain{padding:42px clamp(24px,5vw,72px) 70px}.dashboardHeader{display:flex;justify-content:space-between;align-items:flex-end;gap:28px}.dashboardHeader p,.dashboardSection p,.workspaceGrid p{margin:0;color:#2f6df6;font-size:11px;font-weight:900;letter-spacing:.14em}.dashboardHeader h1{margin:8px 0 5px;color:#142642;font-size:clamp(38px,4vw,57px);letter-spacing:-.05em}.dashboardHeader>div>span{color:#6b7789}.dashboardActions{display:flex;gap:10px}.dashboardActions button,.sectionTitleRow button,.projectCard button,.workspaceGrid button,.emptyProjects button{min-height:44px;padding:0 17px;border-radius:11px;font-weight:850;cursor:pointer}.signOutButton{color:#46556a;background:white;border:1px solid #d8e1ec}.newProjectButton,.sectionTitleRow button,.emptyProjects button{color:white;background:#2f6df6;border:0}.summaryGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:17px;margin-top:34px}.summaryGrid article{padding:23px;background:white;border:1px solid #dfe7f0;border-radius:18px}.summaryGrid span,.summaryGrid strong,.summaryGrid small{display:block}.summaryGrid span{color:#69778a;font-size:13px;font-weight:800}.summaryGrid strong{margin:14px 0 6px;color:#142642;font-size:28px}.summaryGrid small{color:#919bab;line-height:1.45}.dashboardSection{margin-top:42px}.sectionTitleRow{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}.sectionTitleRow h2{margin:7px 0 0;color:#142642;font-size:34px;letter-spacing:-.04em}.projectGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:22px}.projectCard{padding:24px;background:white;border:1px solid #dce5ef;border-radius:20px;box-shadow:0 10px 30px rgba(20,38,66,.04)}.projectTop{display:flex;align-items:center;justify-content:space-between}.projectIcon{width:42px;height:42px;display:grid;place-items:center;color:white;background:linear-gradient(145deg,#2f6df6,#22a06b);border-radius:13px;font-weight:900}.projectTop>span{padding:7px 10px;color:#2f6df6;background:#edf4ff;border-radius:99px;font-size:11px;font-weight:850}.projectCard h3{margin:21px 0 5px;color:#142642;font-size:23px}.projectCard>p{margin:0;color:#7a8797;font-size:14px}.progressLabel{display:flex;justify-content:space-between;margin-top:25px;color:#657287;font-size:12px}.dashboardProgress{height:8px;margin-top:8px;overflow:hidden;background:#edf1f5;border-radius:99px}.dashboardProgress span{display:block;height:100%;background:linear-gradient(90deg,#2f6df6,#22a06b);border-radius:99px}.nextStep{margin:22px 0;padding:15px;background:#f7f9fc;border-radius:12px}.nextStep small,.nextStep strong{display:block}.nextStep small{color:#8995a5;font-size:10px;font-weight:900;letter-spacing:.12em}.nextStep strong{margin-top:7px;color:#334156}.projectCard button{width:100%;color:#2f6df6;background:white;border:1px solid #b9cdf8}.emptyProjects{margin-top:22px;padding:42px;text-align:center;background:white;border:1px dashed #bdcce0;border-radius:20px}.emptyProjects h3{margin:0;color:#142642;font-size:27px}.emptyProjects p{max-width:640px;margin:12px auto 22px!important;color:#6d798a!important;font-size:15px!important;font-weight:500!important;letter-spacing:0!important;line-height:1.65}.workspaceGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}.workspaceGrid article{padding:27px;background:linear-gradient(145deg,#fff,#f7faff);border:1px solid #dce5ef;border-radius:20px}.workspaceGrid h3{margin:11px 0;color:#142642;font-size:24px}.workspaceGrid span{display:block;color:#6d798a;line-height:1.65}.workspaceGrid button{margin-top:23px;color:#142642;background:white;border:1px solid #d3deea}.dashboardLoading{min-height:100vh;display:grid;place-items:center;color:#2f6df6;background:#f5f8fc;font:800 18px Inter,system-ui}@media(max-width:900px){.dashboardPage{grid-template-columns:1fr}.dashboardSidebar{position:relative;height:auto}.dashboardSidebar nav{grid-template-columns:repeat(3,1fr);margin-top:25px}.sidebarUser{margin-top:25px}.summaryGrid{grid-template-columns:1fr}.projectGrid,.workspaceGrid{grid-template-columns:1fr}}@media(max-width:620px){.dashboardMain{padding:30px 18px 55px}.dashboardHeader{align-items:flex-start;flex-direction:column}.dashboardActions{width:100%}.dashboardActions button{flex:1}.dashboardSidebar nav{grid-template-columns:1fr 1fr}.sectionTitleRow{align-items:flex-start;flex-direction:column}.sectionTitleRow button{width:100%}}.flightPlanBanner{margin-top:26px;padding:27px;display:grid;grid-template-columns:1fr 1.15fr;gap:28px;align-items:center;background:linear-gradient(135deg,#10264a,#153b6d);border-radius:21px;color:white;box-shadow:0 18px 45px rgba(20,38,66,.14)}.flightPlanBanner p{margin:0;color:#83adff;font-size:10px;font-weight:900;letter-spacing:.15em}.flightPlanBanner h2{margin:8px 0 7px;font-size:26px;letter-spacing:-.04em}.flightPlanBanner>div>span{color:#b8c8dc;font-size:12px;line-height:1.6}.flightPlanStages{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.flightPlanStages div{position:relative;display:grid;justify-items:center;gap:7px;color:#8194ae}.flightPlanStages div:not(:last-child)::after{content:"";position:absolute;left:64%;right:-36%;top:15px;height:2px;background:rgba(255,255,255,.13)}.flightPlanStages div.active:not(:last-child)::after{background:#4b80e8}.flightPlanStages span{position:relative;z-index:1;width:31px;height:31px;display:grid;place-items:center;border-radius:50%;background:#263d5e;color:#91a3ba;font-size:11px;font-weight:900}.flightPlanStages div.active span{background:#3d79f5;color:white}.flightPlanStages small{font-size:10px;font-weight:800}@media(max-width:900px){.flightPlanBanner{grid-template-columns:1fr}}@media(max-width:540px){.flightPlanStages{grid-template-columns:repeat(5,64px);overflow:auto;justify-content:flex-start}.flightPlanBanner{padding:22px}}
+.dashboardPage {
+  --ink: #142642;
+  --navy: #0d1f38;
+  --blue: #2f6df6;
+  --green: #1fa36b;
+  --muted: #6f7d90;
+  --line: #dce5ef;
+  --surface: #ffffff;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 255px minmax(0, 1fr);
+  background:
+    radial-gradient(circle at 92% 4%, rgba(47, 109, 246, 0.08), transparent 25%),
+    #f4f7fb;
+  color: #192336;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.dashboardPage * {
+  box-sizing: border-box;
+}
+
+.dashboardPage button,
+.dashboardPage a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dashboardSidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 22px;
+  color: #aebbd0;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(61, 124, 255, 0.21), transparent 25%),
+    linear-gradient(180deg, #102541 0%, #0b1b31 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dashboardBrand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 19px;
+}
+
+.dashboardBrand > span,
+.pilotAvatar,
+.projectIcon,
+.emptyProjectIcon {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #3d7cff, #28a96f);
+  font-weight: 900;
+  box-shadow: 0 10px 26px rgba(47, 109, 246, 0.24);
+}
+
+.dashboardBrand > span {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px 13px 20px 13px;
+}
+
+.betaBadge {
+  display: inline-flex;
+  margin: 15px 0 0 53px;
+  padding: 5px 9px;
+  color: #8fb3ff;
+  background: rgba(79, 132, 245, 0.12);
+  border: 1px solid rgba(116, 161, 255, 0.16);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.dashboardSidebar nav {
+  display: grid;
+  gap: 7px;
+  margin-top: 38px;
+}
+
+.dashboardSidebar nav a {
+  position: relative;
+  padding: 12px 14px;
+  color: #adbbcf;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 750;
+  transition: 160ms ease;
+}
+
+.dashboardSidebar nav a:hover,
+.dashboardSidebar nav a.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.06);
+  transform: translateX(2px);
+}
+
+.dashboardSidebar nav a.active::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  background: #5b8cff;
+  border-radius: 0 99px 99px 0;
+}
+
+.sidebarStatus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.statusDot {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  background: #43d391;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(67, 211, 145, 0.12);
+}
+
+.sidebarStatus strong,
+.sidebarStatus small {
+  display: block;
+}
+
+.sidebarStatus strong {
+  color: #fff;
+  font-size: 12px;
+}
+
+.sidebarStatus small {
+  margin-top: 4px;
+  color: #8fa0b8;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.sidebarUser {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 14px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebarUser > div {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #2f6df6;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.sidebarUser span strong,
+.sidebarUser span small {
+  display: block;
+}
+
+.sidebarUser span strong {
+  color: #fff;
+  font-size: 13px;
+}
+
+.sidebarUser span small {
+  max-width: 152px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #8fa0b8;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboardMain {
+  min-width: 0;
+  padding: 42px clamp(24px, 4.5vw, 68px) 70px;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 28px;
+}
+
+.dashboardHeader p,
+.dashboardSection p,
+.workspaceGrid > article > p,
+.missionControlGrid article > div p,
+.activityHeader p,
+.flightPlanBanner p {
+  margin: 0;
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.dashboardHeader h1 {
+  margin: 8px 0 5px;
+  color: var(--ink);
+  font-size: clamp(38px, 4vw, 57px);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.dashboardHeader > div > span {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.dashboardActions {
+  display: flex;
+  gap: 10px;
+}
+
+.dashboardPage button {
+  min-height: 44px;
+  padding: 0 17px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.dashboardPage button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.dashboardPage button:focus-visible,
+.dashboardPage a:focus-visible {
+  outline: 3px solid rgba(47, 109, 246, 0.25);
+  outline-offset: 3px;
+}
+
+.dashboardPage button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.signOutButton {
+  color: #46556a;
+  background: #fff;
+  border: 1px solid #d8e1ec;
+}
+
+.newProjectButton,
+.sectionTitleRow button,
+.emptyProjects button,
+.pilotBriefingCard button {
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue), #285fd5);
+  border: 0;
+  box-shadow: 0 10px 22px rgba(47, 109, 246, 0.18);
+}
+
+.dashboardError {
+  margin-top: 22px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #8a371f;
+  background: #fff4ee;
+  border: 1px solid #f5cbbd;
+  border-radius: 13px;
+  font-size: 13px;
+}
+
+.dashboardError strong {
+  flex: 0 0 auto;
+}
+
+.missionControlGrid {
+  display: grid;
+  grid-template-columns: minmax(290px, 0.92fr) minmax(350px, 1.18fr) minmax(250px, 0.8fr);
+  gap: 17px;
+  margin-top: 34px;
+}
+
+.missionControlGrid > article {
+  min-width: 0;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(20, 38, 66, 0.055);
+}
+
+.missionCardHeading,
+.pilotBriefingHeader,
+.activityHeader,
+.workspaceCardTop,
+.projectTop,
+.briefingFooter,
+.sectionTitleRow,
+.progressLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.missionCardHeading h2,
+.pilotBriefingHeader h2,
+.activityHeader h2 {
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-size: 21px;
+  letter-spacing: -0.035em;
+}
+
+.livePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  color: #16825a;
+  background: #edf9f4;
+  border-radius: 99px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.livePill i {
+  width: 7px;
+  height: 7px;
+  background: #26b879;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(38, 184, 121, 0.12);
+}
+
+.readinessBody {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  margin-top: 25px;
+}
+
+.readinessRing {
+  width: 128px;
+  height: 128px;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    var(--blue) 0 var(--mission-angle),
+    #e8eef6 var(--mission-angle) 360deg
+  );
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(47, 109, 246, 0.05);
+}
+
+.readinessRing > div {
+  width: 98px;
+  height: 98px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(20, 38, 66, 0.08);
+}
+
+.readinessRing strong,
+.readinessRing small {
+  display: block;
+}
+
+.readinessRing strong {
+  color: var(--ink);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.readinessRing small {
+  margin-top: 7px;
+  color: #8a96a7;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.readinessStats {
+  display: grid;
+  gap: 10px;
+}
+
+.readinessStats > div {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.readinessStats > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.readinessStats span,
+.readinessStats strong {
+  display: block;
+}
+
+.readinessStats span {
+  color: #8a96a7;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.readinessStats strong {
+  margin-top: 4px;
+  overflow: hidden;
+  color: #334156;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pilotBriefingCard {
+  color: #fff;
+  background:
+    radial-gradient(circle at 92% 5%, rgba(61, 124, 255, 0.34), transparent 28%),
+    linear-gradient(145deg, #112747, #0e1f39) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 18px 46px rgba(13, 31, 56, 0.18) !important;
+}
+
+.pilotAvatar {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+}
+
+.pilotBriefingHeader {
+  justify-content: flex-start;
+}
+
+.pilotBriefingCard .pilotBriefingHeader p {
+  color: #78a4ff;
+}
+
+.pilotBriefingCard .pilotBriefingHeader h2 {
+  color: #fff;
+}
+
+.priorityBlock {
+  margin-top: 24px;
+  padding: 17px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.priorityBlock span,
+.priorityBlock strong,
+.briefingFooter > div span,
+.briefingFooter > div strong {
+  display: block;
+}
+
+.priorityBlock span,
+.briefingFooter > div span {
+  color: #86a6d4;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.priorityBlock strong {
+  margin-top: 8px;
+  color: #fff;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.pilotMessage {
+  margin: 18px 0 21px;
+  color: #b8c8dc;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.briefingFooter {
+  align-items: flex-end;
+}
+
+.briefingFooter > div strong {
+  margin-top: 5px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.pilotBriefingCard button {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.activityHeader > span {
+  min-width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  background: #edf4ff;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.activityList {
+  display: grid;
+  gap: 0;
+  margin-top: 20px;
+}
+
+.activityItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 0 18px;
+}
+
+.activityItem:last-child {
+  padding-bottom: 0;
+}
+
+.activityItem:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 29px;
+  bottom: 0;
+  width: 1px;
+  background: #dfe7f0;
+}
+
+.activityMarker {
+  position: relative;
+  z-index: 1;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, var(--blue), #4a82f8);
+  border: 4px solid #edf3ff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.activityItem strong,
+.activityItem span,
+.activityItem small {
+  display: block;
+}
+
+.activityItem strong {
+  color: #2d3b4f;
+  font-size: 12px;
+}
+
+.activityItem span {
+  margin-top: 4px;
+  overflow: hidden;
+  color: #788699;
+  font-size: 10px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityItem small {
+  margin-top: 5px;
+  color: #a0aab8;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.flightPlanBanner {
+  margin-top: 18px;
+  padding: 26px 28px;
+  display: grid;
+  grid-template-columns: minmax(250px, 0.78fr) minmax(500px, 1.22fr);
+  gap: 32px;
+  align-items: center;
+  color: #fff;
+  background:
+    radial-gradient(circle at 95% 50%, rgba(48, 123, 255, 0.25), transparent 32%),
+    linear-gradient(135deg, #12284a, #153b6d);
+  border-radius: 20px;
+  box-shadow: 0 18px 45px rgba(20, 38, 66, 0.13);
+}
+
+.flightPlanBanner p {
+  color: #83adff;
+}
+
+.flightPlanBanner h2 {
+  margin: 8px 0 7px;
+  font-size: 25px;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.flightPlanCopy > span {
+  display: block;
+  color: #b8c8dc;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.flightPlanStages {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(62px, 1fr));
+  gap: 6px;
+}
+
+.flightPlanStages > div {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: #8194ae;
+}
+
+.flightPlanStages > div:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 61%;
+  right: -39%;
+  top: 16px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.flightPlanStages > div.active:not(:last-child)::after {
+  background: #4b80e8;
+}
+
+.flightPlanStages > div > span {
+  position: relative;
+  z-index: 1;
+  width: 33px;
+  height: 33px;
+  display: grid;
+  place-items: center;
+  color: #91a3ba;
+  background: #263d5e;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.flightPlanStages > div.active > span {
+  color: #fff;
+  background: #3d79f5;
+}
+
+.flightPlanStages > div.current > span {
+  color: #fff;
+  border-color: #77a1ff;
+  box-shadow: 0 0 0 5px rgba(89, 139, 245, 0.14);
+}
+
+.flightPlanStages small {
+  color: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.flightPlanStages > div.active small,
+.flightPlanStages > div.current small {
+  color: #d5e1f2;
+}
+
+.dashboardSection {
+  margin-top: 42px;
+}
+
+.sectionTitleRow {
+  align-items: flex-end;
+}
+
+.sectionTitleRow h2 {
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.projectCard {
+  min-width: 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(20, 38, 66, 0.04);
+  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease;
+}
+
+.projectCard:hover {
+  transform: translateY(-2px);
+  border-color: #cbd9ec;
+  box-shadow: 0 16px 40px rgba(20, 38, 66, 0.08);
+}
+
+.projectIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+}
+
+.projectTop > span {
+  max-width: 62%;
+  padding: 7px 10px;
+  overflow: hidden;
+  color: var(--blue);
+  background: #edf4ff;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectHeading h3 {
+  margin: 20px 0 5px;
+  color: var(--ink);
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+
+.projectHeading p {
+  margin: 0;
+  color: #7a8797;
+  font-size: 13px;
+}
+
+.projectMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.projectMetaGrid > div {
+  padding: 12px;
+  background: #f7f9fc;
+  border: 1px solid #edf1f5;
+  border-radius: 11px;
+}
+
+.projectMetaGrid span,
+.projectMetaGrid strong {
+  display: block;
+}
+
+.projectMetaGrid span {
+  color: #929dac;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.projectMetaGrid strong {
+  margin-top: 6px;
+  overflow: hidden;
+  color: #405067;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progressLabel {
+  margin-top: 22px;
+  color: #657287;
+  font-size: 11px;
+}
+
+.progressLabel strong {
+  color: #334156;
+}
+
+.dashboardProgress {
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+  background: #edf1f5;
+  border-radius: 99px;
+}
+
+.dashboardProgress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  border-radius: 99px;
+  transition: width 280ms ease;
+}
+
+.nextStep {
+  margin: 20px 0;
+  padding: 15px;
+  background: linear-gradient(145deg, #f8faff, #f4f8fd);
+  border-left: 3px solid #4b7df1;
+  border-radius: 4px 12px 12px 4px;
+}
+
+.nextStep small,
+.nextStep strong {
+  display: block;
+}
+
+.nextStep small {
+  color: #8995a5;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.nextStep strong {
+  margin-top: 7px;
+  color: #334156;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.projectCard > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--blue);
+  background: #fff;
+  border: 1px solid #b9cdf8;
+}
+
+.projectCard > button:hover {
+  border-color: var(--blue);
+  box-shadow: 0 8px 20px rgba(47, 109, 246, 0.1);
+}
+
+.emptyProjects {
+  margin-top: 22px;
+  padding: 50px 30px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(47, 109, 246, 0.08), transparent 38%),
+    #fff;
+  border: 1px dashed #bdcce0;
+  border-radius: 20px;
+}
+
+.emptyProjectIcon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  border-radius: 17px 17px 25px 17px;
+  font-size: 20px;
+}
+
+.emptyProjects h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 27px;
+}
+
+.emptyProjects p {
+  max-width: 650px;
+  margin: 12px auto 22px !important;
+  color: #6d798a !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.65;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.workspaceGrid > article {
+  min-width: 0;
+  padding: 27px;
+  background: linear-gradient(145deg, #fff, #f7faff);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+
+.workspaceCardTop > span {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  background: #edf4ff;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.workspaceCardTop b {
+  padding: 6px 9px;
+  color: #16825a;
+  background: #edf9f4;
+  border-radius: 99px;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+}
+
+.workspaceCardTop b.developmentPill {
+  color: #80611d;
+  background: #fff7df;
+}
+
+.workspaceGrid > article > p {
+  margin-top: 21px;
+}
+
+.workspaceGrid h3 {
+  margin: 10px 0;
+  color: var(--ink);
+  font-size: 23px;
+  letter-spacing: -0.03em;
+}
+
+.workspaceGrid > article > span {
+  display: block;
+  color: #6d798a;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.workspaceGrid button {
+  margin-top: 22px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #d3deea;
+}
+
+.dashboardLoading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  background: #f5f8fc;
+  font: 800 18px Inter, system-ui;
+}
+
+@media (max-width: 1220px) {
+  .missionControlGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .recentActivityCard {
+    grid-column: 1 / -1;
+  }
+
+  .activityList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .activityItem {
+    padding: 13px;
+    grid-template-columns: 30px minmax(0, 1fr);
+    background: #f8fafc;
+    border: 1px solid #edf1f5;
+    border-radius: 12px;
+  }
+
+  .activityItem:not(:last-child)::before {
+    display: none;
+  }
+
+  .flightPlanBanner {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 940px) {
+  .dashboardPage {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardSidebar {
+    position: relative;
+    height: auto;
+  }
+
+  .dashboardSidebar nav {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 24px;
+  }
+
+  .sidebarStatus {
+    margin-top: 24px;
+  }
+
+  .sidebarUser {
+    margin-top: 16px;
+  }
+
+  .projectGrid,
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboardMain {
+    padding: 30px 18px 55px;
+  }
+
+  .dashboardHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboardActions {
+    width: 100%;
+  }
+
+  .dashboardActions button {
+    flex: 1;
+  }
+
+  .missionControlGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .recentActivityCard {
+    grid-column: auto;
+  }
+
+  .activityList {
+    grid-template-columns: 1fr;
+  }
+
+  .activityItem {
+    padding: 0 0 18px;
+    background: transparent;
+    border: 0;
+  }
+
+  .activityItem:not(:last-child)::before {
+    display: block;
+  }
+
+  .flightPlanStages {
+    grid-template-columns: repeat(6, 72px);
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 8px 2px 4px;
+  }
+
+  .sectionTitleRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sectionTitleRow button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboardSidebar nav {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboardHeader h1 {
+    font-size: 40px;
+  }
+
+  .missionControlGrid > article,
+  .projectCard,
+  .workspaceGrid > article,
+  .flightPlanBanner {
+    padding: 21px;
+  }
+
+  .readinessBody {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .readinessStats {
+    width: 100%;
+  }
+
+  .briefingFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .briefingFooter button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .projectMetaGrid {
+    grid-template-columns: 1fr;
+  }
+}
