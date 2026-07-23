@@ -5,7 +5,32 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import "./page.css";
 
-const roles = ["Homeowner", "Contractor", "Property Manager", "Developer", "Investor", "DIY Builder"];
+const accountTypes = [
+  {
+    value: "Homeowner",
+    title: "Homeowner",
+    description: "Plan and manage multiple home projects, compare DIY and professional routes, and keep every project organized.",
+    image: "/role-homeowner.jpg",
+  },
+  {
+    value: "Contractor",
+    title: "Contractor",
+    description: "Manage client jobs, estimates, permit preparation, documents, and the next action across active work.",
+    image: "/role-contractor.jpg",
+  },
+  {
+    value: "Property Manager",
+    title: "Property Manager",
+    description: "Organize projects across properties, track vendors, documents, compliance, and improvement budgets.",
+    image: "/role-property-manager.jpg",
+  },
+  {
+    value: "Developer",
+    title: "Developer / Investor",
+    description: "Track project feasibility, planning, approvals, documents, and portfolio-level decisions.",
+    image: "/category-addition.jpg",
+  },
+];
 
 const categories = [
   { title: "Decks & Patios", image: "/category-deck.jpg" },
@@ -138,7 +163,7 @@ export default function HomePage() {
         </div>
 
         <div className="heroPhoto">
-          <img src="/home-planning-people.jpg" alt="Homeowners reviewing project plans together" />
+          <img src="/home-planning-people.jpg" alt="Homeowners reviewing project plans together" fetchPriority="high" decoding="async" />
           <div className="heroPhotoLabel">
             <strong>One workspace</strong>
             <span>from the first idea to the final inspection</span>
@@ -163,7 +188,26 @@ export default function HomePage() {
             {mode === "signup" && (
               <>
                 <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label>
-                <label>I am a<select value={role} onChange={(event) => setRole(event.target.value)}>{roles.map((item) => <option key={item}>{item}</option>)}</select></label>
+                <fieldset className="accountTypeFieldset">
+                  <legend>Choose the workspace that fits you</legend>
+                  <p>Your account type changes the dashboard, recommendations, and tools you see. Homeowners can manage multiple projects.</p>
+                  <div className="accountTypeGrid">
+                    {accountTypes.map((item) => (
+                      <button
+                        type="button"
+                        className={role === item.value ? "selected" : ""}
+                        onClick={() => setRole(item.value)}
+                        key={item.value}
+                      >
+                        <img src={item.image} alt="" aria-hidden="true" />
+                        <span>
+                          <strong>{item.title}</strong>
+                          <small>{item.description}</small>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
               </>
             )}
             <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
@@ -189,7 +233,7 @@ export default function HomePage() {
         <div className="categoryGrid">
           {categories.map((category) => (
             <article key={category.title}>
-              <img src={category.image} alt={`${category.title} project example`} />
+              <img src={category.image} alt={`${category.title} project example`} loading="lazy" decoding="async" />
               <strong>{category.title}</strong>
             </article>
           ))}
@@ -214,7 +258,7 @@ export default function HomePage() {
 
       <section className="peopleFeatureSection">
         <article>
-          <img src="/home-cost-planning.jpg" alt="Homeowner reviewing project costs" />
+          <img src="/home-cost-planning.jpg" alt="Property manager reviewing project costs" loading="lazy" decoding="async" />
           <div>
             <p className="eyebrow">PROJECT COST ESTIMATOR</p>
             <h2>Understand the likely range before you spend.</h2>
@@ -223,7 +267,7 @@ export default function HomePage() {
         </article>
 
         <article id="diy">
-          <img src="/home-diy-builder.jpg" alt="Person completing a do-it-yourself outdoor project" />
+          <img src="/home-diy-builder.jpg" alt="Contractor completing an outdoor project" loading="lazy" decoding="async" />
           <div>
             <p className="eyebrow">DIY PROJECTS</p>
             <h2>Learn the project before you decide to do it yourself.</h2>

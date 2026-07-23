@@ -23,6 +23,81 @@ const PROJECT_CATEGORIES = [
   { key: "shed", label: "Sheds & Garages", projectType: "Shed", title: "Shed or Garage Project", image: "/category-shed.jpg" },
 ];
 
+const ACCOUNT_WORKSPACES = {
+  homeowner: {
+    value: "Homeowner",
+    label: "Homeowner",
+    image: "/role-homeowner.jpg",
+    eyebrow: "YOUR HOME PROJECTS",
+    headline: "Plan every improvement around your home without losing track of the details.",
+    description: "Manage multiple projects, compare DIY and professional routes, track costs, and keep each Flight Plan separate.",
+    projectLabel: "MY HOME PROJECTS",
+    projectHeading: "Keep every project moving.",
+    launchCopy: "Choose a common home project or create a custom one. There is no one-project limit for homeowner accounts.",
+    tools: [
+      { eyebrow: "HOME PROJECT BINDER", title: "Keep every plan, quote, receipt, and approval together.", description: "Store documents separately for every active improvement around your home.", image: "/home-cost-planning.jpg", action: "Open Project Binder" },
+      { eyebrow: "DIY + COST ROUTES", title: "Compare doing it yourself with hiring a professional.", description: "Review materials, tools, cost ranges, and project-specific learning links.", image: "/home-diy-builder.jpg", action: "Explore DIY Route" },
+      { eyebrow: "PILOT GUIDANCE", title: "Know which home project needs attention next.", description: "Pilot keeps each project scope, permit path, costs, files, and next waypoint connected.", image: "/role-homeowner.jpg", action: "Ask Pilot" },
+    ],
+  },
+  contractor: {
+    value: "Contractor",
+    label: "Contractor",
+    image: "/role-contractor.jpg",
+    eyebrow: "YOUR CLIENT JOBS",
+    headline: "Keep active jobs, permit preparation, estimates, and client documents in one view.",
+    description: "Use Project Pilot as a job command center across multiple customers and project locations.",
+    projectLabel: "CLIENT PROJECTS",
+    projectHeading: "Continue the next active job.",
+    launchCopy: "Start a client job from a category or create a custom project for a different scope of work.",
+    tools: [
+      { eyebrow: "CLIENT JOB FILES", title: "Keep estimates, plans, approvals, and closeout records by customer.", description: "Every client project has its own Binder and Flight Plan.", image: "/role-contractor.jpg", action: "Open Client Project" },
+      { eyebrow: "ESTIMATES + PERMITS", title: "Prepare project ranges and jurisdiction questions before work starts.", description: "Keep cost planning and permit research connected to the same job.", image: "/home-cost-planning.jpg", action: "Review Job Costs" },
+      { eyebrow: "PILOT FOR EXECUTION", title: "Keep the next job action visible across active work.", description: "Pilot can guide scope, documents, permit preparation, and project handoffs.", image: "/home-diy-builder.jpg", action: "Continue Job" },
+    ],
+  },
+  property_manager: {
+    value: "Property Manager",
+    label: "Property Manager",
+    image: "/role-property-manager.jpg",
+    eyebrow: "YOUR PROPERTY PORTFOLIO",
+    headline: "Coordinate improvements, maintenance, vendors, and compliance across every property.",
+    description: "Track multiple projects and locations while keeping costs, documents, and next actions organized.",
+    projectLabel: "PROPERTY PROJECTS",
+    projectHeading: "Manage work across your portfolio.",
+    launchCopy: "Create projects by property and scope, then keep each vendor, permit, cost, and document connected.",
+    tools: [
+      { eyebrow: "PROPERTY RECORDS", title: "Build a project history for every property you manage.", description: "Keep permits, inspections, contracts, warranties, and decisions easy to retrieve.", image: "/role-property-manager.jpg", action: "Open Property Project" },
+      { eyebrow: "VENDORS + BUDGETS", title: "Compare project costs and keep vendor work organized.", description: "Use separate workspaces for renovations, maintenance, and compliance projects.", image: "/home-cost-planning.jpg", action: "Review Portfolio Work" },
+      { eyebrow: "PORTFOLIO GUIDANCE", title: "Prioritize the project with the greatest property impact.", description: "Pilot surfaces readiness, missing documents, permit needs, and next actions.", image: "/pilot-guide.jpg", action: "Ask Pilot" },
+    ],
+  },
+  developer: {
+    value: "Developer",
+    label: "Developer / Investor",
+    image: "/role-property-manager.jpg",
+    eyebrow: "YOUR DEVELOPMENT PIPELINE",
+    headline: "Track feasibility, approvals, costs, and project readiness across opportunities.",
+    description: "Use one portfolio view for planning decisions, property research, documentation, and progress.",
+    projectLabel: "DEVELOPMENT PROJECTS",
+    projectHeading: "Advance the next opportunity.",
+    launchCopy: "Start with a project category or create a custom development workspace.",
+    tools: [
+      { eyebrow: "DUE DILIGENCE", title: "Keep planning assumptions, property records, and approvals connected.", description: "Create a separate workspace for each opportunity or active development.", image: "/role-property-manager.jpg", action: "Open Development" },
+      { eyebrow: "COST + FEASIBILITY", title: "Compare early cost ranges before committing more capital.", description: "Keep budget planning, permit research, and documentation in one place.", image: "/home-cost-planning.jpg", action: "Review Feasibility" },
+      { eyebrow: "PIPELINE GUIDANCE", title: "See which opportunity is ready for the next decision.", description: "Pilot keeps the portfolio view and project-level Flight Plans aligned.", image: "/pilot-guide.jpg", action: "Ask Pilot" },
+    ],
+  },
+};
+
+function normalizeAccountRole(value) {
+  const role = String(value || "Homeowner").toLowerCase();
+  if (role.includes("contractor")) return "contractor";
+  if (role.includes("property")) return "property_manager";
+  if (role.includes("developer") || role.includes("investor")) return "developer";
+  return "homeowner";
+}
+
 function projectImage(project) {
   const text = `
     ${project?.project_type || ""}
@@ -132,6 +207,7 @@ export default function DashboardPage() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [deletingProject, setDeletingProject] = useState("");
   const [dashboardError, setDashboardError] = useState("");
+  const [accountSaving, setAccountSaving] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -415,6 +491,30 @@ export default function DashboardPage() {
     }
   }
 
+  async function updateAccountType(nextRole) {
+    if (!user || accountSaving) return;
+
+    setAccountSaving(true);
+    setDashboardError("");
+
+    const nextMetadata = {
+      ...(user.user_metadata || {}),
+      role: nextRole,
+    };
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: nextMetadata,
+    });
+
+    if (error) {
+      setDashboardError(error.message || "Project Pilot could not update your account type.");
+    } else if (data?.user) {
+      setUser(data.user);
+    }
+
+    setAccountSaving(false);
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.replace("/");
@@ -436,6 +536,8 @@ export default function DashboardPage() {
   const displayName =
     user.user_metadata?.full_name || user.email?.split("@")[0] || "there";
   const firstName = displayName.trim().split(" ")[0] || displayName;
+  const accountRole = normalizeAccountRole(user.user_metadata?.role);
+  const workspaceProfile = ACCOUNT_WORKSPACES[accountRole] || ACCOUNT_WORKSPACES.homeowner;
   const missionAngle = `${averageProgress * 3.6}deg`;
 
   return (
@@ -472,6 +574,21 @@ export default function DashboardPage() {
             <small>{user.email}</small>
           </span>
         </div>
+
+        <label className="accountTypeSwitcher">
+          <span>ACCOUNT WORKSPACE</span>
+          <select
+            value={workspaceProfile.value}
+            onChange={(event) => updateAccountType(event.target.value)}
+            disabled={accountSaving}
+          >
+            <option value="Homeowner">Homeowner</option>
+            <option value="Contractor">Contractor</option>
+            <option value="Property Manager">Property Manager</option>
+            <option value="Developer">Developer / Investor</option>
+          </select>
+          <small>{accountSaving ? "Updating workspace…" : `${workspaceProfile.label} experience active`}</small>
+        </label>
       </aside>
 
       <section className="dashboardMain">
@@ -507,11 +624,11 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="signedInVisualHero">
+        <section className={`signedInVisualHero role-${accountRole}`}>
           <div className="signedInVisualCopy">
-            <p>YOUR PROJECT JOURNEY</p>
-            <h2>See the work, understand the path, and make the next move with confidence.</h2>
-            <span>Project Pilot pairs every workspace with visual project context, cost guidance, permit preparation, and a clearer DIY or professional route.</span>
+            <p>{workspaceProfile.eyebrow}</p>
+            <h2>{workspaceProfile.headline}</h2>
+            <span>{workspaceProfile.description}</span>
             <div>
               <button type="button" onClick={addProject} disabled={creating}>
                 {creating ? "Creating…" : "Start a New Project"}
@@ -519,7 +636,12 @@ export default function DashboardPage() {
               <a href="#category-launchpad">Browse project categories</a>
             </div>
           </div>
-          <img src="/home-planning-people.jpg" alt="Homeowners reviewing renovation plans together" />
+          <img
+            src={workspaceProfile.image}
+            alt={`${workspaceProfile.label} planning active projects`}
+            fetchPriority="high"
+            decoding="async"
+          />
         </section>
 
         <section className="categoryLaunchpad" id="category-launchpad">
@@ -528,7 +650,7 @@ export default function DashboardPage() {
               <p>WHAT ARE YOU PLANNING?</p>
               <h2>Start with a project you can picture.</h2>
             </div>
-            <span>Select a category to open a prefilled workspace.</span>
+            <span>{workspaceProfile.launchCopy}</span>
           </div>
           <div className="signedInCategoryGrid">
             {PROJECT_CATEGORIES.map((category) => (
@@ -538,7 +660,7 @@ export default function DashboardPage() {
                 onClick={() => createProject(category)}
                 disabled={creating}
               >
-                <img src={category.image} alt={category.label} />
+                <img src={category.image} alt={`${category.label} with people planning or completing the work`} loading="lazy" decoding="async" />
                 <span>{category.label}</span>
               </button>
             ))}
@@ -670,8 +792,8 @@ export default function DashboardPage() {
         <section className="dashboardSection" id="projects">
           <div className="sectionTitleRow">
             <div>
-              <p>MY PROJECTS</p>
-              <h2>Continue where you left off.</h2>
+              <p>{workspaceProfile.projectLabel}</p>
+              <h2>{workspaceProfile.projectHeading}</h2>
             </div>
             <button type="button" onClick={addProject} disabled={creating}>
               {creating ? "Creating…" : "Add Project"}
@@ -699,7 +821,7 @@ export default function DashboardPage() {
                 return (
                   <article className="projectCard" key={project.id}>
                     <div className="projectImageWrap">
-                      <img src={projectImage(project)} alt={`${project.title || "Project"} visual`} />
+                      <img src={projectImage(project)} alt={`${project.title || "Project"} visual with project context`} loading="lazy" decoding="async" />
                       <span>{project.project_type || "Guided project"}</span>
                     </div>
 
@@ -762,66 +884,27 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="workspaceGrid">
-          <article id="documents" className="visualWorkspaceCard">
-            <img src="/home-cost-planning.jpg" alt="Homeowner reviewing project planning information" />
-            <div>
-              <div className="workspaceCardTop">
-                <span>01</span>
-                <b>AVAILABLE</b>
+        <section className="workspaceGrid" id="documents">
+          {workspaceProfile.tools.map((tool, index) => (
+            <article className="visualWorkspaceCard" key={tool.title}>
+              <img src={tool.image} alt={`${tool.eyebrow} visual`} loading="lazy" decoding="async" />
+              <div>
+                <div className="workspaceCardTop">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <b>AVAILABLE</b>
+                </div>
+                <p>{tool.eyebrow}</p>
+                <h3>{tool.title}</h3>
+                <span>{tool.description}</span>
+                <button type="button" onClick={openPrimaryProject} disabled={creating}>
+                  {primaryProject ? tool.action : "Create a Project First"}
+                </button>
               </div>
-              <p>PROJECT BINDER</p>
-              <h3>Keep every important document together.</h3>
-              <span>
-                Store permits, plans, estimates, contracts, receipts, inspection
-                reports, and warranties inside the project workspace.
-              </span>
-              <button type="button" onClick={openPrimaryProject} disabled={creating}>
-                {primaryProject ? "Open Project Binder" : "Create a Project First"}
-              </button>
-            </div>
-          </article>
-
-          <article className="visualWorkspaceCard">
-            <img src="/home-diy-builder.jpg" alt="DIY builder working on an outdoor home project" />
-            <div>
-              <div className="workspaceCardTop">
-                <span>02</span>
-                <b>AVAILABLE</b>
-              </div>
-              <p>DIY PROJECTS</p>
-              <h3>Learn the work before doing it yourself.</h3>
-              <span>
-                Compare DIY cost ranges, materials, tools, planning reminders,
-                and project-specific learning links.
-              </span>
-              <button type="button" onClick={openPrimaryProject} disabled={creating}>
-                {primaryProject ? "Explore DIY Route" : "Create a Project First"}
-              </button>
-            </div>
-          </article>
-
-          <article className="visualWorkspaceCard">
-            <img src="/pilot-guide.jpg" alt="Project Pilot guide ready to help" />
-            <div>
-              <div className="workspaceCardTop">
-                <span>03</span>
-                <b>AVAILABLE</b>
-              </div>
-              <p>PILOT GUIDANCE</p>
-              <h3>Keep the next decision visible.</h3>
-              <span>
-                Return to a guided workspace with the project scope, current
-                waypoint, permit research, costs, and files connected.
-              </span>
-              <button type="button" onClick={openPrimaryProject} disabled={creating}>
-                {primaryProject ? "Ask Pilot" : "Start First Project"}
-              </button>
-            </div>
-          </article>
+            </article>
+          ))}
 
           <article id="professionals" className="visualWorkspaceCard">
-            <img src="/category-addition.jpg" alt="Completed home addition project" />
+            <img src="/category-addition.jpg" alt="People planning a professional home improvement project" loading="lazy" decoding="async" />
             <div>
               <div className="workspaceCardTop">
                 <span>04</span>

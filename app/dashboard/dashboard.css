@@ -1417,3 +1417,107 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Sprint 2.7 — role-aware workspaces and high-resolution media */
+.accountTypeSwitcher {
+  margin-top: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  background: rgba(255,255,255,.055);
+}
+
+.accountTypeSwitcher > span {
+  color: #7e94b1;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .15em;
+}
+
+.accountTypeSwitcher select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 10px;
+  background: #173258;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.accountTypeSwitcher small {
+  color: #8ea2bd;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.signedInVisualHero > img,
+.signedInCategoryGrid img,
+.projectImageWrap img,
+.visualWorkspaceCard > img {
+  image-rendering: auto;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  filter: saturate(1.02) contrast(1.015);
+}
+
+.signedInVisualHero > img {
+  object-position: center;
+}
+
+.signedInCategoryGrid img {
+  height: 150px;
+}
+
+.projectImageWrap img {
+  height: 230px;
+}
+
+.visualWorkspaceCard > img {
+  min-height: 340px;
+}
+
+.role-homeowner .signedInVisualCopy {
+  background: linear-gradient(145deg, #fffdf7, #f6fbf9);
+}
+
+.role-contractor .signedInVisualCopy {
+  background: linear-gradient(145deg, #f7fbff, #eef8f4);
+}
+
+.role-property_manager .signedInVisualCopy,
+.role-developer .signedInVisualCopy {
+  background: linear-gradient(145deg, #fbfcff, #f4f8fd);
+}
+
+@media (min-width: 1440px) {
+  .signedInVisualHero {
+    min-height: 380px;
+  }
+
+  .signedInVisualHero > img {
+    min-height: 380px;
+  }
+
+  .signedInCategoryGrid img {
+    height: 178px;
+  }
+
+  .projectImageWrap img {
+    height: 260px;
+  }
+}
+
+@media (max-width: 900px) {
+  .signedInCategoryGrid img {
+    height: 165px;
+  }
+
+  .projectImageWrap img {
+    height: 220px;
+  }
+}

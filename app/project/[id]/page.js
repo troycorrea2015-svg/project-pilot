@@ -801,7 +801,7 @@ export default function ProjectWorkspacePage() {
                 </div>
               </div>
               <div className="commandHeroVisual">
-                <img src={projectVisual(project)} alt={`${project.title} project visual`} />
+                <img src={projectVisual(project)} alt={`${project.title} project visual with people and project context`} fetchPriority="high" decoding="async" />
                 <div className="readinessRing" style={{ "--progress": `${readiness}%` }}>
                   <strong>{readiness}%</strong>
                   <span>mission ready</span>
@@ -1119,7 +1119,7 @@ export default function ProjectWorkspacePage() {
                 <span>Project Pilot organizes the address match, jurisdiction questions, document checklist, and official resources. Final requirements must be confirmed with the governing authority.</span>
               </div>
               <div className="permitGuideVisual">
-                <img src="/permit-guide.jpg" alt="Project planning guide holding a tablet" />
+                <img src="/permit-guide.jpg" alt="Project planning guide holding a tablet" loading="lazy" decoding="async" />
                 {permitChecked && <span className="permitSavedBadge">✓ CHECK SAVED</span>}
               </div>
             </div>

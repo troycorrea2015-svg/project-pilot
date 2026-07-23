@@ -55,7 +55,7 @@ function inferAddress(message) {
   return match ? match[0].trim() : "";
 }
 
-function buildGuidedReply(project, extracted) {
+function buildGuidedReply(project, extracted, accountRole) {
   const known = {
     type: extracted.project_type || project.project_type,
     address: extracted.address || project.address,
@@ -66,6 +66,9 @@ function buildGuidedReply(project, extracted) {
   };
 
   if (!known.type) {
+    if (accountRole === "Contractor") return "Let’s open the client job correctly. What work are you estimating, permitting, or preparing to complete?";
+    if (accountRole === "Property Manager") return "Let’s define the property project first. What maintenance, renovation, compliance, or capital work needs to be completed?";
+    if (accountRole === "Developer") return "Let’s define the development opportunity first. What are you planning to build, renovate, or evaluate?";
     return "Welcome aboard. Let’s define the project first. What are you planning to build, repair, or renovate?";
   }
   if (!known.description) {
@@ -128,7 +131,7 @@ export async function POST(request) {
     const extracted = {
       project_type: project.project_type || inferProjectType(message),
       address: project.address || inferAddress(message),
-      project_role: project.project_role || inferRole(message),
+      project_role: project.project_role || inferRole(message) || user.user_metadata?.role || "",
       target_timeline: project.target_timeline || inferTimeline(message),
       budget: project.budget || inferBudget(message),
     };
@@ -163,7 +166,7 @@ export async function POST(request) {
       .from("projects").update(update).eq("id", project.id).eq("user_id", user.id).select().single();
     if (updateError) throw updateError;
 
-    const reply = buildGuidedReply(updatedProject, extracted);
+    const reply = buildGuidedReply(updatedProject, extracted, user.user_metadata?.role || "Homeowner");
     const { data: savedReply, error: saveReplyError } = await supabase
       .from("conversations")
       .insert({ project_id: project.id, user_id: user.id, role: "assistant", message: reply })
