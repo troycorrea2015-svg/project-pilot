@@ -1187,13 +1187,84 @@ export default function ProjectWorkspacePage() {
             </div>
 
             {permitResult ? (
-              <section className="permitResults">
+              <section className="permitResults exactPermitResults">
                 <header>
-                  <div><p>CHECK RESULT</p><h2>{permitResult.title}</h2></div>
-                  <span>{permitResult.jurisdictionStatus}</span>
+                  <div><p>VERIFIED PERMIT MATCH</p><h2>{permitResult.title}</h2></div>
+                  <span>{permitResult.applicationStatus?.label || permitResult.jurisdictionStatus}</span>
                 </header>
 
                 <p className="permitSummary">{permitResult.summary}</p>
+
+                <div className="authorityMatchCard">
+                  <div className="authorityMatchTop">
+                    <div>
+                      <small>GOVERNING AUTHORITY MATCH</small>
+                      <h3>{permitResult.jurisdiction}</h3>
+                    </div>
+                    <span className={`authorityConfidence ${permitResult.jurisdictionConfidence || "medium"}`}>
+                      {(permitResult.jurisdictionConfidence || "review").toUpperCase()} CONFIDENCE
+                    </span>
+                  </div>
+                  <p>{permitResult.jurisdictionReason || permitResult.jurisdictionStatus}</p>
+
+                  {permitResult.coverage && (
+                    <div className={`permitCoverageBadge ${permitResult.coverage.status === "supported" ? "supported" : "outside"}`}>
+                      <strong>{permitResult.coverage.status === "supported" ? "Release coverage confirmed" : "Outside current release area"}</strong>
+                      <span>{permitResult.coverage.coverageDescription || permitResult.coverage.region} · verified {permitResult.coverage.verifiedAt}</span>
+                    </div>
+                  )}
+
+                  {permitResult.requiredAuthorities?.length > 0 && (
+                    <div className="requiredAuthorityList">
+                      <small>REQUIRED AUTHORITY WORKFLOW</small>
+                      {permitResult.requiredAuthorities.map((authority, index) => (
+                        <a href={authority.url} target="_blank" rel="noreferrer" key={`${authority.name}-${authority.role}`}>
+                          <span>{index + 1}</span>
+                          <div>
+                            <strong>{authority.name}</strong>
+                            <small>{authority.role}{authority.phone ? ` · ${authority.phone}` : ""}</small>
+                          </div>
+                          <b>↗</b>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="geographyFacts">
+                    <div><small>INCORPORATED PLACE</small><strong>{permitResult.locationGeography?.incorporatedPlace || "No incorporated-place match"}</strong></div>
+                    <div><small>COUNTY</small><strong>{permitResult.locationGeography?.county || "Confirm manually"}</strong></div>
+                    <div><small>STATE</small><strong>{permitResult.locationGeography?.state || permitResult.coverage?.matchedState || "Confirm manually"}</strong></div>
+                    <div><small>ADDRESS SOURCE</small><strong>{permitResult.locationGeography?.source || "Address match"}</strong></div>
+                  </div>
+                </div>
+
+                {permitResult.primaryApplication ? (
+                  <article className="primaryPermitApplication">
+                    <div className="primaryPermitBadge">
+                      <span>✓</span>
+                      <div>
+                        <small>{permitResult.primaryApplication.verificationLabel || "OFFICIAL APPLICATION"}</small>
+                        <strong>{permitResult.applicationStatus?.label || "Official permit resource located"}</strong>
+                      </div>
+                    </div>
+                    <h3>{permitResult.primaryApplication.label}</h3>
+                    <p>{permitResult.primaryApplication.description}</p>
+                    <div className="primaryPermitMeta">
+                      <span>Authority: <strong>{permitResult.primaryApplication.authority}</strong></span>
+                      <span>Method: <strong>{permitResult.primaryApplication.method}</strong></span>
+                      <span>Verified: <strong>{permitResult.primaryApplication.verifiedAt}</strong></span>
+                    </div>
+                    <a href={permitResult.primaryApplication.url} target="_blank" rel="noreferrer">
+                      {permitResult.primaryApplication.actionLabel || "Open official application"} ↗
+                    </a>
+                    <small className="applicationExplanation">{permitResult.applicationStatus?.explanation}</small>
+                  </article>
+                ) : (
+                  <article className="primaryPermitApplication needsReview">
+                    <div className="primaryPermitBadge"><span>!</span><div><small>APPLICATION REVIEW</small><strong>Exact application not yet verified</strong></div></div>
+                    <p>Confirm the responsible permit office before using a specific form.</p>
+                  </article>
+                )}
 
                 <div className="permitResultGrid">
                   <article>
@@ -1206,14 +1277,36 @@ export default function ProjectWorkspacePage() {
                   </article>
                 </div>
 
-                <div className="officialResources">
-                  <div><small>OFFICIAL RESOURCES</small><strong>Open the governing authority's current information.</strong></div>
+                <div className="permitDraftReadiness">
                   <div>
-                    {permitResult.sources?.map((source) => (
-                      <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
+                    <small>AI APPLICATION PREPARATION</small>
+                    <h3>Project data that can feed a future permit draft</h3>
+                    <p>Pilot will never submit an application without the user's review and explicit permission.</p>
+                  </div>
+                  <div className="draftFieldGrid">
+                    {permitResult.draftFields?.map((field) => (
+                      <div className={field.ready ? "ready" : "missing"} key={field.key}>
+                        <span>{field.ready ? "✓" : "○"}</span>
+                        <div><strong>{field.label}</strong><small>{field.ready ? field.value : "Still needed"}</small></div>
+                      </div>
                     ))}
                   </div>
                 </div>
+
+                <div className="officialResources applicationResourceList">
+                  <div><small>OFFICIAL APPLICATIONS & SUPPORTING RESOURCES</small><strong>Open only sources published by the matched government authority.</strong></div>
+                  <div>
+                    {(permitResult.applications || permitResult.sources || []).map((resource) => (
+                      <a key={resource.id || resource.url} href={resource.url} target="_blank" rel="noreferrer">
+                        <span>{resource.verificationLabel || "Official resource"}</span>
+                        <strong>{resource.label}</strong>
+                        <small>{resource.description || "Open official source"}</small>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="permitLegalNote">{permitResult.disclaimer}</p>
               </section>
             ) : (
               <section className="permitEmptyResult">

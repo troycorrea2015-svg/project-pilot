@@ -1,58 +1,9 @@
-const records = {
-  "19963": {
-    name: "Milford area, Delaware",
-    jurisdiction: "Milford / Kent or Sussex County boundary review",
-    status: "Address match plus municipal-boundary confirmation required",
-    facts: [
-      "Milford Building Inspections & Permitting publishes construction and renovation permit information.",
-      "A Milford mailing address may fall inside or outside city limits, so the responsible authority must be confirmed.",
-    ],
-    sources: [
-      { label: "City of Milford Building Inspections & Permitting", url: "https://www.cityofmilford.com/15/Building-Inspections-Permitting" },
-      { label: "Milford Planning & Zoning", url: "https://www.cityofmilford.com/78/Planning-Zoning" },
-    ],
-  },
-  "19901": {
-    name: "Dover area, Delaware",
-    jurisdiction: "City of Dover / Kent County boundary review",
-    status: "Address match plus city-boundary confirmation required",
-    facts: ["Dover Planning & Inspection publishes permit, zoning, form, and inspection resources."],
-    sources: [
-      { label: "Dover Planning and Inspections", url: "https://www.cityofdover.com/planning-and-inspections" },
-      { label: "Dover Forms and Brochures", url: "https://www.cityofdover.com/pi-forms-and-brochures" },
-    ],
-  },
-  "19947": {
-    name: "Georgetown / Sussex County area",
-    jurisdiction: "Town of Georgetown / Sussex County boundary review",
-    status: "Municipal versus county jurisdiction must be confirmed",
-    facts: ["Sussex County publishes building permit, code, and application resources for county-administered properties."],
-    sources: [
-      { label: "Sussex County Building Permits", url: "https://sussexcountyde.gov/building-permits" },
-      { label: "Sussex County Application Forms", url: "https://sussexcountyde.gov/application-forms" },
-    ],
-  },
-  "19941": {
-    name: "Ellendale / Sussex County area",
-    jurisdiction: "Town of Ellendale / Sussex County boundary review",
-    status: "Municipal versus county jurisdiction must be confirmed",
-    facts: ["The property location must be checked against municipal boundaries before relying on county permit guidance."],
-    sources: [
-      { label: "Sussex County Building Permits", url: "https://sussexcountyde.gov/building-permits" },
-      { label: "Sussex County Application Forms", url: "https://sussexcountyde.gov/application-forms" },
-    ],
-  },
-  "19968": {
-    name: "Milton / Sussex County area",
-    jurisdiction: "Town of Milton / Sussex County boundary review",
-    status: "Town-boundary and governing-authority confirmation required",
-    facts: ["A Milton mailing address does not by itself establish whether town or county requirements govern the property."],
-    sources: [
-      { label: "Town of Milton Planning and Zoning", url: "https://milton.delaware.gov/" },
-      { label: "Sussex County Building Permits", url: "https://sussexcountyde.gov/building-permits" },
-    ],
-  },
-};
+import {
+  COVERAGE_SUMMARY,
+  getApplicationMatches,
+  resolveAuthority,
+  verificationLabel,
+} from "../../../lib/permit-registry";
 
 const projectDocs = {
   Fence: ["Property survey or site plan", "Fence height, material, and location", "HOA approval when applicable"],
@@ -70,15 +21,30 @@ function clean(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-async function geocode(address, zip) {
-  const query = `${address}, DE ${zip}`;
-  const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&format=json`;
-  const response = await fetch(url, { cache: "no-store" });
+function geographyByName(geographies, target) {
+  if (!geographies || typeof geographies !== "object") return null;
+  const entry = Object.entries(geographies).find(([key]) => key.toLowerCase().includes(target.toLowerCase()));
+  return entry?.[1]?.[0] || null;
+}
+
+async function geocodeWithAuthority(address, zip) {
+  const query = `${address} ${zip}`;
+  const url = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&vintage=Current_Current&layers=all&format=json`;
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: { "User-Agent": "Project-Pilot-Permit-Intelligence/1.0" },
+  });
+
   if (!response.ok) return null;
 
   const payload = await response.json();
   const match = payload?.result?.addressMatches?.[0];
   if (!match) return null;
+
+  const incorporatedPlace = geographyByName(match.geographies, "Incorporated Places");
+  const county = geographyByName(match.geographies, "Counties");
+  const countySubdivision = geographyByName(match.geographies, "County Subdivisions");
+  const state = geographyByName(match.geographies, "States");
 
   return {
     matchedAddress: match.matchedAddress || query,
@@ -86,27 +52,88 @@ async function geocode(address, zip) {
       latitude: Number(match.coordinates?.y),
       longitude: Number(match.coordinates?.x),
     },
+    incorporatedPlace: incorporatedPlace?.NAME || "",
+    countyName: county?.NAME || "",
+    countySubdivision: countySubdivision?.NAME || "",
+    stateName: state?.NAME || "",
+    geographySource: "U.S. Census Geocoder",
   };
 }
 
-function fallbackRecord(zip) {
-  const delaware = zip.startsWith("19");
+function applicationStatus(primary, authority) {
+  if (authority.requiredAuthorities?.length > 1) {
+    return {
+      code: "multi-authority-workflow",
+      label: "Municipal and county steps matched",
+      explanation: "This address requires coordinated local and county steps. Project Pilot lists both official authorities in the order they should be reviewed.",
+    };
+  }
+
+  if (!primary) {
+    return {
+      code: "not-loaded",
+      label: "Application not loaded",
+      explanation: "Project Pilot has not yet verified an official application for this authority and project type.",
+    };
+  }
+
+  if (primary.matchLevel === "exact_application") {
+    return {
+      code: "exact-application",
+      label: "Exact official application located",
+      explanation: "Project Pilot matched a direct official application published by the governing authority.",
+    };
+  }
+
+  if (primary.matchLevel === "official_submission_portal") {
+    return {
+      code: "official-portal",
+      label: "Official application portal located",
+      explanation: "The governing authority accepts applications through this official online portal. The user may still need to select the permit type after opening it.",
+    };
+  }
+
+  if (primary.matchLevel === "official_form_listing") {
+    return {
+      code: "official-form-listing",
+      label: "Official application listing located",
+      explanation: "The governing authority publishes the named building permit application on this official forms page.",
+    };
+  }
+
+  if (primary.matchLevel === "official_municipal_starting_point") {
+    return {
+      code: "official-municipal-source",
+      label: "Official municipal permit source located",
+      explanation: "The municipality issues or approves this permit. Open its official site for the current application and instructions; Project Pilot does not substitute an unverified third-party form.",
+    };
+  }
+
+  if (authority.confidence === "high") {
+    return {
+      code: "official-process",
+      label: "Official application process located",
+      explanation: "The governing authority is matched, but it does not publish a single direct application link for this project in Project Pilot's current verified registry.",
+    };
+  }
+
   return {
-    name: delaware ? "Delaware jurisdiction review" : "Jurisdiction not yet loaded",
-    jurisdiction: delaware ? "Municipal or county authority must be confirmed" : "Manual jurisdiction verification required",
-    status: "Manual jurisdiction verification required",
-    facts: [
-      delaware
-        ? "Project Pilot does not yet have a dedicated local record for this ZIP code. Use the official state and local resources to confirm the responsible authority."
-        : "Project Pilot's beta permit records currently focus on Delaware locations.",
-    ],
-    sources: delaware
-      ? [
-          { label: "Delaware FirstMap", url: "https://firstmap.delaware.gov/" },
-          { label: "Delaware Contractor Registry", url: "https://contractorregistry.delaware.gov/" },
-        ]
-      : [{ label: "Search the governing authority", url: "https://www.usa.gov/local-governments" }],
+    code: "authority-review",
+    label: "Authority confirmation required",
+    explanation: "The municipal or county permit office must be confirmed before relying on a specific application.",
   };
+}
+
+function projectFields(project, address, zip) {
+  return [
+    { key: "project_type", label: "Project type", value: project, ready: Boolean(project) },
+    { key: "project_address", label: "Project address", value: address, ready: Boolean(address) },
+    { key: "zip_code", label: "ZIP code", value: zip, ready: Boolean(zip) },
+    { key: "scope", label: "Detailed scope of work", value: "", ready: false },
+    { key: "owner", label: "Owner / applicant information", value: "", ready: false },
+    { key: "contractor", label: "Contractor information", value: "", ready: false },
+    { key: "estimated_cost", label: "Estimated project cost", value: "", ready: false },
+  ];
 }
 
 export async function POST(request) {
@@ -123,30 +150,76 @@ export async function POST(request) {
       );
     }
 
-    const location = await geocode(address, zip).catch(() => null);
-    const record = records[zip] || fallbackRecord(zip);
+    const location = await geocodeWithAuthority(address, zip).catch(() => null);
+    const authority = resolveAuthority({
+      incorporatedPlace: location?.incorporatedPlace,
+      countyName: location?.countyName,
+      stateName: location?.stateName,
+      zip,
+    });
+    const applicationMatch = getApplicationMatches(authority, project);
+    const status = applicationStatus(applicationMatch.primary, authority);
+
     const steps = [
-      "Confirm the exact municipality or county governing the property.",
-      `Ask whether the proposed ${project.toLowerCase()} requires zoning, building, or trade approvals.`,
-      "Open the official resources and obtain the current application checklist, fee schedule, and submission instructions.",
-      "Prepare the listed plans and property documents.",
-      "Do not begin regulated work before required approvals are issued.",
-      "Schedule required inspections and save final approval records in the Project Binder.",
+      authority.confidence === "high"
+        ? `Review the matched authority workflow: ${authority.name}.`
+        : "Confirm the exact municipality or county governing the property.",
+      ...(authority.requiredAuthorities || []).map(
+        (item, index) => `${index + 1}. ${item.name}: ${item.role}.`
+      ),
+      applicationMatch.primary
+        ? `Open ${applicationMatch.primary.label} and review the current submission instructions.`
+        : `Ask the responsible office which application covers the proposed ${project.toLowerCase()}.`,
+      "Confirm whether separate zoning, electrical, plumbing, mechanical, fire-marshal, septic, sewer, floodplain, or utility approvals also apply.",
+      "Prepare the listed plans, owner information, contractor information, and project cost.",
+      "Review every application field before signing or submitting anything.",
+      "Save the completed application, receipt, inspections, and final approval in the Project Binder.",
     ];
 
+    const applications = applicationMatch.applications.map((item) => ({
+      ...item,
+      verificationLabel: verificationLabel(item.matchLevel),
+    }));
+
     return Response.json({
-      title: `${project} — ${record.name}`,
-      jurisdiction: record.jurisdiction,
-      summary: record.facts.join(" "),
-      matchedAddress: location?.matchedAddress || `${address}, DE ${zip}`,
+      title: `${project} — ${authority.name}`,
+      jurisdiction: authority.name,
+      jurisdictionType: authority.type,
+      jurisdictionConfidence: authority.confidence,
+      jurisdictionReason: authority.reason,
+      workflow: authority.workflow,
+      requiredAuthorities: authority.requiredAuthorities || [],
+      coverage: {
+        ...COVERAGE_SUMMARY,
+        status: authority.confidence === "low" ? "needs-review" : "supported",
+        matchedCounty: authority.county || location?.countyName || "",
+        matchedState: authority.state || location?.stateName || "",
+      },
+      authorityPhone: authority.phone,
+      authorityOfficialPage: authority.officialPage,
+      summary: `${authority.reason} Project Pilot matched the official application resources currently verified for this authority and project type. Where a municipality does not publish a direct form, the app provides the official municipal source and the required county workflow instead of guessing.`,
+      matchedAddress: location?.matchedAddress || `${address} ${zip}`,
       addressMatched: Boolean(location),
       coordinates: location?.coordinates || null,
-      jurisdictionStatus: record.status,
+      locationGeography: {
+        incorporatedPlace: location?.incorporatedPlace || "",
+        county: location?.countyName || "",
+        countySubdivision: location?.countySubdivision || "",
+        state: location?.stateName || "",
+        source: location?.geographySource || "",
+      },
+      jurisdictionStatus: authority.confidenceLabel,
+      applicationStatus: status,
+      exactApplicationAvailable: applicationMatch.exactApplicationAvailable,
+      primaryApplication: applications.find((item) => item.id === applicationMatch.primary?.id) || null,
+      applications,
+      projectKey: applicationMatch.projectKey,
       steps,
       documents: projectDocs[project] || ["Project scope", "Property or site plan", "Contractor information", "Product or material specifications"],
-      sources: record.sources,
+      draftFields: projectFields(project, location?.matchedAddress || address, zip),
       checkedAt: new Date().toISOString(),
-      disclaimer: "Project Pilot organizes permit-preparation research. The governing authority remains the source of truth for current requirements.",
+      registryVerifiedAt: applications[0]?.verifiedAt || null,
+      disclaimer: "Project Pilot links to official sources and organizes application preparation. The governing authority remains the source of truth, and nothing should be submitted without the applicant's review and permission.",
     });
   } catch (error) {
     console.error("Permit lookup error", error);
