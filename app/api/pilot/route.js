@@ -45,6 +45,7 @@ function inferRole(message) {
   const text = message.toLowerCase();
   if (text.includes("contractor") || text.includes("client")) return "Contractor";
   if (text.includes("property manager")) return "Property Manager";
+  if (text.includes("project manager")) return "Project Manager";
   if (text.includes("developer") || text.includes("investor")) return "Developer / Investor";
   if (text.includes("my house") || text.includes("my home") || text.includes("homeowner") || text.includes("doing it myself")) return "Owner";
   return "";
@@ -53,6 +54,52 @@ function inferRole(message) {
 function inferAddress(message) {
   const match = message.match(/\b\d{1,6}\s+[A-Za-z0-9.' -]+\s(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|court|ct|boulevard|blvd|highway|hwy|way|circle|cir)\b[^\n,]*/i);
   return match ? match[0].trim() : "";
+}
+
+function buildPlainLanguageHelp(message, project) {
+  const text = message.toLowerCase();
+  const projectType = project.project_type || "project";
+
+  const definitions = [
+    ["setback", "A setback is the minimum distance required between your project and a property line, road, waterway, or another structure. The exact distance depends on the property and governing office."],
+    ["zoning", "Zoning rules decide whether a project is allowed at a location and where it may be placed. Zoning approval may be needed before a building permit."],
+    ["jurisdiction", "The jurisdiction is the town, city, county, or state office responsible for the project address. A mailing address does not always identify the correct governing office."],
+    ["inspection", "An inspection is an official review of completed work. Some projects require several inspections at different stages before the work can be approved."],
+    ["permit", `A permit is official approval that may be required before work begins. For this ${projectType}, Project Pilot can organize likely requirements and official starting points, but the governing office must confirm the final answer.`],
+    ["estimate", "An estimate is a planning range, not a guaranteed price. Use it to compare options, then confirm real pricing with contractors, suppliers, or signed proposals."],
+    ["flight plan", "The Flight Plan is Project Pilot's name for the step-by-step Project Plan. It shows what has been completed and what should happen next."],
+    ["waypoint", "A waypoint is simply a project step. Project Pilot now uses the plain-language label Project Step in most places."],
+    ["binder", "The Project Binder is the Files & Documents area where plans, photos, estimates, approvals, contracts, receipts, and inspection records are stored."],
+  ];
+
+  const match = definitions.find(([term]) => text.includes(term));
+  if (match && (text.includes("what") || text.includes("mean") || text.includes("explain") || text.includes("confused") || text.includes("help"))) {
+    return match[1];
+  }
+
+  if (text.includes("what should i do next") || text.includes("next step") || text.includes("where do i start")) {
+    return project.next_step
+      ? `Your next recommended step is: ${project.next_step}. Open the related section from the left menu, and I can explain any part that is unclear.`
+      : "Start by describing the work you want completed, the project address, and your preferred timeline. I will use that information to organize the next steps.";
+  }
+
+  if (text.includes("what am i missing") || text.includes("missing information") || text.includes("missing documents")) {
+    const missing = [];
+    if (!project.project_type) missing.push("project type");
+    if (!project.description) missing.push("a short project description");
+    if (!project.address) missing.push("project address");
+    if (!project.target_timeline) missing.push("target timeline");
+    if (!project.budget) missing.push("planning budget");
+    if (!project.permit_research) missing.push("permit and approval check");
+    if (!missing.length) return "The main setup information is present. Review the Project Plan for incomplete steps and add any plans, quotes, approvals, or photos to Files & Documents.";
+    return `The main items still missing are: ${missing.join(", ")}. You do not have to complete everything at once—start with the first item and I will guide you forward.`;
+  }
+
+  if (text.includes("confused") || text.includes("i don't understand") || text.includes("i do not understand") || text.includes("help me")) {
+    return "I can help. Tell me the exact word, requirement, button, or message that is confusing. I will explain it in plain language and give you one clear next action.";
+  }
+
+  return "";
 }
 
 function buildGuidedReply(project, extracted, accountRole) {
@@ -69,13 +116,13 @@ function buildGuidedReply(project, extracted, accountRole) {
     if (accountRole === "Contractor") return "Let’s open the client job correctly. What work are you estimating, permitting, or preparing to complete?";
     if (accountRole === "Property Manager") return "Let’s define the property project first. What maintenance, renovation, compliance, or capital work needs to be completed?";
     if (accountRole === "Developer") return "Let’s define the development opportunity first. What are you planning to build, renovate, or evaluate?";
-    return "Welcome aboard. Let’s define the project first. What are you planning to build, repair, or renovate?";
+    return "Let’s define the project in simple steps. What are you planning to build, repair, or renovate?";
   }
   if (!known.description) {
     return `I’ve marked this as a ${known.type} project. Give me a short description of the work and what you want the finished result to accomplish.`;
   }
   if (!known.address) {
-    return "Good course so far. What is the project address? You can enter the street address now; map pin placement is coming in the next build.";
+    return "Good progress. What is the project address? You can enter the street address now; map pin placement is coming in the next build.";
   }
   if (!known.role) {
     return "Who will be managing the work: the property owner, a contractor, a property manager, or a developer?";
@@ -88,11 +135,11 @@ function buildGuidedReply(project, extracted, accountRole) {
   }
 
   if (!project.permit_research) {
-    return `Your project setup is now on course. I’ve captured the project type, location, role, timeline, and budget. Open Permit Intelligence next to match the address, organize the jurisdiction questions, and build the permit-preparation checklist.`;
+    return `Your basic project setup is complete. I’ve captured the project type, location, role, timeline, and budget. Open Permits & Approvals next to match the address, organize the jurisdiction questions, and build the permit-preparation checklist.`;
   }
 
   const jurisdiction = project.permit_research?.jurisdiction || project.jurisdiction || "the governing authority";
-  return `The permit check is saved for ${jurisdiction}. Review the official resources, prepare the listed documents, and confirm current requirements directly with the governing authority. Then keep plans, approvals, and inspection records in the Project Binder.`;
+  return `The permit check is saved for ${jurisdiction}. Review the official resources, prepare the listed documents, and confirm current requirements directly with the governing authority. Then keep plans, approvals, and inspection records in Files & Documents.`;
 }
 
 export async function POST(request) {
@@ -128,6 +175,17 @@ export async function POST(request) {
     });
     if (saveUserError) throw saveUserError;
 
+    const helpReply = buildPlainLanguageHelp(message, project);
+    if (helpReply) {
+      const { data: savedHelpReply, error: saveHelpError } = await supabase
+        .from("conversations")
+        .insert({ project_id: project.id, user_id: user.id, role: "assistant", message: helpReply })
+        .select("id,role,message,created_at")
+        .single();
+      if (saveHelpError) throw saveHelpError;
+      return NextResponse.json({ message: savedHelpReply, project, mode: "guided-help" });
+    }
+
     const extracted = {
       project_type: project.project_type || inferProjectType(message),
       address: project.address || inferAddress(message),
@@ -157,8 +215,8 @@ export async function POST(request) {
       next_step: ready
         ? permitChecked
           ? "Review the permit checklist and add supporting project documents"
-          : "Run Permit Intelligence for the project location"
-        : "Continue setup with Pilot",
+          : "Check permits and approvals for the project location"
+        : "Continue setup with Project Assistant",
       updated_at: new Date().toISOString(),
     };
 
@@ -176,6 +234,6 @@ export async function POST(request) {
     return NextResponse.json({ message: savedReply, project: updatedProject, mode: "guided" });
   } catch (error) {
     console.error("Pilot route error", error);
-    return NextResponse.json({ error: error?.message || "Pilot could not complete that request." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Project Assistant could not complete that request." }, { status: 500 });
   }
 }

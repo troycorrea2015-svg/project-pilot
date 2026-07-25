@@ -839,3 +839,6 @@
 /* Sprint 2.9 — Delmarva beta permit coverage */
 .permitCoverageBadge.supported { border-color: #b8e4d2; background: #f1fbf6; }
 .permitCoverageBadge.outside { border-color: #f0d5a6; background: #fff9ed; }
+
+/* Sprint 3.0A — plain-language Project Assistant */
+.assistantPromptChips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.assistantPromptChips button{padding:8px 10px;border:1px solid #cfdbea;border-radius:999px;background:#f4f8ff;color:#2c5fbf;font-size:10px;font-weight:850;cursor:pointer}.assistantPromptChips button:hover{border-color:#85aaff;background:#eaf2ff}@media(max-width:680px){.assistantPromptChips{display:grid;grid-template-columns:1fr}.assistantPromptChips button{text-align:left}}

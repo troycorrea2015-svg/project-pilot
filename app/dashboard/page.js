@@ -72,6 +72,22 @@ const ACCOUNT_WORKSPACES = {
       { eyebrow: "PORTFOLIO GUIDANCE", title: "Prioritize the project with the greatest property impact.", description: "Pilot surfaces readiness, missing documents, permit needs, and next actions.", image: "/pilot-guide.jpg", action: "Ask Pilot" },
     ],
   },
+  project_manager: {
+    value: "Project Manager",
+    label: "Project Manager",
+    image: "/role-property-manager.jpg",
+    eyebrow: "YOUR PROJECT PORTFOLIO",
+    headline: "Keep teams, documents, costs, approvals, and next actions aligned.",
+    description: "Manage multiple projects with clear responsibilities, progress, files, and decision history.",
+    projectLabel: "MANAGED PROJECTS",
+    projectHeading: "Keep every assigned project moving.",
+    launchCopy: "Create a project for each client, site, or scope of work and keep the important details separated.",
+    tools: [
+      { eyebrow: "PROJECT RECORDS", title: "Keep decisions, approvals, plans, and closeout records together.", description: "Each project keeps its own plan, files, costs, notes, and permit guidance.", image: "/role-property-manager.jpg", action: "Open Managed Project" },
+      { eyebrow: "COSTS + RESPONSIBILITIES", title: "Keep budgets and the next responsible action visible.", description: "Use one workspace to reduce missed handoffs and scattered project information.", image: "/home-cost-planning.jpg", action: "Review Project" },
+      { eyebrow: "PROJECT ASSISTANT", title: "Get plain-language help when a requirement is unclear.", description: "Project Assistant can explain terms, organize questions, and identify the next step.", image: "/pilot-guide.jpg", action: "Ask Project Assistant" },
+    ],
+  },
   developer: {
     value: "Developer",
     label: "Developer / Investor",
@@ -93,6 +109,7 @@ const ACCOUNT_WORKSPACES = {
 function normalizeAccountRole(value) {
   const role = String(value || "Homeowner").toLowerCase();
   if (role.includes("contractor")) return "contractor";
+  if (role.includes("project manager")) return "project_manager";
   if (role.includes("property")) return "property_manager";
   if (role.includes("developer") || role.includes("investor")) return "developer";
   return "homeowner";
@@ -208,6 +225,18 @@ export default function DashboardPage() {
   const [deletingProject, setDeletingProject] = useState("");
   const [dashboardError, setDashboardError] = useState("");
   const [accountSaving, setAccountSaving] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showProjectWizard, setShowProjectWizard] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [wizardForm, setWizardForm] = useState({
+    title: "",
+    projectType: "",
+    description: "",
+    address: "",
+    projectRole: "Owner",
+    targetTimeline: "",
+    budget: "",
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -228,6 +257,14 @@ export default function DashboardPage() {
       }
 
       setUser(currentUser);
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", currentUser.id)
+        .maybeSingle();
+
+      if (mounted) setIsAdmin(Boolean(profileData?.is_admin));
 
       const { data, error } = await supabase
         .from("projects")
@@ -282,8 +319,8 @@ export default function DashboardPage() {
     if (!projects.length) {
       return [
         {
-          title: "Mission Control is ready",
-          detail: "Create a project to begin your first Flight Plan.",
+          title: "Your dashboard is ready",
+          detail: "Create a project to begin your step-by-step Project Plan.",
           date: "Ready now",
         },
       ];
@@ -292,7 +329,7 @@ export default function DashboardPage() {
     return projects.slice(0, 3).map((project) => ({
       title: project.title || "Untitled Project",
       detail: `${getProjectStage(project)} · ${
-        project.next_step || "Review the next waypoint"
+        project.next_step || "Review the next project step"
       }`,
       date: formatUpdatedDate(project.updated_at || project.created_at),
     }));
@@ -304,19 +341,29 @@ export default function DashboardPage() {
     setCreating(true);
     setDashboardError("");
 
+    const projectType = String(template.projectType || "").trim();
+    const projectAddress = String(template.address || "").trim();
+    const budgetValue = template.budget === "" || template.budget == null
+      ? null
+      : Number(template.budget);
+
     const { data, error } = await supabase
       .from("projects")
       .insert({
         user_id: user.id,
-        title: template.title || "Untitled Project",
-        project_type: template.projectType || null,
-        description: template.description || null,
-        location_label: "Location not added",
+        title: String(template.title || "").trim() || (projectType ? `${projectType} Project` : "Untitled Project"),
+        project_type: projectType || null,
+        description: String(template.description || "").trim() || null,
+        address: projectAddress || null,
+        location_label: projectAddress || "Location not added",
+        project_role: template.projectRole || null,
+        target_timeline: String(template.targetTimeline || "").trim() || null,
+        budget: Number.isFinite(budgetValue) ? budgetValue : null,
         status: "Getting Started",
-        progress: 5,
-        next_step: template.projectType
-          ? `Tell Pilot about the ${template.projectType.toLowerCase()} project and desired result`
-          : "Tell Pilot what you are planning",
+        progress: projectAddress ? 10 : 5,
+        next_step: projectType
+          ? `Describe the ${projectType.toLowerCase()} project and confirm the desired result`
+          : "Describe what you are planning",
       })
       .select()
       .single();
@@ -330,11 +377,46 @@ export default function DashboardPage() {
     }
 
     setProjects((current) => [data, ...current]);
+    setShowProjectWizard(false);
+    setWizardStep(1);
+    setCreating(false);
     router.push(`/project/${data.id}`);
   }
 
-  async function addProject() {
-    return createProject();
+  function addProject(template = {}) {
+    setWizardForm({
+      title: template.title || "",
+      projectType: template.projectType || "",
+      description: template.description || "",
+      address: "",
+      projectRole: accountRole === "contractor"
+        ? "Contractor"
+        : accountRole === "project_manager"
+          ? "Project Manager"
+          : accountRole === "property_manager"
+            ? "Property Manager"
+            : accountRole === "developer"
+              ? "Developer / Investor"
+              : "Owner",
+      targetTimeline: "",
+      budget: "",
+    });
+    setWizardStep(1);
+    setShowProjectWizard(true);
+  }
+
+  function updateWizardField(field, value) {
+    setWizardForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function submitProjectWizard(event) {
+    event.preventDefault();
+    if (!wizardForm.projectType.trim() || !wizardForm.title.trim()) {
+      setDashboardError("Add a project type and project name before continuing.");
+      setWizardStep(1);
+      return;
+    }
+    createProject(wizardForm);
   }
 
   async function deleteProject(project) {
@@ -509,6 +591,10 @@ export default function DashboardPage() {
     if (error) {
       setDashboardError(error.message || "Project Pilot could not update your account type.");
     } else if (data?.user) {
+      await supabase
+        .from("profiles")
+        .update({ role: nextRole, updated_at: new Date().toISOString() })
+        .eq("id", data.user.id);
       setUser(data.user);
     }
 
@@ -530,7 +616,7 @@ export default function DashboardPage() {
   }
 
   if (loading || !user) {
-    return <main className="dashboardLoading">Opening Mission Control…</main>;
+    return <main className="dashboardLoading">Opening your dashboard…</main>;
   }
 
   const displayName =
@@ -552,18 +638,20 @@ export default function DashboardPage() {
         </div>
 
         <nav aria-label="Dashboard navigation">
-          <a className="active" href="/dashboard">Mission Control</a>
+          <a className="active" href="/dashboard">Dashboard</a>
           <a href="#projects">My Projects</a>
-          <a href="#flight-plan">Flight Plan</a>
-          <a href="#documents">Project Binder</a>
+          <a href="#professionals">Find Contractors</a>
+          <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permits</a>
+          <a href="/help">Help Center</a>
+          {isAdmin && <a href="/admin">Admin Control Center</a>}
           <a href="/">Project Pilot Home</a>
         </nav>
 
         <div className="sidebarStatus">
           <span className="statusDot" />
           <div>
-            <strong>Pilot online</strong>
-            <small>Ready for the next waypoint</small>
+            <strong>Project Assistant ready</strong>
+            <small>Ask for help on any page</small>
           </div>
         </div>
 
@@ -576,7 +664,7 @@ export default function DashboardPage() {
         </div>
 
         <label className="accountTypeSwitcher">
-          <span>ACCOUNT WORKSPACE</span>
+          <span>ACCOUNT TYPE</span>
           <select
             value={workspaceProfile.value}
             onChange={(event) => updateAccountType(event.target.value)}
@@ -585,18 +673,19 @@ export default function DashboardPage() {
             <option value="Homeowner">Homeowner</option>
             <option value="Contractor">Contractor</option>
             <option value="Property Manager">Property Manager</option>
+            <option value="Project Manager">Project Manager</option>
             <option value="Developer">Developer / Investor</option>
           </select>
-          <small>{accountSaving ? "Updating workspace…" : `${workspaceProfile.label} experience active`}</small>
+          <small>{accountSaving ? "Updating account type…" : `${workspaceProfile.label} tools active`}</small>
         </label>
       </aside>
 
       <section className="dashboardMain">
         <header className="dashboardHeader">
           <div>
-            <p>MISSION CONTROL</p>
+            <p>YOUR DASHBOARD</p>
             <h1>{getGreeting()}, {firstName}.</h1>
-            <span>Your projects, priorities, and next waypoints are ready.</span>
+            <span>See what needs attention and choose your next action.</span>
           </div>
 
           <div className="dashboardActions">
@@ -623,6 +712,30 @@ export default function DashboardPage() {
             <span>{dashboardError}</span>
           </div>
         )}
+
+        <section className="guidedStartSection" aria-label="Choose your next action">
+          <div className="guidedStartHeading">
+            <div>
+              <p>WHAT WOULD YOU LIKE TO DO TODAY?</p>
+              <h2>Choose one clear next step.</h2>
+            </div>
+            <span>Project Assistant can explain any page or unfamiliar term.</span>
+          </div>
+          <div className="guidedActionGrid">
+            <button type="button" onClick={() => addProject()}>
+              <b>+</b><span><strong>Start a new project</strong><small>Answer a few simple setup questions.</small></span>
+            </button>
+            <button type="button" onClick={openPrimaryProject}>
+              <b>→</b><span><strong>Continue a project</strong><small>{primaryProject ? primaryProject.title : "Create your first project"}</small></span>
+            </button>
+            <button type="button" onClick={openPrimaryProject}>
+              <b>✓</b><span><strong>Check permits</strong><small>Find likely approvals and official resources.</small></span>
+            </button>
+            <button type="button" onClick={() => router.push("/help")}>
+              <b>?</b><span><strong>Get help</strong><small>Plain-language answers and common terms.</small></span>
+            </button>
+          </div>
+        </section>
 
         <section className={`signedInVisualHero role-${accountRole}`}>
           <div className="signedInVisualCopy">
@@ -657,7 +770,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 key={category.key}
-                onClick={() => createProject(category)}
+                onClick={() => addProject(category)}
                 disabled={creating}
               >
                 <img src={category.image} alt={`${category.label} with people planning or completing the work`} loading="lazy" decoding="async" />
@@ -671,8 +784,8 @@ export default function DashboardPage() {
           <article className="missionReadinessCard">
             <div className="missionCardHeading">
               <div>
-                <p>MISSION READINESS</p>
-                <h2>{projects.length ? "Portfolio status" : "Ready for takeoff"}</h2>
+                <p>PROJECT PROGRESS</p>
+                <h2>{projects.length ? "Overall project status" : "Ready to begin"}</h2>
               </div>
               <span className="livePill"><i /> LIVE</span>
             </div>
@@ -699,7 +812,7 @@ export default function DashboardPage() {
                   <strong>{getProjectStage(primaryProject)}</strong>
                 </div>
                 <div>
-                  <span>Primary mission</span>
+                  <span>Current project</span>
                   <strong>{primaryProject?.title || "Not started"}</strong>
                 </div>
               </div>
@@ -710,13 +823,13 @@ export default function DashboardPage() {
             <div className="pilotBriefingHeader">
               <div className="pilotAvatar">P</div>
               <div>
-                <p>PILOT BRIEFING</p>
+                <p>PROJECT ASSISTANT</p>
                 <h2>Today&apos;s priority</h2>
               </div>
             </div>
 
             <div className="priorityBlock">
-              <span>CURRENT OBJECTIVE</span>
+              <span>NEXT RECOMMENDED STEP</span>
               <strong>{pilotBriefing.objective}</strong>
             </div>
 
@@ -728,7 +841,7 @@ export default function DashboardPage() {
                 <strong>{pilotBriefing.estimate}</strong>
               </div>
               <button type="button" onClick={openPrimaryProject} disabled={creating}>
-                {primaryProject ? "Continue Mission" : "Start First Project"}
+                {primaryProject ? "Continue Project" : "Start First Project"}
                 <span aria-hidden="true">→</span>
               </button>
             </div>
@@ -760,15 +873,14 @@ export default function DashboardPage() {
 
         <section className="flightPlanBanner" id="flight-plan">
           <div className="flightPlanCopy">
-            <p>PORTFOLIO FLIGHT PLAN</p>
-            <h2>Every project follows a clear course.</h2>
+            <p>STEP-BY-STEP PROJECT PLAN</p>
+            <h2>Every project follows a clear set of steps.</h2>
             <span>
-              The active waypoint advances as project readiness improves. Open a
-              project to complete the recommended next action.
+              The highlighted step changes as your project progresses. Open a project to complete the next recommended action.
             </span>
           </div>
 
-          <div className="flightPlanStages" aria-label="Flight Plan stages">
+          <div className="flightPlanStages" aria-label="Project Plan stages">
             {FLIGHT_STAGES.map((stage, index) => {
               const completed = projects.length > 0 && averageProgress >= stage.threshold;
               const nextStage =
@@ -803,11 +915,9 @@ export default function DashboardPage() {
           {!projects.length ? (
             <div className="emptyProjects">
               <div className="emptyProjectIcon">P</div>
-              <h3>No missions yet.</h3>
+              <h3>No projects yet.</h3>
               <p>
-                Every completed project begins with a Flight Plan. Create your
-                first project and Pilot will guide the course from concept to
-                completion.
+                Start your first project and Project Assistant will guide you through each step from the initial idea to completion.
               </p>
               <button type="button" onClick={addProject} disabled={creating}>
                 {creating ? "Creating Project…" : "Start My First Project"}
@@ -855,8 +965,8 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="nextStep">
-                      <small>NEXT OBJECTIVE</small>
-                      <strong>{project.next_step || "Review the next waypoint"}</strong>
+                      <small>NEXT STEP</small>
+                      <strong>{project.next_step || "Review the next project step"}</strong>
                     </div>
 
                     <div className="projectCardActions">
@@ -865,7 +975,7 @@ export default function DashboardPage() {
                         className="openProjectButton"
                         onClick={() => router.push(`/project/${project.id}`)}
                       >
-                        Open Workspace <span aria-hidden="true">→</span>
+                        Open Project <span aria-hidden="true">→</span>
                       </button>
                       <button
                         type="button"
@@ -910,19 +1020,74 @@ export default function DashboardPage() {
                 <span>04</span>
                 <b className="developmentPill">IN DEVELOPMENT</b>
               </div>
-              <p>PROFESSIONAL NETWORK</p>
-              <h3>Bring the right help into the mission.</h3>
+              <p>BEST MATCH CONTRACTOR NETWORK</p>
+              <h3>Find contractors based on project fit.</h3>
               <span>
-                Contractor discovery and credential comparison are being prepared
-                for a future beta release.
+                Contractors will be ranked by specialty, location, qualifications, availability, and performance—not payment.
               </span>
               <button type="button" disabled>
-                Network Coming Soon
+                Best Match Coming in 3.0B
               </button>
             </div>
           </article>
         </section>
       </section>
+
+      {showProjectWizard && (
+        <div className="projectWizardBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setShowProjectWizard(false); }}>
+          <section className="projectWizard" role="dialog" aria-modal="true" aria-labelledby="project-wizard-title">
+            <header>
+              <div>
+                <small>NEW PROJECT · STEP {wizardStep} OF 3</small>
+                <h2 id="project-wizard-title">Let&apos;s set up your project.</h2>
+              </div>
+              <button type="button" onClick={() => setShowProjectWizard(false)} disabled={creating} aria-label="Close project setup">×</button>
+            </header>
+
+            <form onSubmit={submitProjectWizard}>
+              {wizardStep === 1 && (
+                <div className="wizardStep">
+                  <p>What are you planning?</p>
+                  <label><span>Project type</span><input value={wizardForm.projectType} onChange={(event) => updateWizardField("projectType", event.target.value)} placeholder="Deck, bathroom, fence, addition…" autoFocus /></label>
+                  <label><span>Project name</span><input value={wizardForm.title} onChange={(event) => updateWizardField("title", event.target.value)} placeholder="Backyard Deck Replacement" /></label>
+                  <label><span>Brief description (optional)</span><textarea value={wizardForm.description} onChange={(event) => updateWizardField("description", event.target.value)} placeholder="What would you like to build, repair, or improve?" /></label>
+                </div>
+              )}
+
+              {wizardStep === 2 && (
+                <div className="wizardStep">
+                  <p>Where and when is the project?</p>
+                  <label><span>Project address (optional for now)</span><input value={wizardForm.address} onChange={(event) => updateWizardField("address", event.target.value)} placeholder="Street address, city, state, ZIP" autoFocus /></label>
+                  <label><span>Target timeline</span><select value={wizardForm.targetTimeline} onChange={(event) => updateWizardField("targetTimeline", event.target.value)}><option value="">Not sure yet</option><option>As soon as possible</option><option>Within 3 months</option><option>Within 6 months</option><option>This year</option><option>Future planning</option></select></label>
+                  <label><span>Your role</span><select value={wizardForm.projectRole} onChange={(event) => updateWizardField("projectRole", event.target.value)}><option>Owner</option><option>Contractor</option><option>Property Manager</option><option>Project Manager</option><option>Developer / Investor</option></select></label>
+                </div>
+              )}
+
+              {wizardStep === 3 && (
+                <div className="wizardStep">
+                  <p>How do you expect to complete the work?</p>
+                  <label><span>Planning budget (optional)</span><div className="wizardMoneyInput"><b>$</b><input inputMode="decimal" value={wizardForm.budget} onChange={(event) => updateWizardField("budget", event.target.value.replace(/[^0-9.]/g, ""))} placeholder="15000" autoFocus /></div></label>
+                  <div className="wizardSummary">
+                    <small>YOUR PROJECT</small>
+                    <strong>{wizardForm.title || "Untitled Project"}</strong>
+                    <span>{wizardForm.projectType || "Project type not added"} · {wizardForm.address || "Location can be added later"}</span>
+                    <p>Project Assistant will create a step-by-step plan and show the first recommended action.</p>
+                  </div>
+                </div>
+              )}
+
+              <footer>
+                <button type="button" className="wizardSecondary" onClick={() => wizardStep === 1 ? setShowProjectWizard(false) : setWizardStep((current) => current - 1)} disabled={creating}>{wizardStep === 1 ? "Cancel" : "Back"}</button>
+                {wizardStep < 3 ? (
+                  <button type="button" onClick={() => setWizardStep((current) => current + 1)} disabled={(wizardStep === 1 && (!wizardForm.projectType.trim() || !wizardForm.title.trim()))}>Continue</button>
+                ) : (
+                  <button type="submit" disabled={creating}>{creating ? "Creating Project…" : "Create Project"}</button>
+                )}
+              </footer>
+            </form>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,0 +1,22 @@
+PROJECT PILOT SPRINT 3.0A PATCH MANIFEST
+
+Modified files:
+- app/layout.js
+- app/api/pilot/route.js
+- app/dashboard/page.js
+- app/dashboard/dashboard.css
+- app/project/[id]/page.js
+- app/project/[id]/project.css
+
+New files:
+- app/help/page.js
+- app/help/help.css
+- app/admin/page.js
+- app/admin/admin.css
+- components/GuidanceAssistant.js
+- components/guidance-assistant.css
+- components/BetaFeedback.js
+- components/beta-feedback.css
+- components/ProductAnalytics.js
+- supabase/migrations/009_sprint_3_0a_guided_beta.sql
+- SPRINT_3_0A_README.txt

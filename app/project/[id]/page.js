@@ -17,11 +17,11 @@ const STAGES = [
 ];
 
 const NAV_ITEMS = [
-  ["overview", "Command Center"],
-  ["flight", "Flight Plan"],
-  ["pilot", "Pilot"],
-  ["permits", "Permit Intelligence"],
-  ["documents", "Project Binder"],
+  ["overview", "Overview"],
+  ["flight", "Project Plan"],
+  ["pilot", "Project Assistant"],
+  ["permits", "Permits & Approvals"],
+  ["documents", "Files & Documents"],
   ["notes", "Notes"],
 ];
 
@@ -279,6 +279,13 @@ export default function ProjectWorkspacePage() {
     }
   }, [messages, sending, activeTab]);
 
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab && NAV_ITEMS.some(([key]) => key === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, []);
+
   async function loadWorkspace() {
     setLoading(true);
     setError("");
@@ -338,7 +345,7 @@ export default function ProjectWorkspacePage() {
     setDocuments(documentResult.data || []);
 
     if (waypointResult.error) {
-      setError("The Flight Plan database update is missing. Run the included Sprint 2.2–2.3 SQL migration in Supabase, then refresh this page.");
+      setError("The Project Plan database update is missing. Run the included Sprint 2.2–2.3 SQL migration in Supabase, then refresh this page.");
       setWaypoints([]);
     } else if (!waypointResult.data?.length) {
       const seeded = await seedWaypoints(projectResult.data, currentUser);
@@ -422,7 +429,7 @@ export default function ProjectWorkspacePage() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Pilot could not respond.");
+      if (!response.ok) throw new Error(data.error || "Project Assistant could not respond.");
 
       setMessages((current) => [...current, data.message]);
       if (data.project) setProject(data.project);
@@ -459,7 +466,7 @@ export default function ProjectWorkspacePage() {
     setSaving(false);
   }
 
-  async function saveWaypoint(index, updates, successMessage = "Flight Plan updated.") {
+  async function saveWaypoint(index, updates, successMessage = "Project Plan updated.") {
     if (!user || !project) return;
 
     const current = waypointFor(index);
@@ -573,7 +580,7 @@ export default function ProjectWorkspacePage() {
       if (recordError) throw recordError;
 
       setDocuments((current) => [data, ...current]);
-      setNotice(`${file.name} added to the Project Binder.`);
+      setNotice(`${file.name} added to Files & Documents.`);
     } catch (uploadError) {
       setError(uploadError.message);
     }
@@ -648,7 +655,7 @@ export default function ProjectWorkspacePage() {
         body: JSON.stringify({ address, zip, project: projectType }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Permit Intelligence could not complete the lookup.");
+      if (!response.ok) throw new Error(result.error || "Permit guidance could not complete the lookup.");
 
       const checkedAt = new Date().toISOString();
       const projectUpdate = {
@@ -681,9 +688,9 @@ export default function ProjectWorkspacePage() {
         ...current,
         address: result.matchedAddress || address,
       }));
-      setNotice("Permit Intelligence saved to this project.");
+      setNotice("Permit guidance saved to this project.");
     } catch (lookupError) {
-      setPermitError(lookupError.message || "Permit Intelligence is temporarily unavailable.");
+      setPermitError(lookupError.message || "Permit guidance is temporarily unavailable.");
     } finally {
       setPermitLoading(false);
     }
@@ -766,7 +773,7 @@ export default function ProjectWorkspacePage() {
           <small>PROJECT READINESS</small>
           <strong>{readiness}%</strong>
           <div><span style={{ width: `${readiness}%` }} /></div>
-          <p>{completedCount} of {STAGES.length} waypoints complete</p>
+          <p>{completedCount} of {STAGES.length} steps complete</p>
         </div>
       </aside>
 
@@ -778,8 +785,8 @@ export default function ProjectWorkspacePage() {
             <span>{project.next_step}</span>
           </div>
           <div className="workspaceHeaderActions">
-            <button className="secondaryAction" onClick={() => setActiveTab("flight")}>Open Flight Plan</button>
-            <button onClick={() => setActiveTab("pilot")}>Continue with Pilot</button>
+            <button className="secondaryAction" onClick={() => setActiveTab("flight")}>Open Project Plan</button>
+            <button onClick={() => setActiveTab("pilot")}>Ask Project Assistant</button>
           </div>
         </header>
 
@@ -793,11 +800,11 @@ export default function ProjectWorkspacePage() {
                 <p>CURRENT OBJECTIVE</p>
                 <h1>{project.next_step}</h1>
                 <span>
-                  Pilot keeps the project course, documents, decisions, and next actions connected in one workspace.
+                  Project Assistant keeps the plan, documents, decisions, and next actions connected in one place.
                 </span>
                 <div className="commandHeroActions">
-                  <button onClick={() => setActiveTab("flight")}>Review Flight Plan</button>
-                  <button className="heroSecondary" onClick={() => setActiveTab("pilot")}>Ask Pilot</button>
+                  <button onClick={() => setActiveTab("flight")}>Review Project Plan</button>
+                  <button className="heroSecondary" onClick={() => setActiveTab("pilot")}>Ask Project Assistant</button>
                 </div>
               </div>
               <div className="commandHeroVisual">
@@ -813,13 +820,13 @@ export default function ProjectWorkspacePage() {
               <article className="missionCard flightCard">
                 <div className="cardHeadingRow">
                   <div>
-                    <p>INTERACTIVE FLIGHT PLAN</p>
-                    <h3>{completedCount} of {STAGES.length} waypoints complete</h3>
+                    <p>STEP-BY-STEP PROJECT PLAN</p>
+                    <h3>{completedCount} of {STAGES.length} steps complete</h3>
                   </div>
                   <button onClick={() => setActiveTab("flight")}>Manage Plan</button>
                 </div>
 
-                <div className="flightStrip" aria-label="Project Flight Plan progress">
+                <div className="flightStrip" aria-label="Project Plan progress">
                   {STAGES.map((stage, index) => {
                     const waypoint = waypointFor(index);
                     const current = index === currentStageIndex && !waypoint.completed;
@@ -866,16 +873,16 @@ export default function ProjectWorkspacePage() {
                   <div><small>FILES</small><strong>{documents.length}</strong></div>
                   <div><small>MESSAGES</small><strong>{messages.length}</strong></div>
                 </div>
-                <button onClick={() => setActiveTab("pilot")}>Continue with Pilot</button>
+                <button onClick={() => setActiveTab("pilot")}>Ask Project Assistant</button>
               </article>
 
               <article className="missionCard binderCard">
                 <div className="cardHeadingRow">
                   <div>
-                    <p>PROJECT BINDER</p>
+                    <p>FILES & DOCUMENTS</p>
                     <h3>{documents.length} saved document{documents.length === 1 ? "" : "s"}</h3>
                   </div>
-                  <button onClick={() => setActiveTab("documents")}>Open Binder</button>
+                  <button onClick={() => setActiveTab("documents")}>Open Files</button>
                 </div>
                 {documents.length ? (
                   <div className="recentDocuments">
@@ -920,7 +927,7 @@ export default function ProjectWorkspacePage() {
               <article className="missionCard permitPreviewCard">
                 <div className="cardHeadingRow">
                   <div>
-                    <p>PERMIT INTELLIGENCE</p>
+                    <p>PERMITS & APPROVALS</p>
                     <h3>{permitChecked ? "Jurisdiction check saved" : "Confirm the permit path"}</h3>
                   </div>
                   <button onClick={() => setActiveTab("permits")}>{permitChecked ? "Review Check" : "Run Check"}</button>
@@ -954,13 +961,13 @@ export default function ProjectWorkspacePage() {
           <div className="workspaceContent flightContent">
             <div className="sectionIntro splitIntro">
               <div>
-                <p>INTERACTIVE FLIGHT PLAN</p>
-                <h1>A clear course from concept to completion.</h1>
-                <span>Open a waypoint to add notes, set a target date, or mark it complete.</span>
+                <p>STEP-BY-STEP PROJECT PLAN</p>
+                <h1>A clear path from the first idea to completion.</h1>
+                <span>Open a step to add notes, set a target date, or mark it complete.</span>
               </div>
               <div className="flightSummaryPill">
                 <strong>{completedCount}/{STAGES.length}</strong>
-                <span>waypoints complete</span>
+                <span>steps complete</span>
               </div>
             </div>
 
@@ -983,7 +990,7 @@ export default function ProjectWorkspacePage() {
                     >
                       <div className="waypointNumber">{waypoint.completed ? "✓" : index + 1}</div>
                       <div className="waypointCopy">
-                        <small>{waypoint.completed ? "COMPLETED" : current ? "CURRENT WAYPOINT" : "UPCOMING"}</small>
+                        <small>{waypoint.completed ? "COMPLETED" : current ? "CURRENT STEP" : "UPCOMING"}</small>
                         <h3>{stage.label}</h3>
                         <p>{stage.description}</p>
                       </div>
@@ -996,7 +1003,7 @@ export default function ProjectWorkspacePage() {
                     {expanded && (
                       <div className="waypointEditor">
                         <label className="waypointNotesField">
-                          <span>Waypoint notes</span>
+                          <span>Step notes</span>
                           <textarea
                             value={waypoint.notes || ""}
                             onChange={(event) => {
@@ -1032,7 +1039,7 @@ export default function ProjectWorkspacePage() {
                           )}
                           disabled={savingThis}
                         >
-                          {savingThis ? "Saving…" : waypoint.completed ? "Mark Incomplete" : "Mark Waypoint Complete"}
+                          {savingThis ? "Saving…" : waypoint.completed ? "Mark Incomplete" : "Mark Step Complete"}
                         </button>
                       </div>
                     )}
@@ -1048,8 +1055,8 @@ export default function ProjectWorkspacePage() {
             <header className="pilotHeader">
               <img className="pilotVisualAvatar" src="/pilot-guide.jpg" alt="Project Pilot guide" />
               <div>
-                <p>PILOT</p>
-                <h2>Guided project setup</h2>
+                <p>PROJECT ASSISTANT</p>
+                <h2>Plain-language project help</h2>
               </div>
               <span className="onlineStatus">Guided beta mode</span>
             </header>
@@ -1059,8 +1066,8 @@ export default function ProjectWorkspacePage() {
                 <article className="message assistant">
                   <div className="messageAvatar">P</div>
                   <div>
-                    <strong>Pilot</strong>
-                    <p>Welcome aboard. What are you planning to build, repair, or renovate?</p>
+                    <strong>Project Assistant</strong>
+                    <p>Tell me what is confusing, or describe what you are planning to build, repair, or renovate.</p>
                   </div>
                 </article>
               )}
@@ -1079,8 +1086,8 @@ export default function ProjectWorkspacePage() {
                 <article className="message assistant">
                   <div className="messageAvatar">P</div>
                   <div>
-                    <strong>Pilot</strong>
-                    <p className="thinking">Charting the next step…</p>
+                    <strong>Project Assistant</strong>
+                    <p className="thinking">Preparing a clear next step…</p>
                   </div>
                 </article>
               )}
@@ -1088,6 +1095,11 @@ export default function ProjectWorkspacePage() {
             </div>
 
             <div className="composerArea">
+              <div className="assistantPromptChips" aria-label="Common questions">
+                <button type="button" onClick={() => setDraft("Explain what I should do next in plain language.")}>What should I do next?</button>
+                <button type="button" onClick={() => setDraft("Explain the permit and approval steps for this project.")}>Explain permits</button>
+                <button type="button" onClick={() => setDraft("What information or documents am I missing?")}>What am I missing?</button>
+              </div>
               <form onSubmit={sendMessage}>
                 <textarea
                   value={draft}
@@ -1098,7 +1110,7 @@ export default function ProjectWorkspacePage() {
                       event.currentTarget.form?.requestSubmit();
                     }
                   }}
-                  placeholder="Tell Pilot about your project…"
+                  placeholder="Ask a question or describe your project…"
                   rows={2}
                 />
                 <button disabled={sending || !draft.trim()}>
@@ -1114,9 +1126,9 @@ export default function ProjectWorkspacePage() {
           <div className="workspaceContent permitContent">
             <div className="sectionIntro splitIntro permitVisualIntro">
               <div>
-                <p>PERMIT INTELLIGENCE</p>
+                <p>PERMITS & APPROVALS</p>
                 <h1>Build a verified path before regulated work begins.</h1>
-                <span>Project Pilot organizes the address match, jurisdiction questions, document checklist, and official resources. Final requirements must be confirmed with the governing authority.</span>
+                <span>Project Pilot organizes the address, likely governing office, required-document checklist, and official resources. Final requirements must be confirmed with the governing authority.</span>
               </div>
               <div className="permitGuideVisual">
                 <img src="/permit-guide.jpg" alt="Project planning guide holding a tablet" loading="lazy" decoding="async" />
@@ -1311,7 +1323,7 @@ export default function ProjectWorkspacePage() {
             ) : (
               <section className="permitEmptyResult">
                 <span>P</span>
-                <div><h2>Permit Intelligence is ready.</h2><p>Enter the property address, ZIP code, and project type. Project Pilot will organize a practical checklist and official starting points.</p></div>
+                <div><h2>Permit guidance is ready.</h2><p>Enter the property address, ZIP code, and project type. Project Pilot will organize a practical checklist and official starting points.</p></div>
               </section>
             )}
 
@@ -1457,7 +1469,7 @@ export default function ProjectWorkspacePage() {
           <div className="workspaceContent">
             <div className="sectionIntro splitIntro">
               <div>
-                <p>PROJECT BINDER</p>
+                <p>FILES & DOCUMENTS</p>
                 <h1>Every important file in one place.</h1>
                 <span>Upload PDFs, plans, photos, estimates, contracts, or notes up to 15 MB.</span>
               </div>
@@ -1476,8 +1488,8 @@ export default function ProjectWorkspacePage() {
             {!documents.length ? (
               <div className="emptyBinder">
                 <div className="emptyBinderIcon">+</div>
-                <strong>No documents added yet.</strong>
-                <span>Add a plan, photo, estimate, contract, or project record to start the binder.</span>
+                <strong>No files added yet.</strong>
+                <span>Add a plan, photo, estimate, contract, or project record to keep this project organized.</span>
                 <button onClick={() => fileRef.current?.click()}>Upload First Document</button>
               </div>
             ) : (
