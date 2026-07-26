@@ -20,7 +20,9 @@ const EMPTY_SUMMARY = {
   project_type_breakdown: [],
 };
 
-function number(value) { return Number(value || 0).toLocaleString("en-US"); }
+function number(value) {
+  return Number(value || 0).toLocaleString("en-US");
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -29,67 +31,151 @@ export default function AdminPage() {
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
+  async function loadAdmin() {
+    setLoading(true);
+    setError("");
+    setAccessChecked(false);
 
-    async function loadAdmin() {
-      const { data: authData } = await supabase.auth.getUser();
-      const currentUser = authData?.user;
-      if (!currentUser) { router.replace("/"); return; }
-      if (!mounted) return;
-      setUser(currentUser);
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const currentUser = sessionData?.session?.user || null;
 
-      const { data: profileData, error: profileError } = await supabase
+    if (sessionError) {
+      setError(sessionError.message || "Project Pilot could not verify your sign-in session.");
+      setLoading(false);
+      setAccessChecked(true);
+      return;
+    }
+
+    if (!currentUser) {
+      setUser(null);
+      setProfile(null);
+      setAuthorized(false);
+      setLoading(false);
+      setAccessChecked(true);
+      return;
+    }
+
+    setUser(currentUser);
+
+    const [{ data: profileData, error: profileError }, { data: adminResult, error: adminError }] = await Promise.all([
+      supabase
         .from("profiles")
         .select("id, full_name, role, is_admin")
         .eq("id", currentUser.id)
-        .single();
+        .maybeSingle(),
+      supabase.rpc("is_project_pilot_admin"),
+    ]);
 
-      if (!mounted) return;
-      if (profileError) {
-        setError("Admin setup is incomplete. Run the Sprint 3.0A Supabase migration first.");
-        setLoading(false);
-        return;
-      }
+    const hasAdminAccess = adminResult === true || profileData?.is_admin === true;
+    setProfile(profileData || null);
+    setAuthorized(hasAdminAccess);
+    setAccessChecked(true);
 
-      setProfile(profileData);
-      if (!profileData?.is_admin) { setLoading(false); return; }
-
-      const [{ data: summaryData, error: summaryError }, { data: feedbackData, error: feedbackError }] = await Promise.all([
-        supabase.rpc("admin_dashboard_summary"),
-        supabase.from("beta_feedback").select("id, category, message, rating, page_path, status, admin_notes, created_at, user_id").order("created_at", { ascending: false }).limit(100),
-      ]);
-
-      if (!mounted) return;
-      if (summaryError || feedbackError) {
-        setError(summaryError?.message || feedbackError?.message || "Admin information could not be loaded.");
-      } else {
-        setSummary({ ...EMPTY_SUMMARY, ...(summaryData || {}) });
-        setFeedback(feedbackData || []);
-      }
+    if (profileError) {
+      setError("The admin profile check failed. Run the Admin Access Repair SQL in Supabase, then refresh this page.");
       setLoading(false);
+      return;
     }
 
-    loadAdmin();
-    return () => { mounted = false; };
-  }, [router]);
+    if (adminError) {
+      setError("The admin access function is missing or unavailable. Run the Admin Access Repair SQL in Supabase, then refresh this page.");
+      setLoading(false);
+      return;
+    }
 
-  const maxAccountCount = useMemo(() => Math.max(1, ...(summary.account_breakdown || []).map((item) => Number(item.count || 0))), [summary.account_breakdown]);
+    if (!hasAdminAccess) {
+      setLoading(false);
+      return;
+    }
 
-  async function updateFeedback(id, status) {
-    const { error: updateError } = await supabase.from("beta_feedback").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
-    if (updateError) { setError(updateError.message); return; }
-    setFeedback((current) => current.map((item) => item.id === id ? { ...item, status } : item));
+    const [{ data: summaryData, error: summaryError }, { data: feedbackData, error: feedbackError }] = await Promise.all([
+      supabase.rpc("admin_dashboard_summary"),
+      supabase
+        .from("beta_feedback")
+        .select("id, category, message, rating, page_path, status, admin_notes, created_at, user_id")
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ]);
+
+    if (summaryError || feedbackError) {
+      setError(summaryError?.message || feedbackError?.message || "Admin information could not be loaded.");
+    } else {
+      setSummary({ ...EMPTY_SUMMARY, ...(summaryData || {}) });
+      setFeedback(feedbackData || []);
+    }
+
+    setLoading(false);
   }
 
-  if (loading) return <main className="adminLoading">Opening Admin Control Center…</main>;
+  useEffect(() => {
+    let active = true;
 
-  if (!profile?.is_admin) {
+    async function start() {
+      if (!active) return;
+      await loadAdmin();
+    }
+
+    start();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const maxAccountCount = useMemo(
+    () => Math.max(1, ...(summary.account_breakdown || []).map((item) => Number(item.count || 0))),
+    [summary.account_breakdown]
+  );
+
+  async function updateFeedback(id, status) {
+    const { error: updateError } = await supabase
+      .from("beta_feedback")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    setFeedback((current) =>
+      current.map((item) => (item.id === id ? { ...item, status } : item))
+    );
+  }
+
+  if (loading) {
+    return <main className="adminLoading">Opening Admin Control Center…</main>;
+  }
+
+  if (accessChecked && !user) {
     return (
       <main className="adminDenied">
-        <div><span>P</span><h1>Admin access is not enabled.</h1><p>This account can use Project Pilot normally, but it has not been marked as an administrator in Supabase.</p><button onClick={() => router.push("/dashboard")}>Return to Dashboard</button></div>
+        <div>
+          <span>P</span>
+          <h1>Sign in to open the Admin Control Center.</h1>
+          <p>This page will remain here instead of redirecting you to another dashboard.</p>
+          <button onClick={() => router.push("/")}>Go to Sign In</button>
+        </div>
+      </main>
+    );
+  }
+
+  if (accessChecked && !authorized) {
+    return (
+      <main className="adminDenied">
+        <div>
+          <span>P</span>
+          <h1>Admin access is not enabled.</h1>
+          <p>
+            You are signed in as <strong>{user?.email || "this account"}</strong>, but Supabase is not returning an active administrator flag for this account.
+          </p>
+          {error && <p className="adminError" role="alert">{error}</p>}
+          <button onClick={loadAdmin}>Check Admin Access Again</button>
+          <button onClick={() => router.push("/dashboard")}>Return to Dashboard</button>
+        </div>
       </main>
     );
   }
@@ -98,15 +184,15 @@ export default function AdminPage() {
     <main className="adminPage">
       <aside className="adminRail">
         <a href="/dashboard" className="adminBrand"><span>P</span><strong>Project Pilot</strong></a>
-        <div><small>ADMIN CONTROL CENTER</small><strong>{profile.full_name || user?.email}</strong></div>
+        <div><small>ADMIN CONTROL CENTER</small><strong>{profile?.full_name || user?.email}</strong></div>
         <nav><a className="active" href="/admin">Overview</a><a href="#accounts">Accounts</a><a href="#financials">Financials</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a><a href="/help">Help Center</a></nav>
-        <div className="adminBetaState"><span /> <div><strong>Free beta active</strong><small>No user charges</small></div></div>
+        <div className="adminBetaState"><span /><div><strong>Free beta active</strong><small>No user charges</small></div></div>
       </aside>
 
       <section className="adminMain">
         <header className="adminHeader">
           <div><p>PROJECT PILOT ADMIN</p><h1>Business and product health at a glance.</h1><span>Accounts, project activity, feedback, and beta financial readiness in one view.</span></div>
-          <button onClick={() => window.location.reload()}>Refresh Data</button>
+          <button onClick={loadAdmin}>Refresh Data</button>
         </header>
 
         {error && <div className="adminError" role="alert">{error}</div>}
