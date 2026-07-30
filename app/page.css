@@ -309,6 +309,10 @@
   background: linear-gradient(180deg, #f8fbfd, #f4faf7);
 }
 
+.peopleFeatureSection article:first-child {
+  grid-column: 1 / -1;
+}
+
 .peopleFeatureSection article {
   overflow: hidden;
   display: grid;

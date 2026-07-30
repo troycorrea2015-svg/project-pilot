@@ -641,6 +641,7 @@ export default function DashboardPage() {
           <a href="#projects">My Projects</a>
           <a href="/contractors">Find Contractors</a>
           <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permits</a>
+          <a href={primaryProject ? `/project/${primaryProject.id}?tab=vision` : "#projects"}>Project Vision</a>
           <a href="/help">Help Center</a>
           {accountRole === "contractor" && <a href="/contractor">Contractor Center</a>}
           {isAdmin && <a href="/admin">Admin Control Center</a>}
@@ -730,6 +731,9 @@ export default function DashboardPage() {
             </button>
             <button type="button" onClick={openPrimaryProject}>
               <b>✓</b><span><strong>Check permits</strong><small>Find likely approvals and official resources.</small></span>
+            </button>
+            <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=vision`) : addProject()}>
+              <b>◫</b><span><strong>Visualize a project</strong><small>Turn your own photo into a realistic proposed result.</small></span>
             </button>
             <button type="button" onClick={() => router.push("/contractors")}>
               <b>⌂</b><span><strong>Find a contractor</strong><small>See unbiased Best Matches for your project.</small></span>

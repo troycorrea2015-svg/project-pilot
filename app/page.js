@@ -137,6 +137,7 @@ export default function HomePage() {
         <nav>
           <a href="#projects">Projects</a>
           <a href="#how-it-works">How It Works</a>
+          <a href="#project-vision">Project Vision</a>
           <a href="#diy">DIY</a>
           <a href="/contractors">Find Contractors</a>
           <a href="#access">Sign In</a>
@@ -156,6 +157,7 @@ export default function HomePage() {
             <a href="#how-it-works" className="secondaryAction">See How It Works</a>
           </div>
           <div className="heroBenefits">
+            <span>✓ AI project visualization</span>
             <span>✓ Estimated project costs</span>
             <span>✓ DIY and professional paths</span>
             <span>✓ Permit preparation</span>
@@ -257,7 +259,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="peopleFeatureSection">
+      <section className="peopleFeatureSection" id="project-vision">
+        <article>
+          <img src="/home-planning-people.jpg" alt="Homeowners visualizing a proposed property project" loading="lazy" decoding="async" />
+          <div>
+            <p className="eyebrow">SU · PROJECT VISION</p>
+            <h2>See a realistic proposed result using your own property photo.</h2>
+            <p>Upload the real project area, describe the changes, and let Su create editable concept versions while preserving the property, layout, and camera angle.</p>
+          </div>
+        </article>
+
         <article>
           <img src="/home-cost-planning.jpg" alt="Property manager reviewing project costs" loading="lazy" decoding="async" />
           <div>
@@ -283,6 +294,7 @@ export default function HomePage() {
           <h2>The useful parts of project planning, together.</h2>
         </div>
         <div className="featureGrid">
+          <article><strong>Project Vision</strong><p>Visualize a proposed result by editing the property photo uploaded by the project owner.</p></article>
           <article><strong>Dashboard</strong><p>See priorities, progress, current stages, and the next action at a glance.</p></article>
           <article><strong>Permits & Approvals</strong><p>Organize address matching, government-office questions, documents, and official links.</p></article>
           <article><strong>Cost Estimator</strong><p>Compare professional and DIY paths using a practical planning range.</p></article>

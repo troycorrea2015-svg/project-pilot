@@ -1,0 +1,94 @@
+PROJECT PILOT — INSTALL SPRINT 3.0C NOW
+=======================================
+
+STATUS FOR THIS PROJECT
+-----------------------
+The Project Vision Supabase migration/policy repair has already completed successfully.
+Do NOT rerun the policy repair or delete any Project Vision tables.
+
+1. UPLOAD THIS UPDATE TO GITHUB
+-------------------------------
+A. Extract Project_Pilot_3.0C_Full_Code_Update.zip on your computer.
+B. Open the project-pilot repository on GitHub.
+C. Select Add file > Upload files.
+D. Drag the CONTENTS of the extracted folder into the repository root.
+   Do not upload the outer folder as a new folder.
+E. GitHub should show both new files and replacements for existing files.
+F. Enter commit message: Sprint 3.0C Project Vision
+G. Select Commit changes.
+
+Important: Keep all existing repository files that are not included in this update.
+This package is a repository overlay, not a request to erase the repository first.
+
+2. ADD VERCEL ENVIRONMENT VARIABLES
+-----------------------------------
+Open Vercel > Project Pilot project > Settings > Environment Variables.
+Add these server-only variables for Production, Preview, and Development:
+
+OPENAI_API_KEY = your OpenAI API key
+PROJECT_VISION_ENABLED = true
+PROJECT_VISION_DAILY_LIMIT = 5
+OPENAI_IMAGE_MODEL = gpt-image-1
+OPENAI_IMAGE_QUALITY = high
+OPENAI_IMAGE_INPUT_FIDELITY = high
+
+OPENAI_IMAGE_SIZE may be left unset. Project Pilot will automatically choose
+portrait, landscape, or square output based on the uploaded original.
+
+Do not name the key NEXT_PUBLIC_OPENAI_API_KEY. The OpenAI key must never be
+available to browser code.
+
+Confirm these existing variables are still present:
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+
+Keep MARKETPLACE_PAYMENTS_ENABLED=false unless Stripe testing and marketplace
+launch requirements are completed separately. Sprint 3.0C does not change it.
+
+3. DEPLOY
+---------
+Saving the GitHub commit should trigger a Vercel deployment automatically.
+Open Vercel > Deployments and confirm the newest deployment says Ready.
+If it does not start automatically, select Redeploy on the latest deployment.
+
+4. TEST WITH A NORMAL HOMEOWNER ACCOUNT
+----------------------------------------
+A. Sign in to Project Pilot.
+B. Open an existing project or create one.
+C. Open Project Vision from the project menu.
+D. Upload a JPG, PNG, or WebP photo that you personally control.
+E. Describe only the changes wanted in the final concept.
+F. Generate the proposed result.
+G. Confirm the original photo remains recognizable.
+H. Test the before/AI slider, revision request, favorite version, and deletion.
+I. Upload an Actual After photo only as a separate real completed-project photo.
+
+5. EXPECTED BEHAVIOR
+--------------------
+- User uploads are stored in the private Supabase project-vision bucket.
+- Browser access uses temporary signed URLs.
+- AI editing happens in a server route; the OpenAI key is not sent to the browser.
+- Every revision starts from the selected original upload.
+- AI concepts are labeled as conceptual visualizations, not completed work.
+- Each account is limited to the configured number of generations per UTC day.
+- Only JPG, PNG, and WebP uploads up to 15 MB are accepted by the interface.
+
+6. QUICK TROUBLESHOOTING
+------------------------
+"Project Vision is not connected yet"
+  Add OPENAI_API_KEY in Vercel and redeploy.
+
+"SUPABASE_SERVICE_ROLE_KEY is not configured"
+  Add the existing Supabase secret/service-role key in Vercel and redeploy.
+
+"Project Vision is not installed in Supabase yet"
+  The app is connected to a different Supabase project or the migration is missing
+  there. Do not rerun repairs in the working project unless this message appears.
+
+"Daily limit reached"
+  Wait until the next UTC day or raise PROJECT_VISION_DAILY_LIMIT carefully.
+
+OpenAI billing/quota error
+  Confirm API billing and project limits in the OpenAI platform. A ChatGPT
+  subscription does not itself fund OpenAI API usage.

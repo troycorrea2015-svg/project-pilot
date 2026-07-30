@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import ProjectVision from "../../../components/ProjectVision";
 import "./project.css";
 
 const STAGES = [
@@ -18,6 +19,7 @@ const STAGES = [
 
 const NAV_ITEMS = [
   ["overview", "Overview"],
+  ["vision", "Project Vision"],
   ["flight", "Project Plan"],
   ["pilot", "Project Assistant"],
   ["permits", "Permits & Approvals"],
@@ -860,6 +862,23 @@ export default function ProjectWorkspacePage() {
                 </div>
               </article>
 
+              <article className="missionCard permitPreviewCard">
+                <div className="cardHeadingRow">
+                  <div>
+                    <p>PROJECT VISION</p>
+                    <h3>Visualize the proposed result using your own property photo.</h3>
+                  </div>
+                  <button onClick={() => setActiveTab("vision")}>Open Visualizer</button>
+                </div>
+                <div className="permitStatusPreview ready">
+                  <span>◫</span>
+                  <div>
+                    <strong>Original photo → AI concept → actual completed result</strong>
+                    <p>Project Vision preserves the uploaded property and edits only the project changes you request.</p>
+                  </div>
+                </div>
+              </article>
+
               <article className="missionCard pilotBriefCard">
                 <div className="pilotBriefTop">
                   <span>P</span>
@@ -955,6 +974,12 @@ export default function ProjectWorkspacePage() {
                 </p>
               </article>
             </section>
+          </div>
+        )}
+
+        {activeTab === "vision" && (
+          <div className="workspaceContent">
+            <ProjectVision project={project} user={user} />
           </div>
         )}
 
