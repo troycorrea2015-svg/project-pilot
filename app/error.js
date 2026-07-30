@@ -12,12 +12,12 @@ export default function GlobalError({ error, reset }) {
     <main className="releaseState">
       <section>
         <div className="releaseMark">P</div>
-        <p>COURSE CORRECTION</p>
-        <h1>This page hit unexpected turbulence.</h1>
-        <span>Your saved project data has not been intentionally removed. Try the page again or return to Mission Control.</span>
+        <p>SOMETHING WENT WRONG</p>
+        <h1>This page could not load.</h1>
+        <span>Your saved project data has not been intentionally removed. Try the page again or return to your Dashboard.</span>
         <div>
           <button type="button" onClick={reset}>Try Again</button>
-          <a href="/dashboard">Mission Control</a>
+          <a href="/dashboard">Dashboard</a>
         </div>
       </section>
     </main>

@@ -43,7 +43,7 @@ const categories = [
 
 const steps = [
   ["01", "Describe the project", "Tell Pilot what you want to build, repair, or renovate."],
-  ["02", "See the full path", "Review permit guidance, costs, documents, and the next waypoint."],
+  ["02", "See the full path", "Review permit guidance, costs, documents, and the next recommended step."],
   ["03", "Choose DIY or professional", "Compare routes and move forward with fewer surprises."],
 ];
 
@@ -138,6 +138,7 @@ export default function HomePage() {
           <a href="#projects">Projects</a>
           <a href="#how-it-works">How It Works</a>
           <a href="#diy">DIY</a>
+          <a href="/contractors">Find Contractors</a>
           <a href="#access">Sign In</a>
         </nav>
         <a className="navCta" href="#access">Get Started</a>
@@ -216,12 +217,12 @@ export default function HomePage() {
             {mode === "signin" && <button className="forgotButton" type="button" onClick={resetPassword}>Forgot password?</button>}
 
             <button className="authSubmit" type="submit" disabled={loading}>
-              {loading ? "Working…" : mode === "signin" ? "Open My Projects" : "Create My Free Account"}
+              {loading ? "Working…" : mode === "signin" ? "Open My Projects" : "Create My Account"}
             </button>
           </form>
 
           {status && <p className="authStatus">{status}</p>}
-          <p className="accessNote">Free during beta. No payment information required.</p>
+          <p className="accessNote">Homeowner planning is free. Contractor partner profiles are free to create.</p>
         </section>
       </section>
 
@@ -282,28 +283,28 @@ export default function HomePage() {
           <h2>The useful parts of project planning, together.</h2>
         </div>
         <div className="featureGrid">
-          <article><strong>Mission Control</strong><p>See priorities, readiness, current stages, and the next action at a glance.</p></article>
-          <article><strong>Permit Intelligence</strong><p>Organize address matching, jurisdiction questions, documents, and official links.</p></article>
+          <article><strong>Dashboard</strong><p>See priorities, progress, current stages, and the next action at a glance.</p></article>
+          <article><strong>Permits & Approvals</strong><p>Organize address matching, government-office questions, documents, and official links.</p></article>
           <article><strong>Cost Estimator</strong><p>Compare professional and DIY paths using a practical planning range.</p></article>
           <article><strong>DIY Resources</strong><p>Open project-specific learning links, materials, and safety reminders.</p></article>
-          <article><strong>Project Binder</strong><p>Keep plans, photos, quotes, permits, receipts, and approvals with the project.</p></article>
-          <article><strong>Pilot Guidance</strong><p>Return to the project without losing track of the next decision.</p></article>
+          <article><strong>Files & Documents</strong><p>Keep plans, photos, quotes, permits, receipts, and approvals with the project.</p></article>
+          <article><strong>Project Assistant</strong><p>Get plain-language help and return without losing track of the next decision.</p></article>
         </div>
       </section>
 
       <section className="betaSection">
         <div>
-          <p className="eyebrow">BETA ACCESS</p>
-          <h2>Start free and help shape what comes next.</h2>
-          <p>Project Pilot is ready for early users, product demonstrations, contractor conversations, and investor feedback.</p>
+          <p className="eyebrow">PROJECT PILOT CONTRACTOR NETWORK</p>
+          <h2>Best Match recommendations that cannot be purchased.</h2>
+          <p>Homeowners plan projects and request introductions at no charge. Contractors create a free partner profile and see the fixed introduction fee before choosing whether to accept a qualified opportunity.</p>
         </div>
-        <a href="#access">Create Free Account</a>
+        <a href="/contractors">Find Contractors</a>
       </section>
 
       <footer className="homeFooter">
         <a className="homeBrand" href="#top"><span>P</span><div><strong>Project Pilot</strong><small>Plan. Verify. Build.</small></div></a>
         <p>Piloting your project from concept to completion.</p>
-        <small>Beta software. Permit, cost, and DIY guidance should be confirmed before work begins.</small>
+        <small>Permit, cost, contractor, and DIY guidance should be independently confirmed before work begins. <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></small>
       </footer>
     </main>
   );

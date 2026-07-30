@@ -30,14 +30,14 @@ const ACCOUNT_WORKSPACES = {
     image: "/role-homeowner.jpg",
     eyebrow: "YOUR HOME PROJECTS",
     headline: "Plan every improvement around your home without losing track of the details.",
-    description: "Manage multiple projects, compare DIY and professional routes, track costs, and keep each Flight Plan separate.",
+    description: "Manage multiple projects, compare DIY and professional routes, track costs, and keep each step-by-step plan separate.",
     projectLabel: "MY HOME PROJECTS",
     projectHeading: "Keep every project moving.",
     launchCopy: "Choose a common home project or create a custom one. There is no one-project limit for homeowner accounts.",
     tools: [
-      { eyebrow: "HOME PROJECT BINDER", title: "Keep every plan, quote, receipt, and approval together.", description: "Store documents separately for every active improvement around your home.", image: "/home-cost-planning.jpg", action: "Open Project Binder" },
+      { eyebrow: "HOME PROJECT FILES", title: "Keep every plan, quote, receipt, and approval together.", description: "Store documents separately for every active improvement around your home.", image: "/home-cost-planning.jpg", action: "Open Files & Documents" },
       { eyebrow: "DIY + COST ROUTES", title: "Compare doing it yourself with hiring a professional.", description: "Review materials, tools, cost ranges, and project-specific learning links.", image: "/home-diy-builder.jpg", action: "Explore DIY Route" },
-      { eyebrow: "PILOT GUIDANCE", title: "Know which home project needs attention next.", description: "Pilot keeps each project scope, permit path, costs, files, and next waypoint connected.", image: "/role-homeowner.jpg", action: "Ask Pilot" },
+      { eyebrow: "PILOT GUIDANCE", title: "Know which home project needs attention next.", description: "Project Assistant keeps each project scope, permit path, costs, files, and next step connected.", image: "/role-homeowner.jpg", action: "Ask Pilot" },
     ],
   },
   contractor: {
@@ -51,7 +51,7 @@ const ACCOUNT_WORKSPACES = {
     projectHeading: "Continue the next active job.",
     launchCopy: "Start a client job from a category or create a custom project for a different scope of work.",
     tools: [
-      { eyebrow: "CLIENT JOB FILES", title: "Keep estimates, plans, approvals, and closeout records by customer.", description: "Every client project has its own Binder and Flight Plan.", image: "/role-contractor.jpg", action: "Open Client Project" },
+      { eyebrow: "CLIENT JOB FILES", title: "Keep estimates, plans, approvals, and closeout records by customer.", description: "Every client project has its own files and step-by-step project plan.", image: "/role-contractor.jpg", action: "Open Client Project" },
       { eyebrow: "ESTIMATES + PERMITS", title: "Prepare project ranges and jurisdiction questions before work starts.", description: "Keep cost planning and permit research connected to the same job.", image: "/home-cost-planning.jpg", action: "Review Job Costs" },
       { eyebrow: "PILOT FOR EXECUTION", title: "Keep the next job action visible across active work.", description: "Pilot can guide scope, documents, permit preparation, and project handoffs.", image: "/home-diy-builder.jpg", action: "Continue Job" },
     ],
@@ -101,7 +101,7 @@ const ACCOUNT_WORKSPACES = {
     tools: [
       { eyebrow: "DUE DILIGENCE", title: "Keep planning assumptions, property records, and approvals connected.", description: "Create a separate workspace for each opportunity or active development.", image: "/role-property-manager.jpg", action: "Open Development" },
       { eyebrow: "COST + FEASIBILITY", title: "Compare early cost ranges before committing more capital.", description: "Keep budget planning, permit research, and documentation in one place.", image: "/home-cost-planning.jpg", action: "Review Feasibility" },
-      { eyebrow: "PIPELINE GUIDANCE", title: "See which opportunity is ready for the next decision.", description: "Pilot keeps the portfolio view and project-level Flight Plans aligned.", image: "/pilot-guide.jpg", action: "Ask Pilot" },
+      { eyebrow: "PIPELINE GUIDANCE", title: "See which opportunity is ready for the next decision.", description: "Project Assistant keeps the portfolio view and project plans aligned.", image: "/pilot-guide.jpg", action: "Ask Pilot" },
     ],
   },
 };
@@ -171,7 +171,7 @@ function buildPilotBriefing(project) {
     return {
       objective: "Create your first project",
       message:
-        "Start with the project idea. Pilot will turn it into a clear Flight Plan and keep the next action visible.",
+        "Start with the project idea. Project Assistant will turn it into a clear project plan and keep the next action visible.",
       estimate: "About 3 minutes",
     };
   }
@@ -202,7 +202,7 @@ function buildPilotBriefing(project) {
     return {
       objective: project.next_step || "Continue permit preparation",
       message:
-        "Your project is ready for the next waypoint. Review the current recommendation and keep supporting plans or property records in the Project Binder.",
+        "Your project is ready for the next step. Review the current recommendation and keep supporting plans or property records in Files & Documents.",
       estimate: "About 5 minutes",
     };
   }
@@ -210,7 +210,7 @@ function buildPilotBriefing(project) {
   return {
     objective: project.next_step || "Review remaining project milestones",
     message:
-      "The project is well underway. Focus on the next incomplete waypoint and keep approvals, receipts, inspections, and warranties organized as the work advances.",
+      "The project is well underway. Focus on the next incomplete step and keep approvals, receipts, inspections, and warranties organized as the work advances.",
     estimate: "About 5 minutes",
   };
 }
@@ -423,7 +423,7 @@ export default function DashboardPage() {
     if (!user || !project?.id || deletingProject) return;
 
     const confirmed = window.confirm(
-      `Delete “${project.title || "Untitled Project"}”? This permanently removes its Flight Plan, messages, notes, permit research, and Project Binder records.`
+      `Delete “${project.title || "Untitled Project"}”? This permanently removes its project plan, messages, notes, permit research, and saved files.`
     );
 
     if (!confirmed) return;
@@ -491,7 +491,7 @@ export default function DashboardPage() {
           "Ask whether zoning, building, or trade approvals apply to the deck replacement.",
           "Obtain the current application checklist and fee schedule.",
           "Prepare the site plan, framing plan, and stair or guard details.",
-          "Save approvals and inspection records in the Project Binder.",
+          "Save approvals and inspection records in Files & Documents.",
         ],
         documents: ["Site plan", "Footing and framing plans", "Guard, stair, and attachment details"],
         sources: [
@@ -538,7 +538,7 @@ export default function DashboardPage() {
           stage_key: stageKey,
           stage_label: stageLabels[index],
           stage_order: index,
-          notes: index === 3 ? "Permit Intelligence check saved. Confirm the governing authority before submission." : "",
+          notes: index === 3 ? "Permit check saved. Confirm the responsible government office before submission." : "",
           due_date: null,
           completed: index < 4,
           updated_at: new Date().toISOString(),
@@ -557,7 +557,7 @@ export default function DashboardPage() {
           project_id: data.id,
           user_id: user.id,
           role: "assistant",
-          message: "The project setup and permit check are saved. The next waypoint is collecting the site plan, framing details, estimates, and product information in the Project Binder.",
+          message: "The project setup and permit check are saved. The next step is collecting the site plan, framing details, estimates, and product information in Files & Documents.",
         },
       ]);
       if (conversationError) throw conversationError;
@@ -634,15 +634,15 @@ export default function DashboardPage() {
             <span>P</span>
             <strong>Project Pilot</strong>
           </a>
-          <span className="betaBadge">BETA</span>
         </div>
 
         <nav aria-label="Dashboard navigation">
           <a className="active" href="/dashboard">Dashboard</a>
           <a href="#projects">My Projects</a>
-          <a href="#professionals">Find Contractors</a>
+          <a href="/contractors">Find Contractors</a>
           <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permits</a>
           <a href="/help">Help Center</a>
+          {accountRole === "contractor" && <a href="/contractor">Contractor Center</a>}
           {isAdmin && <a href="/admin">Admin Control Center</a>}
           <a href="/">Project Pilot Home</a>
         </nav>
@@ -731,6 +731,9 @@ export default function DashboardPage() {
             <button type="button" onClick={openPrimaryProject}>
               <b>✓</b><span><strong>Check permits</strong><small>Find likely approvals and official resources.</small></span>
             </button>
+            <button type="button" onClick={() => router.push("/contractors")}>
+              <b>⌂</b><span><strong>Find a contractor</strong><small>See unbiased Best Matches for your project.</small></span>
+            </button>
             <button type="button" onClick={() => router.push("/help")}>
               <b>?</b><span><strong>Get help</strong><small>Plain-language answers and common terms.</small></span>
             </button>
@@ -780,7 +783,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="missionControlGrid" aria-label="Mission Control overview">
+        <section className="missionControlGrid" aria-label="Project overview">
           <article className="missionReadinessCard">
             <div className="missionCardHeading">
               <div>
@@ -794,7 +797,7 @@ export default function DashboardPage() {
               <div
                 className="readinessRing"
                 style={{ "--mission-angle": missionAngle }}
-                aria-label={`${averageProgress}% mission readiness`}
+                aria-label={`${averageProgress}% project readiness`}
               >
                 <div>
                   <strong>{averageProgress}%</strong>

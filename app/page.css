@@ -482,3 +482,4 @@
   .categoryGrid img { aspect-ratio: 4 / 3; }
   .accessCard { padding: 20px; }
 }
+.homeFooter small a{color:#d9e6f7;text-decoration:none}.homeFooter small a:hover{text-decoration:underline}

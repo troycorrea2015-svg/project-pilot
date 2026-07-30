@@ -2,12 +2,12 @@ import "./globals.css";
 import "../components/guidance-assistant.css";
 import "../components/beta-feedback.css";
 import GuidanceAssistant from "../components/GuidanceAssistant";
-import BetaFeedback from "../components/BetaFeedback";
+import FeedbackCenter from "../components/BetaFeedback";
 import ProductAnalytics from "../components/ProductAnalytics";
 
 export const metadata = {
   title: "Project Pilot | From Concept to Completion",
-  description: "A plain-language project planning workspace for homeowners, contractors, property managers, developers, and investors.",
+  description: "Plan projects, understand permits and costs, and connect with unbiased Best Match contractors.",
 };
 
 export default function RootLayout({ children }) {
@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <ProductAnalytics />
-        <BetaFeedback />
+        <FeedbackCenter />
         <GuidanceAssistant />
       </body>
     </html>

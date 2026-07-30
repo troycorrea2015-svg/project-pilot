@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "../lib/supabase";
 
-export default function BetaFeedback() {
+export default function FeedbackCenter() {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
@@ -45,10 +45,10 @@ export default function BetaFeedback() {
 
     if (error) {
       setStatus(error.message?.includes("beta_feedback")
-        ? "Feedback storage is not active yet. Run the Sprint 3.0A Supabase migration, then try again."
+        ? "Feedback storage is not active yet. Run the Project Pilot database migrations, then try again."
         : "Your feedback could not be sent. Please try again.");
     } else {
-      setStatus("Thank you. Your feedback was sent to the Project Pilot admin dashboard.");
+      setStatus("Thank you. Your feedback was sent to the Project Pilot Admin Control Center.");
       setMessage("");
       setRating("");
     }
@@ -58,13 +58,13 @@ export default function BetaFeedback() {
 
   return (
     <>
-      <button type="button" className="feedbackLauncher" onClick={() => setOpen(true)}>Send Beta Feedback</button>
+      <button type="button" className="feedbackLauncher" onClick={() => setOpen(true)}>Send Feedback</button>
       {open && (
         <div className="feedbackBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
           <section className="feedbackDialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
             <header>
               <div>
-                <small>PROJECT PILOT BETA</small>
+                <small>PROJECT PILOT FEEDBACK</small>
                 <h2 id="feedback-title">Tell us what happened.</h2>
               </div>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close feedback form">×</button>

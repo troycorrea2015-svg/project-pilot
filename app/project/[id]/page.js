@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   ["flight", "Project Plan"],
   ["pilot", "Project Assistant"],
   ["permits", "Permits & Approvals"],
+  ["contractors", "Find Contractors"],
   ["documents", "Files & Documents"],
   ["notes", "Notes"],
 ];
@@ -811,7 +812,7 @@ export default function ProjectWorkspacePage() {
                 <img src={projectVisual(project)} alt={`${project.title} project visual with people and project context`} fetchPriority="high" decoding="async" />
                 <div className="readinessRing" style={{ "--progress": `${readiness}%` }}>
                   <strong>{readiness}%</strong>
-                  <span>mission ready</span>
+                  <span>ready to start</span>
                 </div>
               </div>
             </section>
@@ -848,7 +849,7 @@ export default function ProjectWorkspacePage() {
 
                 <div className="nextWaypointCard">
                   <div>
-                    <small>NEXT WAYPOINT</small>
+                    <small>NEXT STEP</small>
                     <strong>{nextWaypoint.label}</strong>
                     <span>{nextWaypoint.description}</span>
                   </div>
@@ -863,7 +864,7 @@ export default function ProjectWorkspacePage() {
                 <div className="pilotBriefTop">
                   <span>P</span>
                   <div>
-                    <p>PILOT BRIEFING</p>
+                    <p>PROJECT ASSISTANT</p>
                     <h3>Stay focused on the next decision.</h3>
                   </div>
                 </div>
@@ -1058,7 +1059,7 @@ export default function ProjectWorkspacePage() {
                 <p>PROJECT ASSISTANT</p>
                 <h2>Plain-language project help</h2>
               </div>
-              <span className="onlineStatus">Guided beta mode</span>
+              <span className="onlineStatus">Guided assistance</span>
             </header>
 
             <div className="messageList">
@@ -1117,7 +1118,7 @@ export default function ProjectWorkspacePage() {
                   {sending ? "Sending…" : "Send"}
                 </button>
               </form>
-              <small>Guided beta mode saves your project details without paid AI usage.</small>
+              <small>Guided assistance saves your project details without paid AI usage.</small>
             </div>
           </div>
         )}
@@ -1182,7 +1183,7 @@ export default function ProjectWorkspacePage() {
                 <button className="permitLookupButton" disabled={permitLoading}>
                   {permitLoading ? "Checking address and resources…" : permitChecked ? "Refresh Permit Check" : "Run Permit Check"}
                 </button>
-                <small className="permitDisclaimer">Beta research support only. Always confirm current forms, fees, approvals, and inspections with the responsible authority.</small>
+                <small className="permitDisclaimer">Planning support only. Always confirm current forms, fees, approvals, and inspections with the responsible authority.</small>
               </form>
 
               <article className="permitMapCard">
@@ -1463,6 +1464,30 @@ export default function ProjectWorkspacePage() {
               </div>
             </section>
           </div>
+        )}
+
+        {activeTab === "contractors" && (
+          <section className="workspacePanel contractorProjectPanel">
+            <div className="panelHeading">
+              <div>
+                <p>BEST MATCH CONTRACTOR NETWORK</p>
+                <h2>Find verified professionals who fit this project.</h2>
+              </div>
+            </div>
+            <div className="contractorProjectBody">
+              <div>
+                <h3>Ranking is based on fit—not payment.</h3>
+                <p>Project Pilot compares specialty, service area, verification, availability, typical project size, and performance. Contractors cannot purchase a higher position.</p>
+                <ul>
+                  <li>Choose up to three contractors.</li>
+                  <li>Contractors review an anonymized project summary first.</li>
+                  <li>Your contact details are released only after a contractor accepts the introduction.</li>
+                  <li>Homeowners are not charged for requesting introductions.</li>
+                </ul>
+              </div>
+              <button type="button" onClick={() => router.push(`/contractors?project=${project.id}`)}>See Best Matches for This Project</button>
+            </div>
+          </section>
         )}
 
         {activeTab === "documents" && (

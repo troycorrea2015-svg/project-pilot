@@ -5,11 +5,11 @@ export default function NotFound() {
     <main className="releaseState">
       <section>
         <div className="releaseMark">P</div>
-        <p>WAYPOINT NOT FOUND</p>
-        <h1>That page is not on the current Flight Plan.</h1>
-        <span>The address may be incorrect, or the page may have moved during the beta.</span>
+        <p>PAGE NOT FOUND</p>
+        <h1>We could not find that page.</h1>
+        <span>The address may be incorrect, or the page may have moved.</span>
         <div>
-          <a className="primaryReleaseLink" href="/dashboard">Return to Mission Control</a>
+          <a className="primaryReleaseLink" href="/dashboard">Return to Dashboard</a>
           <a href="/">Project Pilot Home</a>
         </div>
       </section>

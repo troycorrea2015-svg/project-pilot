@@ -34,11 +34,29 @@ const PAGE_GUIDANCE = {
   },
   admin: {
     title: "Admin Control Center",
-    explanation: "This page summarizes accounts, projects, feedback, activity, beta financials, and areas that may need attention.",
-    next: "Review open feedback and low-activity areas first. Actual beta revenue remains $0 because all access is free during testing.",
+    explanation: "This page summarizes accounts, projects, feedback, activity, financials and marketplace activity, and areas that may need attention.",
+    next: "Review open feedback and low-activity areas first. Review actual revenue, accepted introductions, contractor verification, and open feedback first.",
     links: [
       { label: "Return to Dashboard", href: "/dashboard" },
       { label: "Open Help Center", href: "/help" },
+    ],
+  },
+  contractors: {
+    title: "Best Match Contractors",
+    explanation: "This page ranks verified contractors by project fit, service area, availability, project size, and performance. Contractors cannot pay for a higher position.",
+    next: "Choose a saved project, add the missing project details, then select up to three contractors for an introduction request.",
+    links: [
+      { label: "Return to Dashboard", href: "/dashboard" },
+      { label: "Read How Introductions Work", href: "/terms" },
+    ],
+  },
+  contractor: {
+    title: "Contractor Center",
+    explanation: "This page keeps your partner profile, verification status, and qualified homeowner opportunities together.",
+    next: "Complete your business profile first. When an opportunity appears, review the anonymized details and fixed fee before accepting or declining.",
+    links: [
+      { label: "Open Best Match Network", href: "/contractors" },
+      { label: "Read Partner Terms", href: "/terms" },
     ],
   },
   help: {
@@ -59,6 +77,8 @@ function getPageKey(pathname) {
   if (pathname?.startsWith("/project/")) return "project";
   if (pathname?.startsWith("/dashboard")) return "dashboard";
   if (pathname?.startsWith("/admin")) return "admin";
+  if (pathname?.startsWith("/contractors")) return "contractors";
+  if (pathname?.startsWith("/contractor")) return "contractor";
   if (pathname?.startsWith("/help")) return "help";
   return "default";
 }
@@ -80,6 +100,14 @@ function answerQuestion(question, guidance) {
 
   if (normalized.includes("cost") || normalized.includes("price") || normalized.includes("budget")) {
     return "Project costs shown in Project Pilot are planning ranges. Compare the professional and do-it-yourself paths, then confirm real prices with suppliers or contractors before committing money.";
+  }
+
+  if (normalized.includes("fee") || normalized.includes("charge") || normalized.includes("payment")) {
+    return "Homeowners are not charged for contractor requests. Contractors create a profile for free and see the fixed introduction fee before choosing whether to accept an opportunity. Payment never changes Best Match ranking.";
+  }
+
+  if (normalized.includes("refund") || normalized.includes("credit") || normalized.includes("bad lead")) {
+    return "A contractor can request a lead review for issues such as invalid contact information, a duplicate request, or a materially incorrect service area. Project Pilot reviews the request before issuing a refund or account credit.";
   }
 
   if (normalized.includes("confused") || normalized.includes("help") || normalized.includes("stuck")) {
@@ -165,7 +193,7 @@ export default function GuidanceAssistant() {
               ))}
             </nav>
 
-            <small className="assistantBetaNote">Guided beta assistance. Official offices, licensed professionals, and signed project documents remain the source of truth.</small>
+            <small className="assistantBetaNote">Project Assistant provides guidance, not legal, engineering, permitting, or contracting approval. Official offices, licensed professionals, and signed documents remain the source of truth.</small>
           </div>
         </section>
       )}

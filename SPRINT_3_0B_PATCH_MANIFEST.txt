@@ -1,0 +1,40 @@
+PROJECT PILOT — SPRINT 3.0B REVENUE LAUNCH PATCH MANIFEST
+=========================================================
+
+Copy every file and folder in this patch into the root of the existing Project Pilot repository.
+Run supabase/migrations/010_revenue_launch_marketplace.sql in Supabase SQL Editor.
+
+Changed or added files: 32
+
+.env.example
+SPRINT_3_0B_REVENUE_LAUNCH_README.txt
+app/admin/admin.css
+app/admin/page.js
+app/api/marketplace/checkout/reset/route.js
+app/api/marketplace/checkout/route.js
+app/api/marketplace/health/route.js
+app/api/marketplace/notify/route.js
+app/api/marketplace/refund/route.js
+app/api/marketplace/webhook/route.js
+app/contractor/contractor.css
+app/contractor/page.js
+app/contractors/contractors.css
+app/contractors/layout.js
+app/contractors/page.js
+app/dashboard/dashboard.css
+app/dashboard/page.js
+app/error.js
+app/layout.js
+app/not-found.js
+app/page.css
+app/page.js
+app/privacy/page.js
+app/project/[id]/page.js
+app/project/[id]/project.css
+app/release.css
+app/terms/page.js
+components/BetaFeedback.js
+components/GuidanceAssistant.js
+lib/marketplace-server.js
+lib/permit-registry.js
+supabase/migrations/010_revenue_launch_marketplace.sql
