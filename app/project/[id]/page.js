@@ -1084,7 +1084,7 @@ export default function ProjectWorkspacePage() {
                 <p>PROJECT ASSISTANT</p>
                 <h2>Plain-language project help</h2>
               </div>
-              <span className="onlineStatus">Guided assistance</span>
+              <span className="onlineStatus">Su AI connected</span>
             </header>
 
             <div className="messageList">
@@ -1143,7 +1143,7 @@ export default function ProjectWorkspacePage() {
                   {sending ? "Sending…" : "Send"}
                 </button>
               </form>
-              <small>Guided assistance saves your project details without paid AI usage.</small>
+              <small>Su uses this project’s saved details and recent conversation to provide project-specific guidance.</small>
             </div>
           </div>
         )}
