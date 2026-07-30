@@ -1,12 +1,12 @@
-PROJECT PILOT — PROJECT VISION RELIABILITY + DELETE FIX
-=======================================================
+PROJECT PILOT — PROJECT VISION ADD YOUR VISION TEXT-ONLY UPDATE
+==============================================================
+Upload every file and folder in this patch into the root of the existing Project Pilot repository.
+This is a cumulative replacement for the prior Add Your Vision package.
+No new Supabase SQL is required.
 
-Changed files:
+Changed or added files: 4
+
+app/api/project-vision/delete/route.js
+app/api/project-vision/generate/route.js
 components/ProjectVision.js
 components/ProjectVision.module.css
-app/api/project-vision/generate/route.js
-
-New file:
-app/api/project-vision/delete/route.js
-
-No SQL migration is included or required.

@@ -771,3 +771,200 @@
     flex: 1;
   }
 }
+
+.visionChat {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: linear-gradient(145deg, #f8fbff, #eef5ff);
+  border: 1px solid #d8e5fb;
+  border-radius: 16px;
+}
+
+.visionChatHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.visionChatHeading p {
+  margin: 0 0 6px;
+  color: #3970df;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.visionChatHeading h3 {
+  margin: 0;
+  color: #20304a;
+  font-size: 20px;
+}
+
+.visionChatHeading span {
+  display: block;
+  margin-top: 7px;
+  color: #67778d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.selectedConceptBadge {
+  max-width: 210px;
+  padding: 8px 10px;
+  color: #315dba;
+  text-align: right;
+  background: #e7f0ff;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.visionMessages {
+  display: grid;
+  gap: 9px;
+  max-height: 260px;
+  padding: 12px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid #e0e8f4;
+  border-radius: 13px;
+}
+
+.visionMessage {
+  display: grid;
+  gap: 4px;
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.visionMessage strong {
+  font-size: 10px;
+}
+
+.visionMessage span {
+  white-space: pre-wrap;
+}
+
+.assistantMessage {
+  justify-self: start;
+  color: #334862;
+  background: #eef4fb;
+  border-bottom-left-radius: 4px;
+}
+
+.userMessage {
+  justify-self: end;
+  color: #fff;
+  background: #2f6df6;
+  border-bottom-right-radius: 4px;
+}
+
+.quickVisionPrompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.quickVisionPrompts button {
+  padding: 7px 9px;
+  color: #315dba;
+  background: #fff;
+  border: 1px solid #d6e2f5;
+  border-radius: 99px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.visionComposer {
+  display: grid;
+  gap: 9px;
+}
+
+.visionComposer label {
+  color: #34465e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.visionComposer textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 96px;
+  padding: 12px 13px;
+  color: #26364e;
+  background: #fff;
+  border: 1px solid #c9d7e9;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.visionComposer textarea:focus {
+  outline: 3px solid rgba(47, 109, 246, 0.13);
+  border-color: #2f6df6;
+}
+
+.visionComposerActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.refineButton {
+  min-height: 43px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
+.refineButton {
+  flex: 1;
+  color: #fff;
+  background: #2f6df6;
+}
+
+.refineButton:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.visionComposer small {
+  color: #74849a;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .visionChatHeading,
+  .visionComposerActions {
+    flex-direction: column;
+  }
+
+  .selectedConceptBadge {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    text-align: left;
+  }
+
+  .refineButton {
+    width: 100%;
+  }
+
+  .visionMessage {
+    max-width: 94%;
+  }
+}

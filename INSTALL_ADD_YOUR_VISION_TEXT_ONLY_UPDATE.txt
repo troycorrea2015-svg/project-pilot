@@ -1,0 +1,30 @@
+PROJECT PILOT — INSTALL ADD YOUR VISION TEXT-ONLY UPDATE
+==========================================================
+This package REPLACES the earlier Add Your Vision package.
+
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Click Add file -> Upload files.
+4. Upload everything INSIDE the extracted folder to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with this message:
+
+   Add universal text-based Project Vision refinements
+
+7. Wait for Vercel to deploy the new commit.
+8. Hard refresh the browser with Ctrl + Shift + R.
+
+What this update includes:
+- Add Your Vision text conversation after the first proposed concepts.
+- Three initial proposed options.
+- Three refinements generated from the currently selected concept.
+- Project and camera-angle preservation rules.
+- Project-type-specific accuracy rules.
+- Image compatibility conversion.
+- Reliable photo and concept deletion.
+- Quick text suggestions that users can tap and edit.
+
+Voice recognition and microphone controls have been removed so the same feature works consistently across supported phones, tablets, and computers.
+
+No new Supabase SQL is required.
+No new Vercel variables are required.

@@ -8,6 +8,12 @@ const BUCKET = "project-vision";
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const MAX_NORMALIZED_EDGE = 2048;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const QUICK_VISION_PROMPTS = [
+  "Keep the layout, but make the materials more modern.",
+  "Make this more affordable without changing the main design.",
+  "Add more privacy and keep everything else the same.",
+  "Make the project area larger without moving the home.",
+];
 
 function normalizedFilename(file) {
   const base = String(file.name || "project-photo")
@@ -97,6 +103,9 @@ export default function ProjectVision({ project, user }) {
   const [budgetTier, setBudgetTier] = useState("Not specified");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [visionInput, setVisionInput] = useState("");
+  const [visionMessages, setVisionMessages] = useState([]);
+  const [visionHistoryReady, setVisionHistoryReady] = useState(false);
 
   const sourceAssets = useMemo(
     () => assets.filter((asset) => asset.asset_type === "source"),
@@ -139,6 +148,27 @@ export default function ProjectVision({ project, user }) {
       setSelectedConceptId((favorite || concepts[0]).id);
     }
   }, [concepts, selectedConceptId]);
+
+  useEffect(() => {
+    if (!project?.id) return;
+    try {
+      const saved = window.localStorage.getItem(`project-vision-chat:${project.id}`);
+      const parsed = saved ? JSON.parse(saved) : [];
+      setVisionMessages(Array.isArray(parsed) ? parsed.slice(-20) : []);
+    } catch {
+      setVisionMessages([]);
+    } finally {
+      setVisionHistoryReady(true);
+    }
+  }, [project?.id]);
+
+  useEffect(() => {
+    if (!visionHistoryReady || !project?.id) return;
+    window.localStorage.setItem(
+      `project-vision-chat:${project.id}`,
+      JSON.stringify(visionMessages.slice(-20))
+    );
+  }, [visionMessages, visionHistoryReady, project?.id]);
 
   async function withSignedUrls(rows) {
     return Promise.all(
@@ -237,7 +267,7 @@ export default function ProjectVision({ project, user }) {
       if (assetType === "source") {
         setSelectedSourceId(record.id);
         setSelectedConceptId("");
-        setNotice("Original photo uploaded. Describe the project to generate the proposed result.");
+        setNotice("Original photo uploaded. Describe the project and Project Vision will create 3 options.");
       } else {
         setNotice("Actual completed-project photo added.");
       }
@@ -248,50 +278,111 @@ export default function ProjectVision({ project, user }) {
     }
   }
 
+  function appendVisionMessage(role, text) {
+    const message = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      role,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+    setVisionMessages((current) => [...current, message].slice(-20));
+  }
+
+  async function requestConcepts({ generationMode, visionMessage = "" }) {
+    if (!selectedSource || generating) return null;
+
+    const cleanDescription = description.trim();
+    if (cleanDescription.length < 10) {
+      throw new Error("Describe what you want the finished project to look like.");
+    }
+    if (generationMode === "refine" && !selectedConcept) {
+      throw new Error("Choose a proposed concept before adding your vision.");
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) throw new Error("Your session expired. Sign in again and retry.");
+
+    const response = await fetch("/api/project-vision/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        projectId: project.id,
+        sourceAssetId: selectedSource.id,
+        baseConceptId: generationMode === "refine" ? selectedConcept?.id : "",
+        generationMode,
+        visionMessage,
+        description: cleanDescription,
+        stylePreferences: stylePreferences.trim(),
+        revisionNotes: revisionNotes.trim(),
+        budgetTier,
+      }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "The visualization could not be generated.");
+
+    await loadAssets(result.selectedAssetId || "");
+    setComparison(50);
+    return result;
+  }
+
   async function generateConcept(event) {
     event.preventDefault();
     if (!selectedSource || generating) return;
 
-    const cleanDescription = description.trim();
-    if (cleanDescription.length < 10) {
-      setError("Describe what you want the finished project to look like.");
+    setGenerating(true);
+    setError("");
+    setNotice("Project Vision is editing your original photo and creating 3 options. Keep this page open until they are saved.");
+
+    try {
+      const result = await requestConcepts({ generationMode: "initial" });
+      setRevisionNotes("");
+      setNotice(`Project Vision created ${Number(result?.generatedCount || 3)} options. Choose one, then use Add Your Vision to keep refining it.`);
+    } catch (generationError) {
+      setError(generationError.message || "Project Vision could not complete this request.");
+      setNotice("");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function refineVision(event) {
+    event.preventDefault();
+    if (generating) return;
+
+    const message = visionInput.trim();
+    if (message.length < 3) {
+      setError("Tell Su what you want changed in the selected concept.");
+      return;
+    }
+    if (!selectedConcept) {
+      setError("Choose a proposed concept before adding your vision.");
       return;
     }
 
+    appendVisionMessage("user", message);
+    setVisionInput("");
     setGenerating(true);
     setError("");
-    setNotice("Project Vision is editing your original photo. Keep this page open until the concept is saved.");
+    setNotice("Su is applying your vision to the selected concept and creating 3 refined options.");
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) throw new Error("Your session expired. Sign in again and retry.");
-
-      const response = await fetch("/api/project-vision/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          projectId: project.id,
-          sourceAssetId: selectedSource.id,
-          description: cleanDescription,
-          stylePreferences: stylePreferences.trim(),
-          revisionNotes: revisionNotes.trim(),
-          budgetTier,
-        }),
-      });
-
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "The visualization could not be generated.");
-
-      await loadAssets(result.asset?.id || "");
-      setRevisionNotes("");
-      setComparison(50);
-      setNotice("New Project Vision concept saved. It is a proposed visualization, not a completed-project photo.");
+      const baseLabel = selectedConcept.caption || `Version ${selectedConcept.version_number}`;
+      const result = await requestConcepts({ generationMode: "refine", visionMessage: message });
+      const count = Number(result?.generatedCount || 3);
+      appendVisionMessage(
+        "assistant",
+        `I used ${baseLabel} as the starting point and created ${count} refined options. Choose the closest one, then tell me what to change next.`
+      );
+      setNotice(`Su created ${count} refinements from your selected concept.`);
     } catch (generationError) {
-      setError(generationError.message || "Project Vision could not complete this request.");
+      const messageText = generationError.message || "Project Vision could not complete this refinement.";
+      appendVisionMessage("assistant", `I could not complete that change: ${messageText}`);
+      setError(messageText);
       setNotice("");
     } finally {
       setGenerating(false);
@@ -391,7 +482,7 @@ export default function ProjectVision({ project, user }) {
           <p>PROJECT VISION</p>
           <h1>See the potential before construction begins.</h1>
           <span>
-            Upload your own property photo. Project Vision edits that original photo to show a realistic proposed result while preserving the property and camera angle.
+            Upload your own property photo. Project Vision preserves the property and camera angle, creates 3 initial options, and then lets the homeowner talk Su through additional changes.
           </span>
         </div>
         <button type="button" onClick={() => sourceInputRef.current?.click()} disabled={Boolean(uploading)}>
@@ -492,11 +583,11 @@ export default function ProjectVision({ project, user }) {
                 />
               </label>
               <div className={styles.preserveNote}>
-                <strong>Original-photo rule</strong>
-                <span>Every version starts from your selected original photo—not from a different property or an earlier AI image.</span>
+                <strong>Scene-lock rule</strong>
+                <span>Initial options start from the original photo. Add Your Vision refinements start from the concept you select while locking every unrequested detail in place.</span>
               </div>
               <button className={styles.generateButton} type="submit" disabled={generating || !selectedSource}>
-                {generating ? "Creating Project Vision…" : concepts.length ? "Generate Revised Concept" : "Generate Proposed After"}
+                {generating ? "Creating 3 Project Vision options…" : concepts.length ? "Generate 3 New Options" : "Generate 3 Proposed Options"}
               </button>
               <small className={styles.disclaimer}>AI concepts are planning visuals only. They are not plans, approvals, cost guarantees, or proof of completed work.</small>
             </form>
@@ -532,8 +623,8 @@ export default function ProjectVision({ project, user }) {
                   />
                   <div className={styles.conceptMeta}>
                     <div>
-                      <strong>Version {selectedConcept.version_number}</strong>
-                      <span>{formatDate(selectedConcept.created_at)} · Conceptual visualization</span>
+                      <strong>{selectedConcept.caption || `Version ${selectedConcept.version_number}`}</strong>
+                      <span>{formatDate(selectedConcept.created_at)} · Conceptual visualization · V{selectedConcept.version_number}</span>
                     </div>
                     <div>
                       <button type="button" onClick={() => favoriteConcept(selectedConcept)}>
@@ -556,7 +647,7 @@ export default function ProjectVision({ project, user }) {
               {concepts.length > 0 && (
                 <div className={styles.versionList}>
                   <div className={styles.sectionTitle}>
-                    <div><p>SAVED VERSIONS</p><h3>Compare different directions.</h3></div>
+                    <div><p>SAVED OPTIONS</p><h3>Choose a direction to refine.</h3></div>
                     <span>{concepts.length}</span>
                   </div>
                   <div className={styles.versionGrid}>
@@ -567,12 +658,71 @@ export default function ProjectVision({ project, user }) {
                         onClick={() => { setSelectedConceptId(concept.id); setComparison(50); }}
                         key={concept.id}
                       >
-                        <img src={concept.url} alt={`Project Vision version ${concept.version_number}`} />
-                        <span>V{concept.version_number}{concept.is_favorite ? " · ★" : ""}</span>
+                        <img src={concept.url} alt={concept.caption || `Project Vision version ${concept.version_number}`} />
+                        <span>{concept.caption || `V${concept.version_number}`}{concept.is_favorite ? " · ★" : ""}</span>
                       </button>
                     ))}
                   </div>
                 </div>
+              )}
+
+              {concepts.length > 0 && selectedConcept && (
+                <section className={styles.visionChat}>
+                  <div className={styles.visionChatHeading}>
+                    <div>
+                      <p>ADD YOUR VISION</p>
+                      <h3>Talk Su through the changes.</h3>
+                      <span>Select the closest concept, then describe or speak exactly what should change next.</span>
+                    </div>
+                    <div className={styles.selectedConceptBadge}>
+                      Refining: {selectedConcept.caption || `Version ${selectedConcept.version_number}`}
+                    </div>
+                  </div>
+
+                  <div className={styles.visionMessages} aria-live="polite">
+                    {!visionMessages.length && (
+                      <div className={`${styles.visionMessage} ${styles.assistantMessage}`}>
+                        <strong>Su</strong>
+                        <span>Choose the closest option and type the changes you want. For example: “Keep this exact layout, make the railing black, use gray composite boards, and remove the furniture.”</span>
+                      </div>
+                    )}
+                    {visionMessages.map((message) => (
+                      <div
+                        className={`${styles.visionMessage} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`}
+                        key={message.id}
+                      >
+                        <strong>{message.role === "user" ? "You" : "Su"}</strong>
+                        <span>{message.text}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className={styles.quickVisionPrompts}>
+                    {QUICK_VISION_PROMPTS.map((prompt) => (
+                      <button type="button" onClick={() => setVisionInput(prompt)} key={prompt}>
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <form className={styles.visionComposer} onSubmit={refineVision}>
+                    <label htmlFor="project-vision-refinement">Add your vision</label>
+                    <textarea
+                      id="project-vision-refinement"
+                      value={visionInput}
+                      onChange={(event) => setVisionInput(event.target.value)}
+                      placeholder="Type exactly what Su should keep, remove, move, resize, recolor, or replace. Unrequested details will stay locked."
+                      rows="4"
+                      disabled={generating}
+                    />
+                    <div className={styles.visionComposerActions}>
+                      <button type="submit" className={styles.refineButton} disabled={generating || visionInput.trim().length < 3}>
+                        {generating ? "Creating 3 refinements…" : "Generate 3 refinements"}
+                      </button>
+                    </div>
+                    <small>Su uses the selected concept as the starting point and applies only the changes you request.</small>
+                  </form>
+                </section>
               )}
             </section>
           </div>
