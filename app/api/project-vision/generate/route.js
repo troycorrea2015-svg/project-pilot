@@ -129,6 +129,7 @@ export async function POST(request) {
       .from("project_vision_requests")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
+      .in("status", ["processing", "completed"])
       .gte("created_at", dayStart.toISOString());
     if (limitError) throw limitError;
     if (Number(dailyRequests || 0) >= dailyLimit) {
@@ -209,7 +210,13 @@ export async function POST(request) {
 
     const openAIResult = await openAIResponse.json().catch(() => ({}));
     if (!openAIResponse.ok) {
-      throw new Error(openAIResult?.error?.message || "The AI image editor could not complete this visualization.");
+      const providerMessage = openAIResult?.error?.message || "The AI image editor could not complete this visualization.";
+      if (/invalid image file or mode/i.test(providerMessage)) {
+        throw new Error(
+          "This original photo uses an incompatible color format. Remove it and upload it again; Project Pilot now converts new uploads to a standard RGB JPG automatically."
+        );
+      }
+      throw new Error(providerMessage);
     }
 
     const base64Image = openAIResult?.data?.[0]?.b64_json;

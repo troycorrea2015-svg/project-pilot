@@ -6,11 +6,70 @@ import styles from "./ProjectVision.module.css";
 
 const BUCKET = "project-vision";
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const MAX_NORMALIZED_EDGE = 4096;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-function extensionFor(file) {
-  const typed = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  return typed;
+function normalizedFilename(file) {
+  const base = String(file.name || "project-photo")
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "project-photo";
+  return `${base}-project-vision.jpg`;
+}
+
+function loadBrowserImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => resolve({ image, url });
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("This photo could not be opened. Save it as a standard JPG or PNG and try again."));
+    };
+    image.src = url;
+  });
+}
+
+async function normalizeForProjectVision(file) {
+  const { image, url } = await loadBrowserImage(file);
+
+  try {
+    const sourceWidth = Number(image.naturalWidth || image.width || 0);
+    const sourceHeight = Number(image.naturalHeight || image.height || 0);
+    if (!sourceWidth || !sourceHeight) {
+      throw new Error("This photo has invalid dimensions. Save it as a standard JPG or PNG and try again.");
+    }
+
+    const scale = Math.min(1, MAX_NORMALIZED_EDGE / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.round(sourceWidth * scale));
+    const height = Math.max(1, Math.round(sourceHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("This browser could not prepare the photo for Project Vision.");
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (result) => result ? resolve(result) : reject(new Error("The photo could not be converted to a compatible format.")),
+        "image/jpeg",
+        0.92
+      );
+    });
+
+    return {
+      file: new File([blob], normalizedFilename(file), { type: "image/jpeg", lastModified: Date.now() }),
+      dimensions: { width, height },
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 function formatDate(value) {
@@ -19,17 +78,6 @@ function formatDate(value) {
   return Number.isNaN(date.getTime())
     ? "Recently"
     : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
-
-async function imageDimensions(file) {
-  try {
-    const bitmap = await createImageBitmap(file);
-    const dimensions = { width: bitmap.width, height: bitmap.height };
-    bitmap.close();
-    return dimensions;
-  } catch {
-    return { width: null, height: null };
-  }
 }
 
 export default function ProjectVision({ project, user }) {
@@ -150,14 +198,16 @@ export default function ProjectVision({ project, user }) {
     }
 
     setUploading(assetType);
-    const extension = extensionFor(file);
-    const storagePath = `${user.id}/${project.id}/${assetType}-${crypto.randomUUID()}.${extension}`;
-    const dimensions = await imageDimensions(file);
 
     try {
+      const normalized = await normalizeForProjectVision(file);
+      const uploadFile = normalized.file;
+      const dimensions = normalized.dimensions;
+      const storagePath = `${user.id}/${project.id}/${assetType}-${crypto.randomUUID()}.jpg`;
+
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
-        .upload(storagePath, file, { contentType: file.type, upsert: false });
+        .upload(storagePath, uploadFile, { contentType: uploadFile.type, upsert: false });
       if (uploadError) throw uploadError;
 
       const { data: record, error: recordError } = await supabase
@@ -167,8 +217,8 @@ export default function ProjectVision({ project, user }) {
           user_id: user.id,
           asset_type: assetType,
           storage_path: storagePath,
-          mime_type: file.type,
-          file_size_bytes: file.size,
+          mime_type: uploadFile.type,
+          file_size_bytes: uploadFile.size,
           width: dimensions.width,
           height: dimensions.height,
           caption: assetType === "source" ? "Original project photo" : "Actual completed project",
