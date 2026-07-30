@@ -6,7 +6,7 @@ import styles from "./ProjectVision.module.css";
 
 const BUCKET = "project-vision";
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
-const MAX_NORMALIZED_EDGE = 4096;
+const MAX_NORMALIZED_EDGE = 2048;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function normalizedFilename(file) {
@@ -15,7 +15,7 @@ function normalizedFilename(file) {
     .replace(/[^a-zA-Z0-9_-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || "project-photo";
-  return `${base}-project-vision.jpg`;
+  return `${base}-project-vision.png`;
 }
 
 function loadBrowserImage(file) {
@@ -58,13 +58,12 @@ async function normalizeForProjectVision(file) {
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob(
         (result) => result ? resolve(result) : reject(new Error("The photo could not be converted to a compatible format.")),
-        "image/jpeg",
-        0.92
+        "image/png"
       );
     });
 
     return {
-      file: new File([blob], normalizedFilename(file), { type: "image/jpeg", lastModified: Date.now() }),
+      file: new File([blob], normalizedFilename(file), { type: "image/png", lastModified: Date.now() }),
       dimensions: { width, height },
     };
   } finally {
@@ -88,6 +87,7 @@ export default function ProjectVision({ project, user }) {
   const [uploading, setUploading] = useState("");
   const [generating, setGenerating] = useState(false);
   const [deleting, setDeleting] = useState("");
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [selectedSourceId, setSelectedSourceId] = useState("");
   const [selectedConceptId, setSelectedConceptId] = useState("");
   const [comparison, setComparison] = useState(50);
@@ -203,7 +203,7 @@ export default function ProjectVision({ project, user }) {
       const normalized = await normalizeForProjectVision(file);
       const uploadFile = normalized.file;
       const dimensions = normalized.dimensions;
-      const storagePath = `${user.id}/${project.id}/${assetType}-${crypto.randomUUID()}.jpg`;
+      const storagePath = `${user.id}/${project.id}/${assetType}-${crypto.randomUUID()}.png`;
 
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
@@ -326,55 +326,58 @@ export default function ProjectVision({ project, user }) {
     }
   }
 
-  async function deleteAsset(asset) {
-    const relatedConcepts = asset.asset_type === "source"
-      ? assets.filter((item) => item.asset_type === "concept" && item.source_asset_id === asset.id)
-      : [];
-    const warning = relatedConcepts.length
-      ? `Remove this original photo and its ${relatedConcepts.length} generated concept${relatedConcepts.length === 1 ? "" : "s"}?`
-      : "Remove this image?";
-    if (!window.confirm(warning)) return;
+  function requestDelete(asset) {
+    setError("");
+    setNotice("");
+    setPendingDelete(asset);
+  }
+
+  async function confirmDelete() {
+    const asset = pendingDelete;
+    if (!asset || deleting) return;
 
     setDeleting(asset.id);
     setError("");
     setNotice("");
 
-    const removalAssets = [...relatedConcepts, asset];
-    const paths = removalAssets.map((item) => item.storage_path);
-    const ids = removalAssets.map((item) => item.id);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Your session expired. Sign in again and retry.");
 
-    if (relatedConcepts.length) {
-      const { error: conceptError } = await supabase
-        .from("project_vision_assets")
-        .delete()
-        .in("id", relatedConcepts.map((item) => item.id))
-        .eq("user_id", user.id);
-      if (conceptError) {
-        setError(conceptError.message);
-        setDeleting("");
-        return;
+      const response = await fetch("/api/project-vision/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          assetId: asset.id,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "The image could not be removed.");
+
+      const removedIds = new Set(result.removedIds || [asset.id]);
+      setAssets((current) => current.filter((item) => !removedIds.has(item.id)));
+
+      if (removedIds.has(selectedSourceId)) {
+        setSelectedSourceId("");
+        setSelectedConceptId("");
+      } else if (removedIds.has(selectedConceptId)) {
+        setSelectedConceptId("");
       }
-    }
 
-    const { error: recordError } = await supabase
-      .from("project_vision_assets")
-      .delete()
-      .eq("id", asset.id)
-      .eq("user_id", user.id);
-
-    if (recordError) {
-      setError(recordError.message);
-      setDeleting("");
+      setPendingDelete(null);
+      setNotice(result.warning || "Image removed successfully.");
       await loadAssets();
-      return;
+    } catch (deleteError) {
+      setError(deleteError.message || "The image could not be removed.");
+    } finally {
+      setDeleting("");
     }
-
-    const { error: storageError } = await supabase.storage.from(BUCKET).remove(paths);
-    setAssets((current) => current.filter((item) => !ids.includes(item.id)));
-    setNotice(storageError
-      ? "Image records were removed. A stored file may require administrator cleanup."
-      : "Image removed.");
-    setDeleting("");
   }
 
   if (loading) {
@@ -420,7 +423,14 @@ export default function ProjectVision({ project, user }) {
           <section className={styles.sourceStrip}>
             <div className={styles.sectionTitle}>
               <div><p>ORIGINAL PHOTOS</p><h2>Choose the view to visualize.</h2></div>
-              <span>{sourceAssets.length} uploaded</span>
+              <div className={styles.sectionActions}>
+                <span>{sourceAssets.length} uploaded</span>
+                {selectedSource && (
+                  <button type="button" onClick={() => requestDelete(selectedSource)} disabled={Boolean(deleting)}>
+                    Delete selected photo
+                  </button>
+                )}
+              </div>
             </div>
             <div className={styles.thumbnailRow}>
               {sourceAssets.map((asset) => (
@@ -529,6 +539,9 @@ export default function ProjectVision({ project, user }) {
                       <button type="button" onClick={() => favoriteConcept(selectedConcept)}>
                         {selectedConcept.is_favorite ? "★ Favorite" : "☆ Set Favorite"}
                       </button>
+                      <button type="button" className={styles.deleteConceptButton} onClick={() => requestDelete(selectedConcept)} disabled={Boolean(deleting)}>
+                        Delete concept
+                      </button>
                       <a href={selectedConcept.url} target="_blank" rel="noreferrer">Open Image</a>
                     </div>
                   </div>
@@ -575,7 +588,7 @@ export default function ProjectVision({ project, user }) {
                   <div className={styles.assetRow} key={asset.id}>
                     <img src={asset.url} alt="Original project upload" />
                     <span>{formatDate(asset.created_at)}</span>
-                    <button type="button" onClick={() => deleteAsset(asset)} disabled={deleting === asset.id}>
+                    <button type="button" onClick={() => requestDelete(asset)} disabled={deleting === asset.id}>
                       {deleting === asset.id ? "Removing…" : "Remove"}
                     </button>
                   </div>
@@ -587,7 +600,7 @@ export default function ProjectVision({ project, user }) {
                   <div className={styles.assetRow} key={asset.id}>
                     <img src={asset.url} alt="Actual completed project upload" />
                     <span>{formatDate(asset.created_at)}</span>
-                    <button type="button" onClick={() => deleteAsset(asset)} disabled={deleting === asset.id}>
+                    <button type="button" onClick={() => requestDelete(asset)} disabled={deleting === asset.id}>
                       {deleting === asset.id ? "Removing…" : "Remove"}
                     </button>
                   </div>
@@ -608,6 +621,35 @@ export default function ProjectVision({ project, user }) {
             </div>
           </section>
         </>
+      )}
+
+      {pendingDelete && (
+        <div className={styles.modalBackdrop} role="presentation" onMouseDown={() => !deleting && setPendingDelete(null)}>
+          <div className={styles.deleteModal} role="dialog" aria-modal="true" aria-labelledby="delete-vision-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className={styles.deleteIcon}>!</div>
+            <div>
+              <p>REMOVE IMAGE</p>
+              <h2 id="delete-vision-title">
+                {pendingDelete.asset_type === "source"
+                  ? "Delete this original photo?"
+                  : pendingDelete.asset_type === "concept"
+                    ? "Delete this AI concept?"
+                    : "Delete this completed photo?"}
+              </h2>
+              <span>
+                {pendingDelete.asset_type === "source"
+                  ? "Any AI concepts and generation history connected to this original will also be removed. This cannot be undone."
+                  : "This image will be permanently removed from the project. This cannot be undone."}
+              </span>
+            </div>
+            <div className={styles.modalButtons}>
+              <button type="button" onClick={() => setPendingDelete(null)} disabled={Boolean(deleting)}>Cancel</button>
+              <button type="button" className={styles.confirmDeleteButton} onClick={confirmDelete} disabled={Boolean(deleting)}>
+                {deleting ? "Deleting…" : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

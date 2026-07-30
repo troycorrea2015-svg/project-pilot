@@ -1,12 +1,12 @@
-PROJECT PILOT — SU ACTION ASSISTANT PATCH MANIFEST
-==================================================
+PROJECT PILOT — PROJECT VISION RELIABILITY + DELETE FIX
+=======================================================
 
-Changed files: 4
+Changed files:
+components/ProjectVision.js
+components/ProjectVision.module.css
+app/api/project-vision/generate/route.js
 
-app/api/pilot/route.js
-app/project/[id]/page.js
-app/project/[id]/project.css
-components/GuidanceAssistant.js
+New file:
+app/api/project-vision/delete/route.js
 
-Documentation:
-INSTALL_SU_ACTION_ASSISTANT.txt
+No SQL migration is included or required.

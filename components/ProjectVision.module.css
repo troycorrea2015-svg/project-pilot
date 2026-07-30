@@ -618,3 +618,156 @@
     height: 260px;
   }
 }
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sectionActions > span {
+  min-width: 34px;
+  padding: 7px 10px;
+  color: #4f6687;
+  text-align: center;
+  background: #f1f5fa;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.sectionActions button,
+.deleteConceptButton {
+  padding: 8px 11px;
+  color: #a13d44 !important;
+  background: #fff0f1 !important;
+  border: 1px solid #f5d5d8 !important;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sectionActions button:disabled,
+.deleteConceptButton:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 24, 43, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.deleteModal {
+  width: min(100%, 480px);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  padding: 24px;
+  color: #24344d;
+  background: #fff;
+  border: 1px solid #e5eaf0;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(14, 31, 54, 0.28);
+}
+
+.deleteIcon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: #a13d44;
+  background: #fff0f1;
+  border-radius: 13px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.deleteModal p {
+  margin: 0 0 6px;
+  color: #b14a52;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.deleteModal h2 {
+  margin: 0;
+  color: #1f3049;
+  font-size: 21px;
+}
+
+.deleteModal span {
+  display: block;
+  margin-top: 9px;
+  color: #68778b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.modalButtons {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.modalButtons button {
+  min-height: 42px;
+  padding: 0 16px;
+  color: #40516a;
+  background: #f0f4f8;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.modalButtons .confirmDeleteButton {
+  color: #fff;
+  background: #bc414b;
+}
+
+.modalButtons button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .sectionTitle {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sectionActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .deleteModal {
+    grid-template-columns: 1fr;
+  }
+
+  .deleteIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .modalButtons {
+    grid-column: 1;
+  }
+
+  .modalButtons button {
+    flex: 1;
+  }
+}
