@@ -256,6 +256,7 @@ export default function ProjectWorkspacePage() {
   const [noteDraft, setNoteDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [applyingAction, setApplyingAction] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingWaypoint, setSavingWaypoint] = useState("");
@@ -428,13 +429,45 @@ export default function ProjectWorkspacePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${sessionData?.session?.access_token}`,
         },
-        body: JSON.stringify({ projectId: id, message: cleanDraft }),
+        body: JSON.stringify({
+          projectId: id,
+          message: cleanDraft,
+          clientContext: {
+            estimator: {
+              projectType: estimateProject.label,
+              enteredProjectType: estimateType,
+              quality: estimateForm.quality,
+              sizeSelection: estimateForm.size,
+              measure: Math.round(estimateMeasure * 100) / 100,
+              unit: estimateProject.unit,
+              professional: {
+                low: Math.round(professionalEstimate.low),
+                midpoint: Math.round(professionalEstimate.total),
+                high: Math.round(professionalEstimate.high),
+                materials: Math.round(professionalEstimate.materials),
+                labor: Math.round(professionalEstimate.labor),
+                permits: Math.round(professionalEstimate.permits),
+                contingency: Math.round(professionalEstimate.contingency),
+              },
+              diy: {
+                low: Math.round(diyEstimate.low),
+                midpoint: Math.round(diyEstimate.total),
+                high: Math.round(diyEstimate.high),
+                materials: Math.round(diyEstimate.materials),
+                tools: Math.round(diyEstimate.tools),
+                permits: Math.round(diyEstimate.permits),
+                contingency: Math.round(diyEstimate.contingency),
+              },
+              disclaimer: "Planning estimate only; not a contractor bid, permit fee quote, or cost guarantee.",
+            },
+          },
+        }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Project Assistant could not respond.");
 
-      setMessages((current) => [...current, data.message]);
+      setMessages((current) => [...current, { ...data.message, action: data.action || null }]);
       if (data.project) setProject(data.project);
     } catch (requestError) {
       setError(requestError.message);
@@ -443,6 +476,52 @@ export default function ProjectWorkspacePage() {
     } finally {
       setSending(false);
     }
+  }
+
+  async function applyAssistantAction(entry) {
+    if (!entry?.action || applyingAction) return;
+
+    setApplyingAction(entry.id);
+    setError("");
+    setNotice("");
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await fetch("/api/pilot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData?.session?.access_token}`,
+        },
+        body: JSON.stringify({ projectId: id, confirmAction: entry.action }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Su could not apply that change.");
+
+      setMessages((current) => [
+        ...current.map((item) =>
+          item.id === entry.id ? { ...item, action: null, actionApplied: true } : item
+        ),
+        data.message,
+      ]);
+      if (data.project) {
+        setProject(data.project);
+        setNoteDraft(data.project.notes || "");
+      }
+      if (Array.isArray(data.waypoints)) setWaypoints(data.waypoints);
+      setNotice(data.message?.message || "Su updated the project.");
+    } catch (actionError) {
+      setError(actionError.message || "Su could not apply that change.");
+    } finally {
+      setApplyingAction("");
+    }
+  }
+
+  function dismissAssistantAction(entryId) {
+    setMessages((current) =>
+      current.map((item) => (item.id === entryId ? { ...item, action: null, actionDismissed: true } : item))
+    );
   }
 
   async function saveNotes() {
@@ -1093,17 +1172,58 @@ export default function ProjectWorkspacePage() {
                   <div className="messageAvatar">P</div>
                   <div>
                     <strong>Project Assistant</strong>
-                    <p>Tell me what is confusing, or describe what you are planning to build, repair, or renovate.</p>
+                    <p>Tell me what is difficult. I can explain it, help estimate it, update saved project details, and complete Project Plan actions after you approve them.</p>
                   </div>
                 </article>
               )}
 
               {messages.map((entry) => (
                 <article className={`message ${entry.role === "assistant" ? "assistant" : "user"}`} key={entry.id}>
-                  <div className="messageAvatar">{entry.role === "assistant" ? "P" : "Y"}</div>
+                  <div className="messageAvatar">{entry.role === "assistant" ? "S" : "Y"}</div>
                   <div>
-                    <strong>{entry.role === "assistant" ? "Pilot" : "You"}</strong>
+                    <strong>{entry.role === "assistant" ? "Su" : "You"}</strong>
                     <p>{entry.message}</p>
+                    {entry.action && (
+                      <div className="assistantActionCard">
+                        <small>SU CAN DO THIS FOR YOU</small>
+                        <h3>{entry.action.summary}</h3>
+                        <div className="assistantActionDetails">
+                          {entry.action.type === "project_update" && Object.entries(entry.action.changes || {}).map(([field, value]) => (
+                            <div key={field}>
+                              <span>{field.replaceAll("_", " ")}</span>
+                              <strong>{field === "budget" ? `$${Number(value).toLocaleString()}` : String(value)}</strong>
+                            </div>
+                          ))}
+                          {entry.action.type === "waypoint_update" && (
+                            <>
+                              <div><span>Project Plan stage</span><strong>{entry.action.stageKey}</strong></div>
+                              {typeof entry.action.completed === "boolean" && <div><span>Status</span><strong>{entry.action.completed ? "Complete" : "Incomplete"}</strong></div>}
+                              {entry.action.dueDate && <div><span>Due date</span><strong>{formatDate(entry.action.dueDate)}</strong></div>}
+                              {entry.action.notes && <div><span>Notes</span><strong>{entry.action.notes}</strong></div>}
+                            </>
+                          )}
+                        </div>
+                        <div className="assistantActionButtons">
+                          <button
+                            type="button"
+                            onClick={() => applyAssistantAction(entry)}
+                            disabled={Boolean(applyingAction)}
+                          >
+                            {applyingAction === entry.id ? "Applying…" : "Apply changes"}
+                          </button>
+                          <button
+                            type="button"
+                            className="assistantActionCancel"
+                            onClick={() => dismissAssistantAction(entry.id)}
+                            disabled={Boolean(applyingAction)}
+                          >
+                            Not now
+                          </button>
+                        </div>
+                        <span className="assistantActionSafety">Nothing changes until you approve it.</span>
+                      </div>
+                    )}
+                    {entry.actionApplied && <span className="assistantActionApplied">✓ Change applied</span>}
                   </div>
                 </article>
               ))}
@@ -1125,6 +1245,7 @@ export default function ProjectWorkspacePage() {
                 <button type="button" onClick={() => setDraft("Explain what I should do next in plain language.")}>What should I do next?</button>
                 <button type="button" onClick={() => setDraft("Explain the permit and approval steps for this project.")}>Explain permits</button>
                 <button type="button" onClick={() => setDraft("What information or documents am I missing?")}>What am I missing?</button>
+                <button type="button" onClick={() => setDraft("Help me correct the saved budget for this project.")}>Fix my budget</button>
               </div>
               <form onSubmit={sendMessage}>
                 <textarea
@@ -1143,7 +1264,7 @@ export default function ProjectWorkspacePage() {
                   {sending ? "Sending…" : "Send"}
                 </button>
               </form>
-              <small>Su uses this project’s saved details and recent conversation to provide project-specific guidance.</small>
+              <small>Su can use saved details, estimator results, and recent conversation—and can update project details or plan steps after you approve the change.</small>
             </div>
           </div>
         )}

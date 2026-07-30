@@ -1,9 +1,12 @@
-Project Pilot Su Contextual AI Fix
+PROJECT PILOT — SU ACTION ASSISTANT PATCH MANIFEST
+==================================================
 
-Changed or added files:
-.env.example
-INSTALL_SU_CONTEXTUAL_AI.txt
-PATCH_MANIFEST.txt
+Changed files: 4
+
 app/api/pilot/route.js
 app/project/[id]/page.js
+app/project/[id]/project.css
 components/GuidanceAssistant.js
+
+Documentation:
+INSTALL_SU_ACTION_ASSISTANT.txt

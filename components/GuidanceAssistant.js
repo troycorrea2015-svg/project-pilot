@@ -86,6 +86,8 @@ export default function GuidanceAssistant() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
   const [error, setError] = useState("");
 
   const guidance = useMemo(() => PAGE_GUIDANCE[getPageKey(pathname)], [pathname]);
@@ -97,6 +99,7 @@ export default function GuidanceAssistant() {
     setLoading(true);
     setError("");
     setAnswer("");
+    setPendingAction(null);
 
     try {
       const { data } = await supabase.auth.getSession();
@@ -122,6 +125,7 @@ export default function GuidanceAssistant() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Su could not respond.");
       setAnswer(payload?.message?.message || "Su could not prepare an answer.");
+      setPendingAction(payload?.action || null);
     } catch (requestError) {
       setError(requestError.message || "Su could not respond.");
     } finally {
@@ -132,6 +136,43 @@ export default function GuidanceAssistant() {
   function submitQuestion(event) {
     event.preventDefault();
     askSu(question);
+  }
+
+  async function applyPendingAction() {
+    if (!pendingAction || applying) return;
+
+    setApplying(true);
+    setError("");
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error("Sign in before Su changes a project.");
+
+      const response = await fetch("/api/pilot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId: projectIdFromPath(pathname),
+          pagePath: pathname,
+          confirmAction: pendingAction,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Su could not apply that change.");
+
+      setAnswer(payload?.message?.message || "Su updated the project.");
+      setPendingAction(null);
+      window.setTimeout(() => window.location.reload(), 900);
+    } catch (actionError) {
+      setError(actionError.message || "Su could not apply that change.");
+    } finally {
+      setApplying(false);
+    }
   }
 
   return (
@@ -161,7 +202,7 @@ export default function GuidanceAssistant() {
           </header>
 
           <div className="assistantBody">
-            <p>Ask about this page or your saved project. Su will use available project details instead of a canned response.</p>
+            <p>Ask about this page or your saved project. Su can explain the issue and, inside a project, propose updates it can complete after you approve them.</p>
 
             <div className="assistantQuickActions">
               <button type="button" onClick={() => askSu("Explain this page using my saved account or project context. Tell me what matters most right now.")} disabled={loading}>Explain this page</button>
@@ -170,6 +211,35 @@ export default function GuidanceAssistant() {
 
             {loading && <div className="assistantAnswer" role="status">Su is reviewing the saved context…</div>}
             {answer && !loading && <div className="assistantAnswer" role="status">{answer}</div>}
+            {pendingAction && !loading && (
+              <div
+                role="group"
+                aria-label="Proposed Project Assistant action"
+                style={{ marginTop: 10, padding: 12, border: "1px solid #b9ccef", borderRadius: 12, background: "#f4f8ff" }}
+              >
+                <small style={{ display: "block", color: "#2f6df6", fontWeight: 900, letterSpacing: ".08em" }}>SU CAN DO THIS FOR YOU</small>
+                <strong style={{ display: "block", marginTop: 6, color: "#173056", lineHeight: 1.35 }}>{pendingAction.summary}</strong>
+                <p style={{ margin: "7px 0 0", color: "#617792", fontSize: 12, lineHeight: 1.5 }}>Nothing changes until you approve it.</p>
+                <div style={{ display: "flex", gap: 8, marginTop: 11 }}>
+                  <button
+                    type="button"
+                    onClick={applyPendingAction}
+                    disabled={applying}
+                    style={{ flex: 1, minHeight: 38, border: 0, borderRadius: 9, background: "#2f6df6", color: "white", fontWeight: 850, cursor: "pointer" }}
+                  >
+                    {applying ? "Applying…" : "Apply changes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingAction(null)}
+                    disabled={applying}
+                    style={{ minHeight: 38, padding: "0 12px", border: "1px solid #cbd7e7", borderRadius: 9, background: "white", color: "#435773", fontWeight: 800, cursor: "pointer" }}
+                  >
+                    Not now
+                  </button>
+                </div>
+              </div>
+            )}
             {error && <div className="assistantAnswer" role="alert">{error}</div>}
 
             <form onSubmit={submitQuestion}>

@@ -1,0 +1,55 @@
+PROJECT PILOT — SU ACTION ASSISTANT UPDATE
+==========================================
+
+PURPOSE
+-------
+This update changes Su from a read-only advice chatbot into a project action assistant.
+
+Su can now:
+- Use the built-in project estimator when discussing cost ranges.
+- Propose a corrected project budget.
+- Update the title, project type, description, address, role, timeline, target date, notes, and next step.
+- Mark Project Plan stages complete or incomplete.
+- Add Project Plan stage notes and due dates.
+- Apply changes only after the user selects "Apply changes."
+
+INSTALL
+-------
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Select Add file -> Upload files.
+4. Upload everything INSIDE this extracted folder to the repository root.
+5. Allow the matching files to be replaced.
+6. Commit with this message:
+
+   Make Su an action assistant
+
+7. Wait for the newest Vercel deployment to show Ready.
+8. Refresh Project Pilot using Ctrl + Shift + R.
+
+NO SUPABASE SQL IS REQUIRED.
+NO NEW VERCEL ENVIRONMENT VARIABLES ARE REQUIRED.
+DO NOT REMOVE OR CHANGE THE EXISTING OPENAI_API_KEY.
+
+TEST
+----
+Open the Project Assistant inside the roof project and send these messages in order:
+
+1. Give me the current planning estimate and explain the assumptions.
+2. The saved budget is wrong. Change it to $15,000.
+3. Select Apply changes on Su's confirmation card.
+4. Mark the planning step complete.
+5. Select Apply changes again.
+
+EXPECTED RESULT
+---------------
+- Su should cite the in-app estimator range instead of saying it cannot estimate.
+- A confirmation card should appear for requested project changes.
+- The database should not change until Apply changes is selected.
+- After approval, the budget or Project Plan stage should update immediately.
+
+SAFETY DESIGN
+-------------
+Su cannot silently alter project data. Every write is limited to the signed-in user's own project, limited to approved fields, validated by the server, and requires an explicit confirmation click.
+
+This update does not enable marketplace payments and does not change Project Vision.
