@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
+import { readAssistantStream } from "../lib/assistant-stream";
 
 const PAGE_GUIDANCE = {
   dashboard: {
@@ -114,16 +115,20 @@ export default function GuidanceAssistant() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          Accept: "application/x-ndjson",
         },
         body: JSON.stringify({
           projectId: projectIdFromPath(pathname),
           pagePath: pathname,
           message: cleanPrompt,
+          stream: true,
         }),
       });
 
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Su could not respond.");
+      const payload = await readAssistantStream(response, {
+        onDelta: (delta) => setAnswer((current) => current + delta),
+      });
+
       setAnswer(payload?.message?.message || "Su could not prepare an answer.");
       setPendingAction(payload?.action || null);
     } catch (requestError) {
@@ -135,7 +140,9 @@ export default function GuidanceAssistant() {
 
   function submitQuestion(event) {
     event.preventDefault();
-    askSu(question);
+    const prompt = question;
+    setQuestion("");
+    askSu(prompt);
   }
 
   async function applyPendingAction() {
@@ -209,8 +216,8 @@ export default function GuidanceAssistant() {
               <button type="button" onClick={() => askSu("What is my single best next step here, based on my saved project progress?")} disabled={loading}>Show my next step</button>
             </div>
 
-            {loading && <div className="assistantAnswer" role="status">Su is reviewing the saved context…</div>}
-            {answer && !loading && <div className="assistantAnswer" role="status">{answer}</div>}
+            {loading && !answer && <div className="assistantAnswer" role="status">Su is reviewing the saved context…</div>}
+            {answer && <div className="assistantAnswer" role="status">{answer}{loading ? <span aria-hidden="true"> ▍</span> : null}</div>}
             {pendingAction && !loading && (
               <div
                 role="group"

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import { readAssistantStream } from "../../../lib/assistant-stream";
 import ProjectVision from "../../../components/ProjectVision";
 import "./project.css";
 
@@ -412,14 +413,23 @@ export default function ProjectWorkspacePage() {
     setError("");
     setSending(true);
 
+    const requestStamp = Date.now();
     const optimistic = {
-      id: `local-${Date.now()}`,
+      id: `local-${requestStamp}`,
       role: "user",
       message: cleanDraft,
       created_at: new Date().toISOString(),
     };
+    const streamingAssistantId = `stream-${requestStamp}`;
+    const streamingAssistant = {
+      id: streamingAssistantId,
+      role: "assistant",
+      message: "",
+      created_at: new Date().toISOString(),
+      streaming: true,
+    };
 
-    setMessages((current) => [...current, optimistic]);
+    setMessages((current) => [...current, optimistic, streamingAssistant]);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -428,10 +438,12 @@ export default function ProjectWorkspacePage() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${sessionData?.session?.access_token}`,
+          Accept: "application/x-ndjson",
         },
         body: JSON.stringify({
           projectId: id,
           message: cleanDraft,
+          stream: true,
           clientContext: {
             estimator: {
               projectType: estimateProject.label,
@@ -464,14 +476,27 @@ export default function ProjectWorkspacePage() {
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Project Assistant could not respond.");
+      const data = await readAssistantStream(response, {
+        onDelta: (delta) => {
+          setMessages((current) => current.map((entry) =>
+            entry.id === streamingAssistantId
+              ? { ...entry, message: `${entry.message || ""}${delta}` }
+              : entry
+          ));
+        },
+      });
 
-      setMessages((current) => [...current, { ...data.message, action: data.action || null }]);
+      setMessages((current) => current.map((entry) =>
+        entry.id === streamingAssistantId
+          ? { ...data.message, action: data.action || null, streaming: false }
+          : entry
+      ));
       if (data.project) setProject(data.project);
     } catch (requestError) {
-      setError(requestError.message);
-      setMessages((current) => current.filter((message) => message.id !== optimistic.id));
+      setError(requestError.message || "Project Assistant could not respond.");
+      setMessages((current) => current.filter((message) =>
+        message.id !== optimistic.id && message.id !== streamingAssistantId
+      ));
       setDraft(cleanDraft);
     } finally {
       setSending(false);
@@ -1182,7 +1207,7 @@ export default function ProjectWorkspacePage() {
                   <div className="messageAvatar">{entry.role === "assistant" ? "S" : "Y"}</div>
                   <div>
                     <strong>{entry.role === "assistant" ? "Su" : "You"}</strong>
-                    <p>{entry.message}</p>
+                    <p>{entry.message || (entry.streaming ? "Su is reviewing your project…" : "")}{entry.streaming && entry.message ? <span aria-hidden="true"> ▍</span> : null}</p>
                     {entry.action && (
                       <div className="assistantActionCard">
                         <small>SU CAN DO THIS FOR YOU</small>
@@ -1228,15 +1253,6 @@ export default function ProjectWorkspacePage() {
                 </article>
               ))}
 
-              {sending && (
-                <article className="message assistant">
-                  <div className="messageAvatar">P</div>
-                  <div>
-                    <strong>Project Assistant</strong>
-                    <p className="thinking">Preparing a clear next step…</p>
-                  </div>
-                </article>
-              )}
               <div ref={bottomRef} />
             </div>
 
