@@ -150,7 +150,7 @@ export default function HomePage() {
           <p className="eyebrow">YOUR PROJECT JOURNEY, SMARTER FROM THE START</p>
           <h1>Plan with confidence before the first tool comes out.</h1>
           <p className="heroLead">
-            Project Pilot brings project planning, permit guidance, cost estimates, DIY resources, and saved progress into one welcoming workspace.
+            Project Pilot brings project planning, Permit Autopilot, cost estimates, AI visualization, documents, and saved progress into one homeowner-controlled workspace.
           </p>
           <div className="heroActions">
             <a href="#access" className="primaryAction">Start a Project</a>
@@ -160,7 +160,7 @@ export default function HomePage() {
             <span>✓ AI project visualization</span>
             <span>✓ Estimated project costs</span>
             <span>✓ DIY and professional paths</span>
-            <span>✓ Permit preparation</span>
+            <span>✓ Permit Autopilot preparation and tracking</span>
             <span>✓ Saved documents and progress</span>
           </div>
         </div>
@@ -296,7 +296,7 @@ export default function HomePage() {
         <div className="featureGrid">
           <article><strong>Project Vision</strong><p>Visualize a proposed result by editing the property photo uploaded by the project owner.</p></article>
           <article><strong>Dashboard</strong><p>See priorities, progress, current stages, and the next action at a glance.</p></article>
-          <article><strong>Permits & Approvals</strong><p>Organize address matching, government-office questions, documents, and official links.</p></article>
+          <article><strong>Permit Autopilot</strong><p>Match the authority, answer the application interview, link required documents, authorize the packet, and track submission, corrections, and inspections.</p></article>
           <article><strong>Cost Estimator</strong><p>Compare professional and DIY paths using a practical planning range.</p></article>
           <article><strong>DIY Resources</strong><p>Open project-specific learning links, materials, and safety reminders.</p></article>
           <article><strong>Files & Documents</strong><p>Keep plans, photos, quotes, permits, receipts, and approvals with the project.</p></article>

@@ -58,6 +58,7 @@ export default function AdminPage() {
   const [feedback, setFeedback] = useState([]);
   const [contractors, setContractors] = useState([]);
   const [credits, setCredits] = useState([]);
+  const [permitCases, setPermitCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -98,19 +99,25 @@ export default function AdminPage() {
         supabase.from("beta_feedback").select("id, category, message, rating, page_path, status, admin_notes, created_at, user_id").order("created_at", { ascending: false }).limit(100),
         supabase.rpc("admin_contractor_directory"),
         supabase.from("marketplace_lead_credits").select("id, reason, details, status, admin_notes, created_at, contractor_id, lead_match_id").order("created_at", { ascending: false }).limit(100),
+        supabase.from("permit_cases").select("id, project_id, user_id, jurisdiction, status, readiness_score, application_reference, concierge_requested_at, submitted_at, activity, updated_at").order("updated_at", { ascending: false }).limit(100),
         healthRequest,
       ]);
 
       if (!mounted) return;
-      const [summaryResult, marketplaceResult, feedbackResult, contractorResult, creditResult, healthResult] = results;
-      const firstError = [summaryResult.error, marketplaceResult.error, feedbackResult.error, contractorResult.error, creditResult.error, healthResult.error].find(Boolean);
-      if (firstError) setError(firstError.message?.includes("admin_marketplace_summary") ? "Run migration 010 in Supabase to activate marketplace reporting." : firstError.message);
+      const [summaryResult, marketplaceResult, feedbackResult, contractorResult, creditResult, permitCaseResult, healthResult] = results;
+      const firstError = [summaryResult.error, marketplaceResult.error, feedbackResult.error, contractorResult.error, creditResult.error, permitCaseResult.error, healthResult.error].find(Boolean);
+      if (firstError) {
+        if (firstError.message?.includes("admin_marketplace_summary")) setError("Run migration 010 in Supabase to activate marketplace reporting.");
+        else if (firstError.message?.includes("permit_cases")) setError("Run migration 012 in Supabase to activate Permit Autopilot and the concierge queue.");
+        else setError(firstError.message);
+      }
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResult.data || {}) });
       setMarketplace({ ...EMPTY_MARKETPLACE, ...(marketplaceResult.data || {}) });
       setLaunchHealth({ ...EMPTY_LAUNCH_HEALTH, ...(healthResult.data || {}) });
       setFeedback(feedbackResult.data || []);
       setContractors(Array.isArray(contractorResult.data) ? contractorResult.data : []);
       setCredits(creditResult.data || []);
+      setPermitCases(permitCaseResult.data || []);
       setLoading(false);
     }
 
@@ -161,6 +168,28 @@ export default function AdminPage() {
     setCredits((current) => current.map((item) => item.id === id ? { ...item, status } : item));
   }
 
+
+  async function updatePermitCase(id, status) {
+    setError("");
+    setNotice("");
+    const current = permitCases.find((item) => item.id === id);
+    const activity = Array.isArray(current?.activity) ? current.activity : [];
+    const nextActivity = [...activity, {
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+      type: "admin_status",
+      title: `Permit Concierge updated status to ${status}`,
+      detail: "Updated from the Project Pilot Admin Control Center.",
+    }].slice(-100);
+    const { error: updateError } = await supabase
+      .from("permit_cases")
+      .update({ status, activity: nextActivity, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (updateError) { setError(updateError.message); return; }
+    setPermitCases((items) => items.map((item) => item.id === id ? { ...item, status } : item));
+    setNotice(`Permit case updated to ${status}.`);
+  }
+
   if (loading) return <main className="adminLoading">Opening Admin Control Center…</main>;
 
   if (!profile?.is_admin) {
@@ -176,7 +205,7 @@ export default function AdminPage() {
       <aside className="adminRail">
         <a href="/dashboard" className="adminBrand"><span>P</span><strong>Project Pilot</strong></a>
         <div><small>ADMIN CONTROL CENTER</small><strong>{profile.full_name || user?.email}</strong></div>
-        <nav><a className="active" href="/admin">Overview</a><a href="#accounts">Accounts</a><a href="#marketplace">Marketplace</a><a href="#contractors">Contractors</a><a href="#financials">Financials</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a></nav>
+        <nav><a className="active" href="/admin">Overview</a><a href="#accounts">Accounts</a><a href="#marketplace">Marketplace</a><a href="#contractors">Contractors</a><a href="#financials">Financials</a><a href="#permits">Permit Concierge</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a></nav>
         <div className="adminBetaState production"><span /><div><strong>Revenue launch</strong><small>Payments controlled by Vercel setting</small></div></div>
       </aside>
 
@@ -229,6 +258,9 @@ export default function AdminPage() {
         <section className="adminFinancials" id="financials"><div className="adminPanelHeading"><div><p>FINANCIALS</p><h2>Actual money is separated from opportunity value.</h2></div><span>All values in U.S. dollars</span></div><div className="financialGrid"><article><small>ACTUAL REVENUE</small><strong>{money(marketplace.actual_revenue_cents)}</strong><p>Completed paid introductions.</p></article><article><small>OPEN FEE VALUE</small><strong>{money(marketplace.pending_fee_value_cents)}</strong><p>Unpaid offers currently available.</p></article><article><small>PAID INTRODUCTIONS</small><strong>{number(marketplace.paid_leads)}</strong><p>Stripe-confirmed lead payments.</p></article><article><small>OPEN CREDIT REVIEWS</small><strong>{number(marketplace.credit_requests)}</strong><p>Lead-quality disputes needing attention.</p></article></div></section>
 
         <section className="adminPanel" id="credits"><div className="adminPanelHeading"><div><p>LEAD REVIEWS</p><h2>Protect contractor trust and lead quality.</h2></div><span>{number(credits.length)} recent requests</span></div><div className="feedbackTableWrap"><table><thead><tr><th>Reason</th><th>Details</th><th>Status</th><th>Date</th></tr></thead><tbody>{credits.map((item) => <tr key={item.id}><td><b>{item.reason}</b></td><td>{item.details || "—"}</td><td><select value={item.status} onChange={(event) => updateCredit(item.id, event.target.value)}><option>Requested</option><option>Reviewing</option><option>Approved</option><option>Denied</option><option>Issued</option></select></td><td>{formatDate(item.created_at)}</td></tr>)}{!credits.length && <tr><td colSpan="4"><div className="adminEmpty">No lead review requests.</div></td></tr>}</tbody></table></div></section>
+
+
+        <section className="adminPanel" id="permits"><div className="adminPanelHeading"><div><p>PERMIT CONCIERGE</p><h2>Review prepared permit cases and homeowner requests.</h2></div><span>{number(permitCases.length)} recent cases</span></div><div className="feedbackTableWrap"><table><thead><tr><th>Jurisdiction</th><th>Readiness</th><th>Reference</th><th>Concierge</th><th>Status</th><th>Updated</th></tr></thead><tbody>{permitCases.map((item) => <tr key={item.id}><td><b>{item.jurisdiction || "Authority review needed"}</b><small className="tableSubline">Project {item.project_id}</small></td><td>{number(item.readiness_score)}%</td><td>{item.application_reference || "—"}</td><td>{item.concierge_requested_at ? formatDate(item.concierge_requested_at) : "Not requested"}</td><td><select value={item.status} onChange={(event) => updatePermitCase(item.id, event.target.value)}><option value="draft">Draft</option><option value="collecting">Collecting</option><option value="ready_for_review">Ready for review</option><option value="authorized">Authorized</option><option value="concierge_requested">Concierge requested</option><option value="submitted">Submitted</option><option value="correction_required">Correction required</option><option value="approved">Approved</option><option value="inspection">Inspections</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option></select></td><td>{formatDate(item.updated_at)}</td></tr>)}{!permitCases.length && <tr><td colSpan="6"><div className="adminEmpty">No Permit Autopilot cases yet.</div></td></tr>}</tbody></table></div></section>
 
         <section className="adminPanel feedbackPanel" id="feedback"><div className="adminPanelHeading"><div><p>USER FEEDBACK</p><h2>What users need you to know.</h2></div><span>{number(feedback.length)} recent items</span></div><div className="feedbackTableWrap"><table><thead><tr><th>Type</th><th>Message</th><th>Page</th><th>Rating</th><th>Status</th><th>Date</th></tr></thead><tbody>{feedback.map((item) => <tr key={item.id}><td><b>{item.category}</b></td><td>{item.message}</td><td><code>{item.page_path}</code></td><td>{item.rating || "—"}</td><td><select value={item.status || "New"} onChange={(event) => updateFeedback(item.id, event.target.value)}><option>New</option><option>Reviewing</option><option>Planned</option><option>Fixed</option><option>Closed</option></select></td><td>{formatDate(item.created_at)}</td></tr>)}{!feedback.length && <tr><td colSpan="6"><div className="adminEmpty">No feedback has been submitted yet.</div></td></tr>}</tbody></table></div></section>
       </section>

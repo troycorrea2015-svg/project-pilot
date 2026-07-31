@@ -1,0 +1,58 @@
+PROJECT PILOT — INSTALL SPRINT 3.1 PERMIT AUTOPILOT
+==================================================
+
+PART 1 — UPLOAD THE CODE TO GITHUB
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Click Add file -> Upload files.
+4. Open the extracted folder and upload EVERYTHING INSIDE it to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with:
+
+   Sprint 3.1 Permit Autopilot
+
+7. Wait for Vercel to deploy the commit.
+
+PART 2 — RUN THE ONE SUPABASE MIGRATION
+1. Open Supabase -> SQL Editor -> New query.
+2. Open RUN_THIS_IN_SUPABASE_012.sql from this package.
+3. Copy the entire file into the SQL Editor.
+4. Click Run.
+5. A successful run creates the permit_cases table, security policies, indexes,
+   and the updated-at trigger. It does not delete projects, users, images, or documents.
+
+PART 3 — VERIFY VERCEL VALUES
+Use VERCEL_ENVIRONMENT_VALUES.txt as the reference. The most important corrections are:
+
+   OPENAI_IMAGE_MODEL=gpt-image-1
+   OPENAI_IMAGE_QUALITY=medium
+   OPENAI_ASSISTANT_MODEL=gpt-5-mini
+   OPENAI_ASSISTANT_FAST_MODEL=gpt-5-nano
+   OPENAI_ASSISTANT_FALLBACK_MODEL=gpt-4o-mini
+   OPENAI_PROJECT_VISION_MODEL=gpt-5
+
+Save changes and redeploy once if you changed any environment value.
+
+PART 4 — TEST SPRINT 3.1
+1. Sign in as a homeowner.
+2. Open a project and choose Permit Autopilot.
+3. Run the existing Permit Check if the project has no saved jurisdiction match.
+4. Select Start Permit Autopilot.
+5. Complete and save the application interview.
+6. Upload needed files under Files & Documents, then link them in Permit Autopilot.
+7. Preview the permit preparation packet.
+8. Type the applicant name and authorize the packet.
+9. Open the official application route and record the confirmation number after filing.
+10. Paste a sample reviewer correction and confirm Su returns an explanation, action list,
+    professional-review warning where needed, and a response draft.
+11. Schedule and update an inspection.
+12. Sign in as admin and confirm Permit Concierge cases appear in the admin queue.
+13. Test Project Vision and confirm one image is created per click.
+14. Ask Su a project question and confirm the answer streams progressively.
+
+IMPORTANT OPERATING BOUNDARY
+The code prepares, organizes, checks, drafts, guides, and tracks permit work. Direct government
+submission cannot be activated by code alone where a jurisdiction requires its own account,
+identity verification, signature, payment, professional seal, or approved agent agreement.
+Sprint 3.1 therefore uses guided official-portal submission and a Permit Concierge review queue.
+Do not advertise unrestricted direct filing until each jurisdiction formally supports that workflow.

@@ -1,0 +1,25 @@
+PROJECT PILOT SPRINT 3.1 — RECOMMENDED VERCEL PRODUCTION VALUES
+==============================================================
+
+Do not replace OPENAI_API_KEY, Supabase keys, or Stripe keys.
+
+NEXT_PUBLIC_SITE_URL=https://www.projectpiloting.com
+
+# One image per Project Vision request, balanced for cost and speed
+OPENAI_IMAGE_MODEL=gpt-image-1
+OPENAI_IMAGE_QUALITY=medium
+OPENAI_IMAGE_INPUT_FIDELITY=high
+PROJECT_VISION_ENABLED=true
+PROJECT_VISION_DAILY_LIMIT=5
+
+# Fast Project Assistant routing
+OPENAI_ASSISTANT_MODEL=gpt-5-mini
+OPENAI_ASSISTANT_FAST_MODEL=gpt-5-nano
+OPENAI_ASSISTANT_FALLBACK_MODEL=gpt-4o-mini
+PROJECT_ASSISTANT_DAILY_LIMIT=50
+
+# Only used if the image edit endpoint needs the Responses API fallback
+OPENAI_PROJECT_VISION_MODEL=gpt-5
+
+# Keep marketplace charges disabled until checkout and refund testing is complete
+MARKETPLACE_PAYMENTS_ENABLED=false

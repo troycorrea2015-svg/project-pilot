@@ -181,94 +181,102 @@ function shouldTryResponsesFallback(error) {
 }
 
 async function editWithImageApi({ imageBuffer, imageType, prompt, width, height }) {
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   const automaticSize = height > width * 1.12
     ? "1024x1536"
     : width > height * 1.12
       ? "1536x1024"
       : "1024x1024";
+  const models = [...new Set([process.env.OPENAI_IMAGE_MODEL, "gpt-image-1"].filter(Boolean))];
+  let lastError = null;
 
-  const form = new FormData();
-  form.append("model", model);
-  form.append(
-    "image[]",
-    new Blob([imageBuffer], { type: imageType.mime }),
-    `project-vision-input.${imageType.extension}`
-  );
-  form.append("prompt", prompt);
-  form.append("size", process.env.OPENAI_IMAGE_SIZE || automaticSize);
-  form.append("quality", process.env.OPENAI_IMAGE_QUALITY || "medium");
-  form.append("output_format", "png");
-
-  if (model !== "gpt-image-2") {
+  for (const model of models) {
+    const form = new FormData();
+    form.append("model", model);
+    form.append(
+      "image[]",
+      new Blob([imageBuffer], { type: imageType.mime }),
+      `project-vision-input.${imageType.extension}`
+    );
+    form.append("prompt", prompt);
+    form.append("size", process.env.OPENAI_IMAGE_SIZE || automaticSize);
+    form.append("quality", process.env.OPENAI_IMAGE_QUALITY || "medium");
+    form.append("output_format", "png");
     form.append("input_fidelity", process.env.OPENAI_IMAGE_INPUT_FIDELITY || "high");
+
+    const response = await fetch("https://api.openai.com/v1/images/edits", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+      body: form,
+      cache: "no-store",
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const base64Image = result?.data?.[0]?.b64_json;
+      if (!base64Image) throw new Error("The image editor returned no completed image.");
+      return {
+        base64Image,
+        requestId: response.headers.get("x-request-id") || "",
+        provider: `images-edits:${model}`,
+      };
+    }
+
+    lastError = providerError(result, "The AI image editor could not complete this visualization.", response.status);
+    if (![400, 404].includes(response.status) || model === models[models.length - 1]) break;
   }
 
-  const response = await fetch("https://api.openai.com/v1/images/edits", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: form,
-    cache: "no-store",
-  });
-
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw providerError(result, "The AI image editor could not complete this visualization.", response.status);
-  }
-
-  const base64Image = result?.data?.[0]?.b64_json;
-  if (!base64Image) throw new Error("The image editor returned no completed image.");
-
-  return {
-    base64Image,
-    requestId: response.headers.get("x-request-id") || "",
-    provider: "images-edits",
-  };
+  throw lastError || new Error("The AI image editor could not complete this visualization.");
 }
 
 async function editWithResponsesApi({ imageBuffer, imageType, prompt }) {
-  const model = process.env.OPENAI_PROJECT_VISION_MODEL || "gpt-5.5";
+  const models = [...new Set([process.env.OPENAI_PROJECT_VISION_MODEL, "gpt-5"].filter(Boolean))];
   const imageUrl = `data:${imageType.mime};base64,${imageBuffer.toString("base64")}`;
+  let lastError = null;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      input: [
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: prompt },
-            { type: "input_image", image_url: imageUrl, detail: "high" },
-          ],
-        },
-      ],
-      tools: [{ type: "image_generation" }],
-    }),
-    cache: "no-store",
-  });
+  for (const model of models) {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        store: false,
+        input: [
+          {
+            role: "user",
+            content: [
+              { type: "input_text", text: prompt },
+              { type: "input_image", image_url: imageUrl, detail: "high" },
+            ],
+          },
+        ],
+        tools: [{ type: "image_generation" }],
+      }),
+      cache: "no-store",
+    });
 
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw providerError(result, "The fallback image editor could not complete this visualization.", response.status);
+    const result = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const imageCall = (result?.output || []).find((item) => item?.type === "image_generation_call");
+      const base64Image = imageCall?.result || imageCall?.b64_json || "";
+      if (!base64Image) {
+        const outputText = clean(result?.output_text, 500);
+        throw new Error(outputText || "The fallback image editor returned no completed image.");
+      }
+      return {
+        base64Image,
+        requestId: response.headers.get("x-request-id") || result?.id || "",
+        provider: `responses-image-generation:${model}`,
+      };
+    }
+
+    lastError = providerError(result, "The fallback image editor could not complete this visualization.", response.status);
+    if (![400, 404].includes(response.status) || model === models[models.length - 1]) break;
   }
 
-  const imageCall = (result?.output || []).find((item) => item?.type === "image_generation_call");
-  const base64Image = imageCall?.result || imageCall?.b64_json || "";
-  if (!base64Image) {
-    const outputText = clean(result?.output_text, 500);
-    throw new Error(outputText || "The fallback image editor returned no completed image.");
-  }
-
-  return {
-    base64Image,
-    requestId: response.headers.get("x-request-id") || result?.id || "",
-    provider: "responses-image-generation",
-  };
+  throw lastError || new Error("The fallback image editor could not complete this visualization.");
 }
 
 async function updateFailedRequest(service, requestId, error) {

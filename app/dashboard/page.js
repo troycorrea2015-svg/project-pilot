@@ -640,7 +640,7 @@ export default function DashboardPage() {
           <a className="active" href="/dashboard">Dashboard</a>
           <a href="#projects">My Projects</a>
           <a href="/contractors">Find Contractors</a>
-          <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permits</a>
+          <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permit Autopilot</a>
           <a href={primaryProject ? `/project/${primaryProject.id}?tab=vision` : "#projects"}>Project Vision</a>
           <a href="/help">Help Center</a>
           {accountRole === "contractor" && <a href="/contractor">Contractor Center</a>}
@@ -730,7 +730,7 @@ export default function DashboardPage() {
               <b>→</b><span><strong>Continue a project</strong><small>{primaryProject ? primaryProject.title : "Create your first project"}</small></span>
             </button>
             <button type="button" onClick={openPrimaryProject}>
-              <b>✓</b><span><strong>Check permits</strong><small>Find likely approvals and official resources.</small></span>
+              <b>✓</b><span><strong>Start Permit Autopilot</strong><small>Prepare the application path, documents, and approval tracking.</small></span>
             </button>
             <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=vision`) : addProject()}>
               <b>◫</b><span><strong>Visualize a project</strong><small>Turn your own photo into a realistic proposed result.</small></span>

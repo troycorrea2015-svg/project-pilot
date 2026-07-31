@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { readAssistantStream } from "../../../lib/assistant-stream";
 import ProjectVision from "../../../components/ProjectVision";
+import PermitAutopilot from "../../../components/PermitAutopilot";
 import "./project.css";
 
 const STAGES = [
@@ -23,7 +24,7 @@ const NAV_ITEMS = [
   ["vision", "Project Vision"],
   ["flight", "Project Plan"],
   ["pilot", "Project Assistant"],
-  ["permits", "Permits & Approvals"],
+  ["permits", "Permit Autopilot"],
   ["contractors", "Find Contractors"],
   ["documents", "Files & Documents"],
   ["notes", "Notes"],
@@ -1052,7 +1053,7 @@ export default function ProjectWorkspacePage() {
                 <div className="cardHeadingRow">
                   <div>
                     <p>PERMITS & APPROVALS</p>
-                    <h3>{permitChecked ? "Jurisdiction check saved" : "Confirm the permit path"}</h3>
+                    <h3>{permitChecked ? "Jurisdiction check saved" : "Start Permit Autopilot"}</h3>
                   </div>
                   <button onClick={() => setActiveTab("permits")}>{permitChecked ? "Review Check" : "Run Check"}</button>
                 </div>
@@ -1060,7 +1061,7 @@ export default function ProjectWorkspacePage() {
                   <span>{permitChecked ? "✓" : "!"}</span>
                   <div>
                     <strong>{permitChecked ? permitResult.title : "Location verification required"}</strong>
-                    <p>{permitChecked ? permitResult.jurisdictionStatus : "Use the project address and ZIP code to build a permit-preparation checklist and open official resources."}</p>
+                    <p>{permitChecked ? permitResult.jurisdictionStatus : "Match the authority, prepare the application interview, organize required files, and track approval from one place."}</p>
                   </div>
                 </div>
               </article>
@@ -1287,6 +1288,12 @@ export default function ProjectWorkspacePage() {
 
         {activeTab === "permits" && (
           <div className="workspaceContent permitContent">
+            <PermitAutopilot
+              project={project}
+              user={user}
+              permitResult={permitResult}
+              onOpenDocuments={() => setActiveTab("documents")}
+            />
             <div className="sectionIntro splitIntro permitVisualIntro">
               <div>
                 <p>PERMITS & APPROVALS</p>

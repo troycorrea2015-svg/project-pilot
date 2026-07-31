@@ -284,8 +284,8 @@ function chooseAssistantProfile(message, project) {
 
   if (requiresGuidance) {
     return {
-      model: process.env.OPENAI_ASSISTANT_MODEL || "gpt-5.6-luna",
-      fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-5.4-mini",
+      model: process.env.OPENAI_ASSISTANT_MODEL || "gpt-5-mini",
+      fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-4o-mini",
       maxOutputTokens: 650,
       allowTools: true,
       route: "guided",
@@ -293,8 +293,8 @@ function chooseAssistantProfile(message, project) {
   }
 
   return {
-    model: process.env.OPENAI_ASSISTANT_FAST_MODEL || "gpt-5.4-nano",
-    fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-5.4-mini",
+    model: process.env.OPENAI_ASSISTANT_FAST_MODEL || "gpt-5-nano",
+    fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-4o-mini",
     maxOutputTokens: 380,
     allowTools: false,
     route: "fast",
@@ -302,17 +302,20 @@ function chooseAssistantProfile(message, project) {
 }
 
 async function startOpenAIRequest(requestBody, preferredModel, fallbackModel) {
-  const candidates = [...new Set([preferredModel, fallbackModel].filter(Boolean))];
+  const candidates = [...new Set([preferredModel, fallbackModel, "gpt-5-mini", "gpt-4o-mini"].filter(Boolean))];
   let lastMessage = "OpenAI could not answer this question.";
 
   for (const model of candidates) {
+    const modelBody = { ...requestBody, model };
+    if (!String(model).startsWith("gpt-5")) delete modelBody.reasoning;
+
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...requestBody, model }),
+      body: JSON.stringify(modelBody),
       cache: "no-store",
     });
 
