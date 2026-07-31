@@ -16,31 +16,13 @@ const ALLOWED_BUDGETS = new Set([
 
 const VARIANTS = [
   {
-    key: "option-a",
-    initialLabel: "Option A — Conservative refresh",
+    key: "single",
+    initialLabel: "Proposed concept",
     initialDirective:
-      "Create a conservative, practical option focused on safety, repair, organization, and modest finish upgrades. Keep the change localized and budget-conscious.",
-    refineLabel: "Refinement A — Closest match",
+      "Create the single strongest practical option for this homeowner. Prioritize accuracy, safety, usability, budget fit, and faithful preservation of the original property.",
+    refineLabel: "Refined concept",
     refineDirective:
-      "Apply the homeowner's new instruction as literally and conservatively as possible. Keep every unrequested detail exactly as shown in the selected concept.",
-  },
-  {
-    key: "option-b",
-    initialLabel: "Option B — Balanced redesign",
-    initialDirective:
-      "Create a balanced option that feels polished and upgraded while remaining realistic for a typical homeowner. Improve appearance and usability without replacing the property.",
-    refineLabel: "Refinement B — Alternative finish",
-    refineDirective:
-      "Apply the same homeowner instruction with a tasteful alternative material, finish, or detail treatment while keeping the layout and all unrequested elements fixed.",
-  },
-  {
-    key: "option-c",
-    initialLabel: "Option C — Strongest visual",
-    initialDirective:
-      "Create the strongest visual option while staying believable for the requested budget. Make it attractive and finished, but still clearly the same property and same project area.",
-    refineLabel: "Refinement C — Enhanced detail",
-    refineDirective:
-      "Apply the homeowner instruction with slightly more polished detailing, while preserving the selected concept's layout, dimensions, camera angle, and every unrequested feature.",
+      "Apply the homeowner's latest instruction as literally and conservatively as possible. Keep every unrequested detail exactly as shown in the selected concept.",
   },
 ];
 
@@ -199,7 +181,7 @@ function shouldTryResponsesFallback(error) {
 }
 
 async function editWithImageApi({ imageBuffer, imageType, prompt, width, height }) {
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   const automaticSize = height > width * 1.12
     ? "1024x1536"
     : width > height * 1.12
@@ -215,7 +197,7 @@ async function editWithImageApi({ imageBuffer, imageType, prompt, width, height 
   );
   form.append("prompt", prompt);
   form.append("size", process.env.OPENAI_IMAGE_SIZE || automaticSize);
-  form.append("quality", process.env.OPENAI_IMAGE_QUALITY || "high");
+  form.append("quality", process.env.OPENAI_IMAGE_QUALITY || "medium");
   form.append("output_format", "png");
 
   if (model !== "gpt-image-2") {

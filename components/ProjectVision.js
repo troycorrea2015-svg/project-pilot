@@ -267,7 +267,7 @@ export default function ProjectVision({ project, user }) {
       if (assetType === "source") {
         setSelectedSourceId(record.id);
         setSelectedConceptId("");
-        setNotice("Original photo uploaded. Describe the project and Project Vision will create 3 options.");
+        setNotice("Original photo uploaded. Describe the project and Project Vision will create one proposed concept.");
       } else {
         setNotice("Actual completed-project photo added.");
       }
@@ -336,12 +336,12 @@ export default function ProjectVision({ project, user }) {
 
     setGenerating(true);
     setError("");
-    setNotice("Project Vision is editing your original photo and creating 3 options. Keep this page open until they are saved.");
+    setNotice("Project Vision is editing your original photo and creating one proposed concept. Keep this page open until it is saved.");
 
     try {
       const result = await requestConcepts({ generationMode: "initial" });
       setRevisionNotes("");
-      setNotice(`Project Vision created ${Number(result?.generatedCount || 3)} options. Choose one, then use Add Your Vision to keep refining it.`);
+      setNotice(`Project Vision created the proposed concept. Use Add Your Vision to keep refining it until it matches what you want.`);
     } catch (generationError) {
       setError(generationError.message || "Project Vision could not complete this request.");
       setNotice("");
@@ -368,17 +368,17 @@ export default function ProjectVision({ project, user }) {
     setVisionInput("");
     setGenerating(true);
     setError("");
-    setNotice("Su is applying your vision to the selected concept and creating 3 refined options.");
+    setNotice("Su is applying your vision to the selected concept and creating one refined concept.");
 
     try {
       const baseLabel = selectedConcept.caption || `Version ${selectedConcept.version_number}`;
       const result = await requestConcepts({ generationMode: "refine", visionMessage: message });
-      const count = Number(result?.generatedCount || 3);
+      const count = Number(result?.generatedCount || 1);
       appendVisionMessage(
         "assistant",
-        `I used ${baseLabel} as the starting point and created ${count} refined options. Choose the closest one, then tell me what to change next.`
+        `I used ${baseLabel} as the starting point and created the refined concept. Review it, then tell me what to change next.`
       );
-      setNotice(`Su created ${count} refinements from your selected concept.`);
+      setNotice(`Su created a refinement from your selected concept.`);
     } catch (generationError) {
       const messageText = generationError.message || "Project Vision could not complete this refinement.";
       appendVisionMessage("assistant", `I could not complete that change: ${messageText}`);
@@ -482,7 +482,7 @@ export default function ProjectVision({ project, user }) {
           <p>PROJECT VISION</p>
           <h1>See the potential before construction begins.</h1>
           <span>
-            Upload your own property photo. Project Vision preserves the property and camera angle, creates 3 initial options, and then lets the homeowner talk Su through additional changes.
+            Upload your own property photo. Project Vision preserves the property and camera angle, creates one proposed concept, and then lets the homeowner keep refining it with Su.
           </span>
         </div>
         <button type="button" onClick={() => sourceInputRef.current?.click()} disabled={Boolean(uploading)}>
@@ -584,10 +584,10 @@ export default function ProjectVision({ project, user }) {
               </label>
               <div className={styles.preserveNote}>
                 <strong>Scene-lock rule</strong>
-                <span>Initial options start from the original photo. Add Your Vision refinements start from the concept you select while locking every unrequested detail in place.</span>
+                <span>The first concept starts from the original photo. Add Your Vision refinements start from the concept you select while locking every unrequested detail in place.</span>
               </div>
               <button className={styles.generateButton} type="submit" disabled={generating || !selectedSource}>
-                {generating ? "Creating 3 Project Vision options…" : concepts.length ? "Generate 3 New Options" : "Generate 3 Proposed Options"}
+                {generating ? "Creating Project Vision concept…" : concepts.length ? "Generate New Concept" : "Generate Proposed Concept"}
               </button>
               <small className={styles.disclaimer}>AI concepts are planning visuals only. They are not plans, approvals, cost guarantees, or proof of completed work.</small>
             </form>
@@ -647,7 +647,7 @@ export default function ProjectVision({ project, user }) {
               {concepts.length > 0 && (
                 <div className={styles.versionList}>
                   <div className={styles.sectionTitle}>
-                    <div><p>SAVED OPTIONS</p><h3>Choose a direction to refine.</h3></div>
+                    <div><p>SAVED CONCEPTS</p><h3>Select a concept to view or refine.</h3></div>
                     <span>{concepts.length}</span>
                   </div>
                   <div className={styles.versionGrid}>
@@ -671,8 +671,8 @@ export default function ProjectVision({ project, user }) {
                   <div className={styles.visionChatHeading}>
                     <div>
                       <p>ADD YOUR VISION</p>
-                      <h3>Talk Su through the changes.</h3>
-                      <span>Select the closest concept, then describe or speak exactly what should change next.</span>
+                      <h3>Tell Su exactly what to change.</h3>
+                      <span>Select the concept you want to improve, then type exactly what should change next.</span>
                     </div>
                     <div className={styles.selectedConceptBadge}>
                       Refining: {selectedConcept.caption || `Version ${selectedConcept.version_number}`}
@@ -717,7 +717,7 @@ export default function ProjectVision({ project, user }) {
                     />
                     <div className={styles.visionComposerActions}>
                       <button type="submit" className={styles.refineButton} disabled={generating || visionInput.trim().length < 3}>
-                        {generating ? "Creating 3 refinements…" : "Generate 3 refinements"}
+                        {generating ? "Creating refinement…" : "Generate refinement"}
                       </button>
                     </div>
                     <small>Su uses the selected concept as the starting point and applies only the changes you request.</small>
