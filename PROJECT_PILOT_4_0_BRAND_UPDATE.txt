@@ -1,0 +1,29 @@
+PROJECT PILOT 4.0 — APPROVED BRAND INTEGRATION
+
+Integrated directly into the complete uploaded repository:
+- Approved folded-ribbon Project Pilot SVG mark
+- Project Pilot wordmark and favicon
+- Navy / electric-blue / sky-blue official palette
+- Homepage navigation, hero, buttons, login card, categories, and feature surfaces
+- Dashboard, project workspace, contractor, contractor marketplace, admin, help, loading, error, and not-found brand marks
+- Responsive/mobile brand sizing
+- Accessibility focus styling and improved interactive states
+
+PRESERVED WITHOUT INTENTIONAL CHANGES:
+- Supabase configuration and database files
+- Authentication logic
+- Marketplace/payment logic and environment settings
+- Permit lookup/API logic
+- Existing user and project functionality
+
+FILES DIRECTLY MODIFIED:
+- app/layout.js
+- app/brand.css
+
+EXISTING BRAND ASSETS USED:
+- public/project-pilot-mark.svg
+- public/project-pilot-wordmark.svg
+- public/favicon.svg
+
+VERIFICATION NOTE:
+A production build could not be completed in the packaging environment because its private npm registry returned a 404 for @supabase/supabase-js. Run `npm install` and `npm run build` in your normal local/GitHub/Vercel environment.
