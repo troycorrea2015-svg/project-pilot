@@ -1,18 +1,11 @@
-PROJECT PILOT — SPRINT 3.1C PERMIT CONCIERGE PATCH MANIFEST
-===========================================================
+PROJECT PILOT — SU QUICK GUIDANCE UPGRADE
+=========================================
+Copy every file and folder in this patch into the root of the existing Project Pilot repository.
+No Supabase SQL is required.
 
-Changed or added files:
+Changed or added files: 4
 
-app/admin/page.js
-app/admin/permit-concierge/[id]/page.js
-app/admin/permit-concierge/[id]/concierge.css
-app/api/permit-concierge/request/route.js
-components/PermitAutopilot.js
-components/PermitAutopilot.module.css
-components/PermitConcierge.js
-components/PermitConcierge.module.css
-supabase/migrations/013_permit_concierge_3_1c.sql
-RUN_THIS_IN_SUPABASE_013.sql
-INSTALL_SPRINT_3_1C_PERMIT_CONCIERGE.txt
-PATCH_MANIFEST.txt
-SHA256SUMS.txt
+app/api/pilot/route.js
+app/project/[id]/page.js
+components/GuidanceAssistant.js
+lib/assistant-stream.js

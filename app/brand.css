@@ -32,6 +32,10 @@ body {
 .adminBrand > span:first-child,
 .contractorBrand > span:first-child,
 .projectBrand > span:first-child,
+.marketplaceBrand > span:first-child,
+.loginBrand > span:first-child,
+.helpBrand > span:first-child,
+.pilotBadge > span:first-child,
 .releaseMark,
 .adminDenied > div > span:first-child {
   width: 42px !important;
@@ -52,7 +56,10 @@ body {
 .dashboardBrand strong,
 .adminBrand strong,
 .contractorBrand strong,
-.projectBrand strong {
+.projectBrand strong,
+.marketplaceBrand strong,
+.loginBrand strong,
+.helpBrand strong {
   color: var(--pp-ink) !important;
   font-weight: 800 !important;
   letter-spacing: -.025em !important;
@@ -60,7 +67,10 @@ body {
 .dashboardSidebar .dashboardBrand strong,
 .adminRail .adminBrand strong,
 .contractorRail .contractorBrand strong,
-.projectSidebar .projectBrand strong {
+.projectSidebar .projectBrand strong,
+.marketplaceBrand strong,
+.loginBrand strong,
+.helpBrand strong {
   color: var(--pp-white) !important;
 }
 
@@ -186,7 +196,7 @@ button[type="submit"]:hover {
     radial-gradient(circle at 84% 8%, rgba(61,165,255,.13), transparent 28%),
     linear-gradient(180deg, #F9FBFF 0%, #F4F7FB 100%) !important;
 }
-.homeHeader {
+.homeNav {
   background: rgba(255,255,255,.88) !important;
   border-bottom: 1px solid rgba(10,15,28,.07) !important;
   backdrop-filter: blur(18px);
@@ -232,9 +242,52 @@ button[type="submit"]:hover {
   .dashboardBrand > span:first-child,
   .adminBrand > span:first-child,
   .contractorBrand > span:first-child,
-  .projectBrand > span:first-child {
+  .projectBrand > span:first-child,
+  .marketplaceBrand > span:first-child,
+  .loginBrand > span:first-child,
+  .helpBrand > span:first-child,
+  .pilotBadge > span:first-child {
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
   }
+}
+
+
+/* 4.0 direct integration polish */
+.homeNav {
+  position: sticky !important;
+  top: 0;
+  z-index: 50;
+  background: rgba(255,255,255,.9) !important;
+  border-bottom: 1px solid rgba(10,15,28,.07) !important;
+  backdrop-filter: blur(18px);
+}
+.navCta, .primaryAction, .primaryLink {
+  background: var(--pp-gradient) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 24px rgba(37,99,255,.22) !important;
+}
+.secondaryAction {
+  color: var(--pp-navy) !important;
+  border-color: rgba(19,35,61,.18) !important;
+  background: rgba(255,255,255,.76) !important;
+}
+.accessCard {
+  border: 1px solid rgba(37,99,255,.16) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 70px rgba(10,35,84,.16) !important;
+}
+.authTabs button.active { color: var(--pp-blue) !important; }
+.authTabs button.active::after { background: var(--pp-blue) !important; }
+.categoryGrid article, .featureGrid article, .howGrid article {
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.categoryGrid article:hover, .featureGrid article:hover, .howGrid article:hover {
+  transform: translateY(-3px);
+}
+.marketplaceBrand > span:first-child, .loginBrand > span:first-child, .helpBrand > span:first-child {
+  flex: 0 0 auto;
 }
