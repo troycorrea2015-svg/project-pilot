@@ -7,9 +7,8 @@ import FeedbackCenter from "../components/BetaFeedback";
 import ProductAnalytics from "../components/ProductAnalytics";
 
 export const metadata = {
-  title: "Project Pilot | From Concept to Completion",
-  description: "AI-guided project planning, permit preparation, cost estimates, documents, and trusted professional connections.",
-  icons: { icon: "/favicon.svg" },
+  title: "Project Pilot | AI Guidance. Real Results.",
+  description: "Plan smarter with AI-powered guidance for permits, budgets, project visualization, DIY decisions, and trusted professionals.",
 };
 
 export default function RootLayout({ children }) {

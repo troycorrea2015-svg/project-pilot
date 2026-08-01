@@ -131,15 +131,14 @@ export default function HomePage() {
           <span>P</span>
           <div>
             <strong>Project Pilot</strong>
-            <small>Plan. Verify. Build.</small>
+            <small>AI Guidance. Real Results.</small>
           </div>
         </a>
         <nav>
-          <a href="#projects">Projects</a>
           <a href="#how-it-works">How It Works</a>
+          <a href="#solutions">Solutions</a>
           <a href="#project-vision">Project Vision</a>
-          <a href="#diy">DIY</a>
-          <a href="/contractors">Find Contractors</a>
+          <a href="/contractors">Contractors</a>
           <a href="#access">Sign In</a>
         </nav>
         <a className="navCta" href="#access">Get Started</a>
@@ -147,14 +146,14 @@ export default function HomePage() {
 
       <section className="heroSection" id="top">
         <div className="heroCopy">
-          <p className="eyebrow">YOUR PROJECT JOURNEY, SMARTER FROM THE START</p>
-          <h1>Plan with confidence before the first tool comes out.</h1>
+          <p className="eyebrow">AI GUIDANCE FOR REAL-WORLD PROJECTS</p>
+          <h1>Plan smarter. Build with confidence.</h1>
           <p className="heroLead">
-            Project Pilot brings project planning, Permit Autopilot, cost estimates, AI visualization, documents, and saved progress into one homeowner-controlled workspace.
+            Move from idea to completion with one intelligent workspace for permits, budgets, project visualization, DIY decisions, documents, and trusted professionals.
           </p>
           <div className="heroActions">
-            <a href="#access" className="primaryAction">Start a Project</a>
-            <a href="#how-it-works" className="secondaryAction">See How It Works</a>
+            <a href="#access" className="primaryAction">Start Free</a>
+            <a href="#how-it-works" className="secondaryAction">Explore the Platform</a>
           </div>
           <div className="heroBenefits">
             <span>✓ AI project visualization</span>
@@ -288,7 +287,7 @@ export default function HomePage() {
         </article>
       </section>
 
-      <section className="featureSection">
+      <section className="featureSection" id="solutions">
         <div className="sectionHeading">
           <p className="eyebrow">EVERYTHING CONNECTED</p>
           <h2>The useful parts of project planning, together.</h2>
@@ -314,7 +313,7 @@ export default function HomePage() {
       </section>
 
       <footer className="homeFooter">
-        <a className="homeBrand" href="#top"><span>P</span><div><strong>Project Pilot</strong><small>Plan. Verify. Build.</small></div></a>
+        <a className="homeBrand" href="#top"><span>P</span><div><strong>Project Pilot</strong><small>AI Guidance. Real Results.</small></div></a>
         <p>Piloting your project from concept to completion.</p>
         <small>Permit, cost, contractor, and DIY guidance should be independently confirmed before work begins. <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></small>
       </footer>

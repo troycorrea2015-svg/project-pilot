@@ -487,3 +487,126 @@
   .accessCard { padding: 20px; }
 }
 .homeFooter small a{color:#d9e6f7;text-decoration:none}.homeFooter small a:hover{text-decoration:underline}
+
+/* Project Pilot 5.0 — premium logo-driven homepage */
+:root {
+  --home-ink: #0A0F1C;
+  --home-navy: #07162F;
+  --home-navy-2: #0A1F45;
+  --home-blue: #2563FF;
+  --home-sky: #3DA5FF;
+  --home-green: #22C55E;
+  --home-soft: #F4F7FB;
+  --home-line: #DCE5F0;
+}
+
+.homePage { background: #fff; color: var(--home-ink); }
+.homeNav {
+  min-height: 78px;
+  padding: 0 clamp(22px,6vw,88px);
+  background: rgba(7,22,47,.96) !important;
+  border-bottom: 1px solid rgba(255,255,255,.09) !important;
+  box-shadow: 0 12px 34px rgba(2,11,32,.18);
+}
+.homeNav .homeBrand strong { color: #fff !important; font-size: 18px; }
+.homeNav .homeBrand small { color: rgba(255,255,255,.58) !important; letter-spacing: .06em; }
+.homeNav nav a { color: rgba(255,255,255,.74) !important; font-weight: 700; }
+.homeNav nav a:hover { color: #fff !important; }
+.navCta {
+  background: linear-gradient(135deg,var(--home-sky),var(--home-blue)) !important;
+  color:#fff !important;
+  border:0 !important;
+  box-shadow:0 10px 26px rgba(37,99,255,.32) !important;
+}
+
+.heroSection {
+  padding: clamp(64px,7vw,108px) clamp(22px,6vw,88px) clamp(70px,8vw,118px) !important;
+  grid-template-columns: minmax(0,1.02fr) minmax(420px,.98fr) !important;
+  gap: 30px 56px !important;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(61,165,255,.28), transparent 28%),
+    radial-gradient(circle at 11% 5%, rgba(37,99,255,.12), transparent 25%),
+    linear-gradient(145deg,#fff 0%,#f6f9ff 52%,#edf5ff 100%) !important;
+}
+.heroCopy { padding-top: 30px !important; }
+.heroCopy .eyebrow { color: var(--home-blue) !important; letter-spacing:.16em; }
+.heroCopy h1 {
+  max-width: 780px !important;
+  margin: 16px 0 22px !important;
+  font-size: clamp(58px,6.2vw,92px) !important;
+  line-height: .96 !important;
+  letter-spacing: -.065em !important;
+  color: var(--home-ink) !important;
+}
+.heroLead { max-width: 700px !important; color:#53627A !important; font-size:18px !important; line-height:1.7 !important; }
+.primaryAction {
+  background: linear-gradient(135deg,var(--home-sky),var(--home-blue)) !important;
+  box-shadow:0 16px 34px rgba(37,99,255,.28) !important;
+}
+.secondaryAction { border-color:rgba(37,99,255,.24) !important; color:var(--home-blue) !important; }
+.heroBenefits span { background:rgba(255,255,255,.78) !important; border-color:rgba(37,99,255,.13) !important; color:#4B5E78 !important; }
+.heroPhoto {
+  height: clamp(510px,50vw,720px) !important;
+  border: 1px solid rgba(37,99,255,.16) !important;
+  border-radius: 32px !important;
+  box-shadow:0 34px 90px rgba(7,22,47,.22) !important;
+}
+.heroPhoto::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 50%,rgba(7,22,47,.32)); pointer-events:none; }
+.heroPhotoLabel { z-index:2; background:rgba(7,22,47,.86) !important; border:1px solid rgba(255,255,255,.14); }
+.accessCard {
+  background:rgba(255,255,255,.9) !important;
+  border:1px solid rgba(37,99,255,.14) !important;
+  box-shadow:0 28px 70px rgba(7,22,47,.14) !important;
+  backdrop-filter:blur(20px);
+}
+.pilotBadge strong { color:var(--home-ink) !important; }
+.authTabs { background:#EEF3FB !important; }
+.authTabs button.active { background:#fff !important; color:var(--home-blue) !important; box-shadow:0 6px 18px rgba(7,22,47,.08); }
+.accessCard input { border-color:#D8E2F0 !important; background:#FBFDFF !important; }
+.authSubmit { background:linear-gradient(135deg,var(--home-sky),var(--home-blue)) !important; }
+
+.categorySection { background:#fff !important; }
+.sectionHeading .eyebrow,.compactHeading .eyebrow { color:var(--home-blue) !important; }
+.sectionHeading h2,.compactHeading h2 { color:var(--home-ink) !important; }
+.categoryGrid article,.howGrid article,.peopleFeatureSection article {
+  border-color:rgba(37,99,255,.12) !important;
+  box-shadow:0 18px 48px rgba(7,22,47,.08) !important;
+}
+.categoryGrid article:hover,.howGrid article:hover,.peopleFeatureSection article:hover { transform:translateY(-4px); box-shadow:0 26px 62px rgba(7,22,47,.14) !important; }
+.howSection { background:linear-gradient(180deg,#F8FAFF,#EEF4FF) !important; }
+.howGrid article>span { background:linear-gradient(135deg,#E8F2FF,#DCE9FF) !important; color:var(--home-blue) !important; }
+.peopleFeatureSection { background:#fff !important; }
+.peopleFeatureSection article { border-radius:26px !important; overflow:hidden; background:#F8FAFE !important; }
+.peopleFeatureSection h2 { color:var(--home-ink) !important; }
+
+.featureSection {
+  background:
+    radial-gradient(circle at 15% 12%,rgba(61,165,255,.18),transparent 26%),
+    linear-gradient(135deg,var(--home-navy),var(--home-navy-2)) !important;
+}
+.featureSection .eyebrow { color:var(--home-sky) !important; }
+.featureGrid article { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.12) !important; backdrop-filter:blur(10px); }
+.featureGrid article:hover { background:rgba(255,255,255,.11) !important; transform:translateY(-3px); }
+.featureGrid strong { color:#fff !important; }
+.featureGrid p { color:#B8C7DC !important; }
+
+.betaSection {
+  background:
+    radial-gradient(circle at 90% 50%,rgba(61,165,255,.18),transparent 25%),
+    linear-gradient(135deg,#F7FAFF,#EAF3FF) !important;
+}
+.betaSection h2 { color:var(--home-ink) !important; }
+.betaSection > a { background:linear-gradient(135deg,var(--home-sky),var(--home-blue)) !important; box-shadow:0 14px 30px rgba(37,99,255,.25) !important; }
+.homeFooter { background:#050F22 !important; }
+.homeFooter .homeBrand strong { color:#fff !important; }
+
+@media (max-width:1000px){
+  .heroSection{grid-template-columns:1fr !important;grid-template-areas:"copy" "photo" "access" !important}
+  .heroPhoto{height:min(70vw,650px) !important}
+}
+@media (max-width:740px){
+  .homeNav{min-height:68px}
+  .heroCopy h1{font-size:clamp(48px,13vw,68px) !important}
+  .heroSection{padding-top:46px !important}
+  .heroPhoto{height:470px !important;border-radius:24px !important}
+}
