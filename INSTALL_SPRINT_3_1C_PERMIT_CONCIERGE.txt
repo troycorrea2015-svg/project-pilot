@@ -1,0 +1,76 @@
+PROJECT PILOT — SPRINT 3.1C PERMIT CONCIERGE
+=============================================
+
+WHAT THIS UPDATE ADDS
+---------------------
+This adds a human-assisted Permit Concierge operating workflow on top of Sprint 3.1B.
+
+Homeowners can:
+- Choose which permit tasks they want Project Pilot to handle.
+- Authorize Project Pilot staff to review, prepare, organize, and coordinate the administrative process.
+- See what Project Pilot is handling and what still requires the homeowner.
+- Complete homeowner tasks.
+- Exchange messages with the Permit Concierge inside the project.
+- Follow concierge status from intake through preparation, filing, corrections, approval, and closeout.
+
+Administrators can:
+- See all Permit Concierge requests in the Admin Control Center.
+- Open a dedicated Permit Concierge workbench for each request.
+- Assign a coordinator.
+- Update service status.
+- Create Project Pilot or homeowner tasks.
+- Mark tasks in progress, blocked, or complete.
+- Send plain-English messages to the homeowner.
+- Keep private operating notes and a homeowner-visible summary.
+
+IMPORTANT OPERATING REQUIREMENT
+-------------------------------
+This code creates the service workflow, but a human must monitor and operate the Permit Concierge queue.
+Initially, that can be the Project Pilot founder/admin.
+
+Project Pilot may review, prepare, organize, communicate, track, and coordinate. It must not impersonate the homeowner, sign legal certifications, fabricate professional seals, bypass portal identity requirements, or submit where the authority does not permit an agent or authorized workflow.
+
+INSTALLATION
+------------
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Click Add file -> Upload files.
+4. Upload everything INSIDE the extracted folder to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with:
+
+   Sprint 3.1C Permit Concierge
+
+7. Open Supabase -> SQL Editor -> New query.
+8. Open RUN_THIS_IN_SUPABASE_013.sql from this package.
+9. Copy the entire SQL file into Supabase and click Run.
+10. Wait for Vercel to deploy the GitHub commit.
+11. Hard refresh Project Pilot with Ctrl + Shift + R.
+
+TEST
+----
+Homeowner test:
+1. Open a project and Permit Autopilot.
+2. Start or open the permit case.
+3. Open Review & Authorize or Concierge & Track.
+4. Select Permit Concierge services.
+5. Enter contact information, accept the authorization, and click Start Permit Concierge.
+6. Confirm the active concierge workspace appears with tasks and messages.
+
+Admin test:
+1. Open /admin.
+2. Scroll to Permit Concierge.
+3. Open the request workbench.
+4. Assign yourself, add a homeowner task, and send a message.
+5. Return to the homeowner project and confirm the task/message appears.
+
+OPTIONAL EMAIL ALERT
+--------------------
+No new Vercel variable is required.
+
+To email the operator whenever a homeowner starts Permit Concierge, add:
+
+PERMIT_CONCIERGE_EMAIL=your-email@example.com
+
+Email alerts also require the existing RESEND_API_KEY and MARKETPLACE_FROM_EMAIL settings.
+The in-app queue works without email.
