@@ -1,0 +1,240 @@
+/* Project Pilot 3.0C — official brand system
+   Additive overrides only. No database, marketplace, or payment logic changes. */
+
+:root {
+  --pp-ink: #0A0F1C;
+  --pp-navy: #13233D;
+  --pp-blue: #2563FF;
+  --pp-sky: #3DA5FF;
+  --pp-green: #22C55E;
+  --pp-slate: #64748B;
+  --pp-cloud: #F4F7FB;
+  --pp-white: #FFFFFF;
+  --pp-border: #DCE5F0;
+  --pp-gradient: linear-gradient(135deg, #3DA5FF 0%, #2563FF 50%, #0A2E88 100%);
+  --pp-shadow: 0 18px 55px rgba(10, 35, 84, .14);
+  --pp-radius-sm: 12px;
+  --pp-radius-md: 18px;
+  --pp-radius-lg: 26px;
+}
+
+html { color-scheme: light; }
+body {
+  background: var(--pp-cloud);
+  color: var(--pp-ink);
+  font-family: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+/* Turn every existing single-letter brand tile into the official mark. */
+.homeBrand > span:first-child,
+.dashboardBrand > span:first-child,
+.adminBrand > span:first-child,
+.contractorBrand > span:first-child,
+.projectBrand > span:first-child,
+.releaseMark,
+.adminDenied > div > span:first-child {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  display: inline-block !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: url("/project-pilot-mark.svg") center / contain no-repeat !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Wordmark treatment */
+.homeBrand strong,
+.dashboardBrand strong,
+.adminBrand strong,
+.contractorBrand strong,
+.projectBrand strong {
+  color: var(--pp-ink) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.025em !important;
+}
+.dashboardSidebar .dashboardBrand strong,
+.adminRail .adminBrand strong,
+.contractorRail .contractorBrand strong,
+.projectSidebar .projectBrand strong {
+  color: var(--pp-white) !important;
+}
+
+/* Navigation and dark workspaces */
+.dashboardSidebar,
+.adminRail,
+.contractorRail,
+.projectSidebar {
+  background:
+    radial-gradient(circle at 18% 5%, rgba(61,165,255,.20), transparent 30%),
+    linear-gradient(180deg, #07162F 0%, #0A1F45 48%, #061329 100%) !important;
+  border-right: 1px solid rgba(255,255,255,.08) !important;
+}
+
+.dashboardSidebar nav a,
+.adminRail nav a,
+.contractorRail nav a,
+.projectSidebar nav a {
+  border-radius: 11px !important;
+  color: rgba(255,255,255,.72) !important;
+}
+.dashboardSidebar nav a:hover,
+.dashboardSidebar nav a.active,
+.adminRail nav a:hover,
+.adminRail nav a.active,
+.contractorRail nav a:hover,
+.contractorRail nav a.active,
+.projectSidebar nav a:hover,
+.projectSidebar nav a.active {
+  color: white !important;
+  background: linear-gradient(90deg, rgba(37,99,255,.34), rgba(61,165,255,.10)) !important;
+  box-shadow: inset 3px 0 0 var(--pp-sky) !important;
+}
+
+/* Primary controls */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+.newProjectButton,
+.authSubmit,
+.heroPrimary,
+.pricingCard a,
+.sectionTitleRow button,
+.emptyProjects button,
+.guidedActionCard.primary,
+.contractorHeader > a,
+.adminHeader button,
+button[type="submit"] {
+  background: var(--pp-gradient) !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 24px rgba(37,99,255,.24) !important;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease !important;
+}
+.newProjectButton:hover,
+.authSubmit:hover,
+.heroPrimary:hover,
+.pricingCard a:hover,
+.sectionTitleRow button:hover,
+.emptyProjects button:hover,
+.guidedActionCard.primary:hover,
+.contractorHeader > a:hover,
+.adminHeader button:hover,
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 15px 32px rgba(37,99,255,.32) !important;
+  filter: saturate(1.08);
+}
+
+/* Cards and surfaces */
+.summaryGrid article,
+.projectCard,
+.featureGrid article,
+.howGrid article,
+.pricingCard,
+.guidedStartSection,
+.visualWorkspaceCard,
+.contractorPanel,
+.opportunityCard,
+.adminPanel,
+.wizardPanel,
+.authCard {
+  border: 1px solid var(--pp-border) !important;
+  border-radius: var(--pp-radius-md) !important;
+  background: rgba(255,255,255,.97) !important;
+  box-shadow: 0 12px 38px rgba(19,35,61,.07) !important;
+}
+.summaryGrid article:hover,
+.projectCard:hover,
+.featureGrid article:hover,
+.howGrid article:hover,
+.guidedActionCard:hover {
+  border-color: rgba(37,99,255,.30) !important;
+  box-shadow: var(--pp-shadow) !important;
+}
+
+/* Brand accents */
+.eyebrow,
+.sectionHeading .eyebrow,
+.dashboardHeader p,
+.sectionTitleRow p,
+.guidedStartHeading p,
+.contractorHeader p,
+.adminHeader p,
+.projectHeader p {
+  color: var(--pp-blue) !important;
+}
+.dashboardProgress > span,
+.progressBar > span,
+.signedInProgress > span {
+  background: linear-gradient(90deg, var(--pp-blue), var(--pp-sky)) !important;
+}
+.statusDot,
+.production .statusDot {
+  background: var(--pp-green) !important;
+  box-shadow: 0 0 0 5px rgba(34,197,94,.12) !important;
+}
+
+/* Homepage premium navy treatment */
+.homePage {
+  background:
+    radial-gradient(circle at 84% 8%, rgba(61,165,255,.13), transparent 28%),
+    linear-gradient(180deg, #F9FBFF 0%, #F4F7FB 100%) !important;
+}
+.homeHeader {
+  background: rgba(255,255,255,.88) !important;
+  border-bottom: 1px solid rgba(10,15,28,.07) !important;
+  backdrop-filter: blur(18px);
+}
+.heroSection {
+  position: relative;
+  isolation: isolate;
+}
+.heroSection::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 75% 26%, rgba(61,165,255,.22), transparent 28%),
+    radial-gradient(circle at 58% 72%, rgba(37,99,255,.12), transparent 30%);
+  pointer-events: none;
+}
+.heroSection h1,
+.signedInVisualHero h1 {
+  letter-spacing: -.045em !important;
+}
+.heroSection h1 em,
+.heroSection h1 span,
+.signedInVisualHero h1 em,
+.signedInVisualHero h1 span {
+  color: var(--pp-blue) !important;
+}
+
+/* Accessibility */
+:focus-visible {
+  outline: 3px solid rgba(61,165,255,.70) !important;
+  outline-offset: 3px !important;
+}
+::selection {
+  background: rgba(37,99,255,.20);
+  color: var(--pp-ink);
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .homeBrand > span:first-child,
+  .dashboardBrand > span:first-child,
+  .adminBrand > span:first-child,
+  .contractorBrand > span:first-child,
+  .projectBrand > span:first-child {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+}
