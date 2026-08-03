@@ -487,3 +487,4 @@
   .accessCard { padding: 20px; }
 }
 .homeFooter small a{color:#d9e6f7;text-decoration:none}.homeFooter small a:hover{text-decoration:underline}
+\n.launchStrip{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 18px;color:#dce8ff;background:#07172f;font-size:12px}.launchStrip strong{color:#fff}.launchStrip a{color:#9bbcff;font-weight:900;text-decoration:none}.launchStrip a:hover{text-decoration:underline}@media(max-width:680px){.launchStrip{align-items:flex-start;flex-direction:column;gap:3px;padding:10px 16px}}\n

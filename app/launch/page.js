@@ -1,0 +1,10 @@
+import "./launch.css";
+
+export const metadata = {
+  title: "Project Pilot Founding Launch",
+  description: "Join Project Pilot's founding homeowner launch and plan, visualize, organize, and prepare home projects in one workspace.",
+};
+
+export default function LaunchPage() {
+  return <main className="launchPage"><header><a href="/"><img src="/project-pilot-mark.svg" alt="" /><strong>Project Pilot</strong></a><a href="/#access">Create Account</a></header><section className="launchHero"><p>FOUNDING HOMEOWNER LAUNCH</p><h1>Bring the project you have been putting off.</h1><span>Project Pilot is open for real homeowner projects. Plan the work, visualize a faithful remodel, organize documents, prepare the permit process, and ask Su what to do next.</span><div><a href="/#access">Start a Project</a><a href="/support">Get Support</a></div></section><section className="launchPromises"><article><b>1</b><h2>One project workspace</h2><p>Keep the plan, budget, documents, permit progress, contractor path, and decisions together.</p></article><article><b>2</b><h2>Su guides the next action</h2><p>Ask plain-language questions and approve supported updates instead of searching through menus.</p></article><article><b>3</b><h2>Permit preparation and concierge</h2><p>Project Pilot organizes the administrative process and brings the homeowner in when identity, signature, payment, professional review, or a decision is required.</p></article></section><section className="launchBoundaries"><h2>What founding users should know</h2><ul><li>Project Vision images are planning concepts, not construction drawings or proof of completed work.</li><li>Cost estimates are planning ranges, not contractor bids or guarantees.</li><li>Permit guidance and concierge coordination do not replace the governing agency or licensed professionals.</li><li>AI usage limits protect availability and operating costs during launch.</li><li>Use the Support page whenever something blocks progress.</li></ul></section><footer><span>Project Pilot · From vision to approval</span><nav><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/support">Support</a></nav></footer></main>;
+}

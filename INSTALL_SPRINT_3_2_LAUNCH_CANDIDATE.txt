@@ -1,0 +1,28 @@
+PROJECT PILOT — SPRINT 3.2 LAUNCH CANDIDATE
+================================================
+
+This is a cumulative GitHub overlay containing the latest Project Vision, Su, Permit Autopilot, Permit Concierge, brand system, and launch-hardening files.
+
+INSTALL
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Click Add file -> Upload files.
+4. Upload everything INSIDE the extracted folder to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with: Sprint 3.2 Launch Candidate
+7. Wait for Vercel to show Ready.
+8. Run RUN_THIS_IN_SUPABASE_014.sql once in Supabase SQL Editor.
+9. Redeploy after confirming Production environment variables.
+10. Hard refresh with Ctrl + Shift + R.
+
+VERIFY
+- Open /api/health and confirm status ok.
+- Sign in as admin and open /admin/launch-readiness.
+- Complete every manual test shown there before advertising broadly.
+- Submit a test request at /support and confirm it appears at /admin/support.
+
+IMPORTANT
+- MARKETPLACE_PAYMENTS_ENABLED remains false. This launch candidate does not silently enable charges.
+- Permit Concierge can coordinate administrative work, but government identity, signature, payment, and professional-seal steps remain controlled by the appropriate person or authority.
+- Project Vision creates planning concepts, not construction drawings.
+- A successful build is not enough: complete the six homeowner workflow tests shown in Launch Readiness before sharing the site.

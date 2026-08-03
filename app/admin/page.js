@@ -209,7 +209,7 @@ export default function AdminPage() {
       <aside className="adminRail">
         <a href="/dashboard" className="adminBrand"><span>P</span><strong>Project Pilot</strong></a>
         <div><small>ADMIN CONTROL CENTER</small><strong>{profile.full_name || user?.email}</strong></div>
-        <nav><a className="active" href="/admin">Overview</a><a href="#accounts">Accounts</a><a href="#marketplace">Marketplace</a><a href="#contractors">Contractors</a><a href="#financials">Financials</a><a href="#permits">Permit Concierge</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a></nav>
+        <nav><a className="active" href="/admin">Overview</a><a href="/admin/launch-readiness">Launch Readiness</a><a href="/admin/support">Support Queue</a><a href="#accounts">Accounts</a><a href="#marketplace">Marketplace</a><a href="#contractors">Contractors</a><a href="#financials">Financials</a><a href="#permits">Permit Concierge</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a></nav>
         <div className="adminBetaState production"><span /><div><strong>Revenue launch</strong><small>Payments controlled by Vercel setting</small></div></div>
       </aside>
 
