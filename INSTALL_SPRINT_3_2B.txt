@@ -1,0 +1,21 @@
+INSTALL — SPRINT 3.2B REFERENCE EXACT HOMEPAGE FIX
+
+Purpose:
+This patch replaces the approximate homepage with a much closer match to the user-approved reference.
+It uses reference-derived homepage assets for the logo, hero visual, and dashboard preview so the live homepage stays much closer to the agreed look.
+
+Steps:
+1. Extract this ZIP.
+2. Open the `project-pilot` GitHub repository.
+3. Click Add file → Upload files.
+4. Upload everything inside the extracted folder.
+5. Replace matching files.
+6. Commit with:
+
+Sprint 3.2B Reference Exact Homepage Fix
+
+7. Wait for Vercel to deploy.
+8. Hard refresh the site with Ctrl + Shift + R.
+
+No Supabase SQL required.
+No new Vercel variables required.

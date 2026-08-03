@@ -1,0 +1,2 @@
+This full package includes the corrected app/release.css file.
+The literal \\n characters that caused the Vercel PostCSSSyntaxError were removed.

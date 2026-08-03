@@ -1,27 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import "./page.css";
 
-const launchMetrics = [
-  { label: "Active Projects", value: "3", note: "1 new last month" },
-  { label: "Permits in Progress", value: "2", note: "View all →" },
-  { label: "Tasks Due Soon", value: "4", note: "View tasks →" },
-  { label: "Budget Tracking", value: "$24,350", note: "$1,650 below target" },
-];
-
-const projectRows = [
-  { name: "Kitchen Remodel", location: "1905 Sussex Ave, Austin, TX", stage: "In Progress", progress: 68, next: "Submit permit application" },
-  { name: "Deck Addition", location: "460 Oak Drive, Austin, TX", stage: "Planning", progress: 42, next: "Finalize budget" },
-  { name: "Bathroom Renovation", location: "110 Pine Avenue, Austin, TX", stage: "Needs Review", progress: 71, next: "Address permit comments" },
-];
-
-const contractorRows = [
-  "Blue Ridge Contracting",
-  "Urban Build Studio",
-  "Crafted Spaces",
+const launchChecks = [
+  "Guided permit process in plain English",
+  "One-image faithful remodel generation",
+  "Permit Concierge for hands-on support",
+  "Project planning, tasks, documents, and budgets in one place",
 ];
 
 const featureBar = [
@@ -30,13 +19,6 @@ const featureBar = [
   ["Trusted Pros", "Verified contractors, stronger results"],
   ["Budget Control", "Track costs and stay on budget"],
   ["Real Results", "Manage projects from idea to approval"],
-];
-
-const launchChecks = [
-  "Guided permit process in plain English",
-  "One-image faithful remodel generation",
-  "Permit Concierge for hands-on support",
-  "Project planning, tasks, documents, and budgets in one place",
 ];
 
 export default function HomePage() {
@@ -64,7 +46,6 @@ export default function HomePage() {
     event.preventDefault();
     setLoading(true);
     setStatus("");
-
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
@@ -73,9 +54,8 @@ export default function HomePage() {
           options: { data: { full_name: name, role } },
         });
         if (error) throw error;
-        if (data.session) {
-          router.push("/dashboard");
-        } else {
+        if (data.session) router.push("/dashboard");
+        else {
           setStatus("Account created. Check your email to confirm it, then sign in here.");
           setMode("signin");
           setPassword("");
@@ -109,145 +89,49 @@ export default function HomePage() {
 
   return (
     <main className="homePage">
-      <header className="heroHeader">
-        <a className="homeBrand" href="#top" aria-label="Project Pilot home">
-          <span aria-hidden="true">P</span>
-          <div><strong>Project Pilot</strong><small>From idea to approval</small></div>
-        </a>
+      <section className="homeShell" id="top">
+        <header className="heroHeader">
+          <a className="homeBrand" href="#top" aria-label="Project Pilot home">
+            <Image src="/homepage-logo-approved.png" alt="Project Pilot" width={139} height={26} priority />
+          </a>
+          <nav>
+            <a href="#how">How It Works</a>
+            <a href="#solutions">Solutions</a>
+            <a href="#resources">Resources</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#access">Log In</a>
+          </nav>
+          <a className="navCta" href="#access">Get Started</a>
+        </header>
 
-        <nav>
-          <a href="#how">How It Works</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#resources">Resources</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#access">Log In</a>
-        </nav>
-
-        <a className="navCta" href="#access">Get Started</a>
-      </header>
-
-      <section className="heroPanel" id="top">
-        <div className="heroCopy">
-          <p className="eyebrow">YOUR HOME PROJECTS</p>
-          <h1>
-            Your project.
-            <span> Guided from start to finish.</span>
-          </h1>
-          <p className="heroLead">
-            AI-powered guidance for permits, planning, budgets, and the right pros — all in one launch-ready homeowner workspace.
-          </p>
-          <div className="heroActions">
-            <a className="primaryAction" href="#access">Get Started</a>
-            <a className="secondaryAction" href="#how">See How It Works</a>
-          </div>
-          <div className="heroTrustRow">
-            <div><strong>Permit Confidence</strong><span>Guided permit steps with clear explanations</span></div>
-            <div><strong>Trusted Pros</strong><span>Connect with vetted contractors</span></div>
-            <div><strong>Better Outcomes</strong><span>Plan with budgets, tasks, and real next steps</span></div>
-          </div>
-        </div>
-
-        <div className="heroVisual" aria-hidden="true">
-          <div className="houseScene">
-            <div className="houseGlow" />
-            <div className="houseMain" />
-            <div className="houseRoof top" />
-            <div className="houseRoof wing" />
-            <div className="garage" />
-            <div className="windowGrid main">
-              <span /><span /><span /><span /><span /><span />
+        <section className="heroPanel">
+          <div className="heroCopy">
+            <p className="eyebrow">YOUR HOME PROJECTS</p>
+            <h1>
+              Your project.
+              <span> Guided from start to finish.</span>
+            </h1>
+            <p className="heroLead">
+              AI-powered guidance for permits, planning, budgets, and the right pros — all in one launch-ready homeowner workspace.
+            </p>
+            <div className="heroActions">
+              <a className="primaryAction" href="#access">Get Started</a>
+              <a className="secondaryAction" href="#how">See How It Works</a>
             </div>
-            <div className="windowGrid upper">
-              <span /><span /><span /><span />
-            </div>
-            <div className="driveway" />
-            <div className="assistantCard">
-              <strong>AI Project Assistant</strong>
-              <p>Good morning! I can help with permits, budgets, contractor notes, and next steps.</p>
-              <button type="button">Ask a question →</button>
+            <div className="heroTrustRow">
+              <div><strong>Permit Confidence</strong><span>Guided permit steps with clear explanations</span></div>
+              <div><strong>Trusted Pros</strong><span>Connect with vetted contractors</span></div>
+              <div><strong>Better Outcomes</strong><span>Plan with budgets, tasks, and real next steps</span></div>
             </div>
           </div>
-        </div>
-      </section>
+          <div className="heroVisual">
+            <Image src="/homepage-hero-reference.png" alt="Approved hero reference" width={275} height={212} priority />
+          </div>
+        </section>
 
-      <section className="previewBoard" id="solutions">
-        <div className="previewSidebar">
-          <a className="previewBrand pilotBrandLockup" href="#top"><span>P</span><div><strong>Project Pilot</strong><small>Workspace</small></div></a>
-          <ul>
-            <li className="active">Dashboard</li>
-            <li>My Projects</li>
-            <li>Permits</li>
-            <li>Find Contractors</li>
-            <li>Messages</li>
-            <li>Documents</li>
-            <li>Payments</li>
-            <li>Settings</li>
-          </ul>
-          <div className="miniAssistant">
-            <b>Project Assistant</b>
-            <span>Ask anything</span>
-          </div>
-        </div>
-
-        <div className="previewMain">
-          <div className="previewTopbar">
-            <strong>Dashboard</strong>
-            <button type="button">+ New Project</button>
-          </div>
-          <div className="statsGrid">
-            {launchMetrics.map((item) => (
-              <article className="statCard" key={item.label}>
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-                <small>{item.note}</small>
-              </article>
-            ))}
-          </div>
-          <div className="workspaceGrid">
-            <section className="projectsPanel">
-              <div className="panelHeader">
-                <strong>My Projects</strong>
-                <a href="#access">View all →</a>
-              </div>
-              {projectRows.map((project) => (
-                <article className="projectRow" key={project.name}>
-                  <div className="projectThumb" />
-                  <div className="projectInfo">
-                    <strong>{project.name}</strong>
-                    <span>{project.location}</span>
-                    <div className="projectMeta">
-                      <mark>{project.stage}</mark>
-                      <div className="progressBar"><span style={{ width: `${project.progress}%` }} /></div>
-                      <small>{project.progress}%</small>
-                    </div>
-                  </div>
-                  <div className="projectNext">
-                    <span>Next up</span>
-                    <strong>{project.next}</strong>
-                  </div>
-                </article>
-              ))}
-            </section>
-
-            <aside className="contractorsPanel">
-              <div className="panelHeader">
-                <strong>Find Contractors</strong>
-                <a href="/contractors">View all →</a>
-              </div>
-              {contractorRows.map((name) => (
-                <article className="contractorRow" key={name}>
-                  <div className="contractorAvatar" />
-                  <div>
-                    <strong>{name}</strong>
-                    <span>Austin, TX</span>
-                  </div>
-                  <button type="button">View Profile</button>
-                </article>
-              ))}
-              <a className="browseButton" href="/contractors">Browse All Contractors</a>
-            </aside>
-          </div>
-        </div>
+        <section className="previewBoard" id="solutions">
+          <Image src="/homepage-preview-reference.png" alt="Approved dashboard preview reference" width={498} height={162} />
+        </section>
       </section>
 
       <section className="featureRibbon" id="how">
@@ -277,7 +161,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="launchCard">
-            <span>Founding homeowner launch</span>
+            <span>FOUNDING HOMEOWNER LAUNCH</span>
             <strong>Built for real projects — decks, kitchens, bathrooms, additions, permits, and more.</strong>
             <p>
               Start a project today and let Project Pilot guide the plan, the visuals, the permit path, and the next action.
@@ -334,7 +218,6 @@ export default function HomePage() {
                 </label>
               </>
             )}
-
             <label>
               Email address
               <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
@@ -343,23 +226,19 @@ export default function HomePage() {
               Password
               <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength="6" placeholder="At least 6 characters" required />
             </label>
-
             {mode === "signin" && <button className="forgotButton" type="button" onClick={resetPassword}>Forgot password?</button>}
-
             <button className="authSubmit" type="submit" disabled={loading}>
               {loading ? "Working…" : mode === "signup" ? "Create My Account" : "Open My Projects"}
             </button>
           </form>
-
           {status && <p className="authStatus">{status}</p>}
           <p className="accessNote">Need help? Use the support page after sign-in or reply to your launch message.</p>
         </div>
       </section>
 
       <footer className="homeFooter">
-        <a className="homeBrand" href="#top" aria-label="Project Pilot home">
-          <span aria-hidden="true">P</span>
-          <div><strong>Project Pilot</strong><small>From start to finish</small></div>
+        <a className="homeBrand footerBrand" href="#top" aria-label="Project Pilot home">
+          <Image src="/homepage-logo-approved.png" alt="Project Pilot" width={139} height={26} />
         </a>
         <p>Plan every improvement around your home without losing track of the details.</p>
         <small>Project Pilot provides planning support, permit guidance, visual concepts, and homeowner tools. Government approvals, professional seals, and legal or licensed determinations still require the appropriate authority or professional.</small>
