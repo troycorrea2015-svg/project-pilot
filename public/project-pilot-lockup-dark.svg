@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 40" role="img" aria-label="Project Pilot">
+  <defs>
+    <linearGradient id="front" x1="10" y1="4" x2="36" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6FA6FF"/>
+      <stop offset="0.55" stop-color="#2F6DF6"/>
+      <stop offset="1" stop-color="#1546B8"/>
+    </linearGradient>
+    <linearGradient id="side" x1="6" y1="8" x2="16" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#164DBF"/>
+      <stop offset="1" stop-color="#082968"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0 2)">
+    <path d="M6 6 12 2v30l-6-4V6Z" fill="url(#side)"/>
+    <path d="M12 2h13.2c8.8 0 14.1 4.8 14.1 12.1s-5.2 12.1-14.1 12.1H19v9.8h-7V2Zm7 6.4v11.4h5.4c4.6 0 7.1-1.9 7.1-5.7 0-3.8-2.6-5.7-7.1-5.7H19Z" fill="url(#front)"/>
+  </g>
+  <text x="52" y="24" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="800" letter-spacing="1.8" fill="#0B1F3A">PROJECT</text>
+  <text x="156" y="24" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="800" letter-spacing="1.8" fill="#2F6DF6">PILOT</text>
+</svg>

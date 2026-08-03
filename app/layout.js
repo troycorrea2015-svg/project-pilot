@@ -10,18 +10,18 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.projectpiloting
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "Project Pilot | From Vision to Approval", template: "%s | Project Pilot" },
-  description: "Plan, visualize, prepare permits, organize documents, and manage home projects with Project Pilot and Su.",
+  title: { default: "Project Pilot | Guided from Start to Finish", template: "%s | Project Pilot" },
+  description: "AI-powered home project guidance for permits, planning, budgets, contractors, and the next step.",
   applicationName: "Project Pilot",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Project Pilot | From Vision to Approval",
-    description: "A homeowner-controlled workspace for planning, visualization, permits, documents, and next steps.",
+    title: "Project Pilot | Guided from Start to Finish",
+    description: "Plan, visualize, prepare permits, and move your home project forward in one workspace.",
     url: siteUrl,
     siteName: "Project Pilot",
     type: "website",
   },
-  twitter: { card: "summary", title: "Project Pilot", description: "From vision to approval." },
+  twitter: { card: "summary", title: "Project Pilot", description: "Your project. Guided from start to finish." },
   icons: { icon: "/project-pilot-mark.svg", shortcut: "/project-pilot-mark.svg", apple: "/project-pilot-mark.svg" },
 };
 

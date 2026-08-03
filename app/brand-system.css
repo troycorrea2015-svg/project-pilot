@@ -1,41 +1,128 @@
-
-/* Project Pilot Sprint 3.1D — global brand system
-   Approved direction: deep navy + vivid royal blue + cool blue tints + white.
-   Teal remains removed from brand accents. Semantic warning/error colors are preserved. */
+/* Sprint 3.2A — Exact Brand Match UI Overhaul
+   Source of truth: dark navy header, royal blue accent, white surfaces, cool gray background. */
 html:root {
+  --pp-navy-980: #061327 !important;
   --pp-navy-950: #07172f !important;
-  --pp-navy-900: #0b2346 !important;
-  --pp-navy-800: #123462 !important;
-  --pp-blue-700: #1f55d6 !important;
+  --pp-navy-920: #0b1f3a !important;
+  --pp-navy-900: #10284a !important;
+  --pp-navy-800: #163c73 !important;
+  --pp-blue-700: #1d58ea !important;
   --pp-blue-600: #2f6df6 !important;
-  --pp-blue-500: #437cff !important;
-  --pp-blue-300: #9bbcff !important;
-  --pp-blue-100: #eaf1ff !important;
-  --pp-blue-50: #f4f7ff !important;
-  --pp-ink: #102544 !important;
-  --pp-muted: #667890 !important;
-  --pp-line: #dce6f4 !important;
+  --pp-blue-500: #4d8aff !important;
+  --pp-blue-200: #cfe0ff !important;
+  --pp-blue-100: #eaf2ff !important;
+  --pp-blue-50: #f4f8ff !important;
+  --pp-page: #eef3fa !important;
   --pp-surface: #ffffff !important;
+  --pp-line: #dbe5f1 !important;
+  --pp-ink: #0f2445 !important;
+  --pp-muted: #61748c !important;
   --ink: var(--pp-ink) !important;
   --navy: var(--pp-navy-950) !important;
   --blue: var(--pp-blue-600) !important;
   --green: var(--pp-blue-600) !important;
-  --home-ink: var(--pp-ink) !important;
+  --soft: var(--pp-blue-50) !important;
   --home-teal: var(--pp-blue-600) !important;
   --home-teal-dark: var(--pp-blue-700) !important;
   --home-soft: var(--pp-blue-50) !important;
   --home-line: var(--pp-line) !important;
 }
-
 body {
-  color: var(--pp-ink);
-  background: #f5f8ff;
+  color: var(--pp-ink) !important;
+  background: var(--pp-page) !important;
+}
+::selection { background: #d6e4ff; color: #07172f; }
+
+/* Replace legacy teal and keep the launch brand coherent. */
+:is(.primaryAction,.navCta,.authSubmit,.workspaceLaunch button,.signedInVisualHero button,.dashboardPage button.primary,.projectWorkspace button.primary,.marketplacePage .primaryLink,.contractorPage .primaryLink,[class*="PermitAutopilot"] button[class*="primary"],[class*="PermitConcierge"] button[class*="primary"],[class*="ProjectVision"] button[class*="generate"],button[class*="guideButton"]) {
+  background: linear-gradient(135deg, #3c7dff, #1d58ea) !important;
+  border-color: #2f6df6 !important;
+  color: #fff !important;
+  box-shadow: 0 14px 28px rgba(29,88,234,.18) !important;
 }
 
-::selection { background: #cddcff; color: #07172f; }
+:is(.secondaryAction,.ghostAction,.homeNav nav a,.supportLink) {
+  color: #0f2445 !important;
+}
 
-/* Replace every legacy single-letter mark with the approved blue 3D Project Pilot mark. */
-:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand) > span,
+:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail,[class*="sideRail"],[class*="sidebar"]) {
+  background: linear-gradient(180deg, #07172f 0%, #0b2140 50%, #0c2a56 100%) !important;
+}
+
+:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail) a.active,
+:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail) button.active,
+.projectRail nav button.active {
+  background: rgba(85, 136, 255, .18) !important;
+  color: #fff !important;
+  box-shadow: inset 3px 0 0 #78a8ff !important;
+}
+
+.homeNav,
+.dashboardTopbar,
+.workspaceHeader,
+.marketplaceTopbar,
+.contractorHeader,
+.adminHeader,
+.releaseDocument > header {
+  border-color: var(--pp-line) !important;
+}
+
+/* Shared cards and chips */
+:is(.card,.metricCard,.overviewCard,.supportCard,.accessCard,.pricingCard,.mockupFrame,.previewBoard,.statCard,[class*="card"],[class*="panel"],[class*="surface"]) {
+  border-color: var(--pp-line) !important;
+}
+
+:is(input,select,textarea,button,a):focus-visible {
+  outline: 3px solid rgba(47,109,246,.18) !important;
+  outline-offset: 2px;
+}
+
+.eyebrow,
+.sectionHeading > p,
+[class*="sectionTitle"] p,
+[class*="cardHeading"] p,
+[class*="visionChatHeading"] p,
+[class*="guideHeading"] p,
+[class*="permit"] p[class*="eyebrow"],
+[class*="concierge"] p[class*="eyebrow"] {
+  color: #2f6df6 !important;
+}
+
+/* Site-wide logo cleanup */
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0 !important;
+  min-height: 30px;
+}
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) > span,
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) strong,
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) small,
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) > div {
+  opacity: 0 !important;
+}
+.homeBrand::before,
+.releaseDocument > header a::before,
+.pilotBrandLockup::before {
+  content: "";
+  display: block;
+  width: 180px;
+  height: 24px;
+  background: url('/project-pilot-lockup-dark.svg') no-repeat center / contain;
+}
+.dashboardBrand::before,
+.adminBrand::before,
+.contractorBrand::before,
+.marketplaceBrand::before {
+  content: "";
+  display: block;
+  width: 180px;
+  height: 24px;
+  background: url('/project-pilot-lockup-light.svg') no-repeat center / contain;
+}
+
+/* Preserve mark replacement for old standalone bubbles */
 .pilotMark > span,
 .releaseMark,
 .adminDenied > div > span,
@@ -52,128 +139,21 @@ body {
   box-shadow: none !important;
 }
 
-:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand) > span,
-.pilotMark > span { width: 43px !important; height: 43px !important; flex: 0 0 43px !important; }
-.releaseMark { width: 58px !important; height: 58px !important; }
-
-/* Primary brand surfaces. */
-.homeNav,
-.dashboardTopbar,
-.workspaceHeader,
-.marketplaceTopbar,
-.contractorHeader,
-.adminHeader {
-  border-color: var(--pp-line) !important;
-}
-
-.dashboardSidebar,
-.projectRail,
-.adminRail,
-.contractorRail,
-[class*="sideRail"],
-[class*="sidebar"] {
-  background: linear-gradient(180deg, #071a35 0%, #0a2347 58%, #0b2b57 100%) !important;
-}
-
-:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail) a.active,
-:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail) button.active,
-.projectRail nav button.active {
-  background: rgba(84, 135, 255, .18) !important;
-  color: #fff !important;
-  box-shadow: inset 3px 0 0 #74a1ff !important;
-}
-
-/* Legacy teal CTAs and highlights are standardized to royal blue. */
-.primaryAction,
-.navCta,
-.authSubmit,
-.betaSection > a,
-.signedInVisualHero button,
-.workspaceLaunch button,
-.dashboardPage button.primary,
-.projectWorkspace button.primary,
-.marketplacePage .primaryLink,
-.contractorPage .primaryLink,
-[class*="PermitAutopilot"] button[class*="primary"],
-[class*="PermitConcierge"] button[class*="primary"],
-[class*="ProjectVision"] button[class*="generate"],
-button[class*="guideButton"] {
-  background: linear-gradient(135deg, #3978ff, #1f55d6) !important;
-  border-color: #2f6df6 !important;
-  color: #fff !important;
-  box-shadow: 0 12px 26px rgba(47,109,246,.20) !important;
-}
-
-/* Consistent blue focus and selected states. */
-:is(input,select,textarea,button,a):focus-visible {
-  outline: 3px solid rgba(47,109,246,.22) !important;
-  outline-offset: 2px;
-}
-
-.accountTypeGrid button.selected,
-.categoryGrid article:hover,
-[class*="thumbnail"][class*="selected"],
-[class*="selectedVersion"],
-[class*="selectedConcept"] {
-  border-color: #2f6df6 !important;
-  box-shadow: 0 0 0 3px rgba(47,109,246,.12) !important;
-}
-
-.eyebrow,
-.sectionHeading > p,
-[class*="sectionTitle"] p,
-[class*="cardHeading"] p,
-[class*="visionChatHeading"] p,
-[class*="guideHeading"] p,
-[class*="permit"] p[class*="eyebrow"],
-[class*="concierge"] p[class*="eyebrow"] {
-  color: #2f6df6 !important;
-}
-
-/* Remove leftover green/teal decorative backgrounds without affecting error and warning states. */
-.heroSection,
-.peopleFeatureSection,
-.pricingSection,
-.signedInVisualHero,
-.releaseState {
-  background-image:
-    radial-gradient(circle at 10% 12%, rgba(79,132,245,.17), transparent 30%),
-    radial-gradient(circle at 90% 10%, rgba(152,184,255,.14), transparent 28%),
-    linear-gradient(135deg, #fbfdff, #f3f7ff) !important;
-}
-
-.pricingCard > span,
-[class*="successBadge"],
-[class*="readyBadge"],
-[class*="completeBadge"] {
-  background: #eaf1ff !important;
-  color: #245dcc !important;
-}
-
-/* CSS-module components receive generated class names; substring selectors keep branding global. */
-[class*="PermitAutopilot_"][class*="intro"],
-[class*="PermitConcierge_"][class*="intro"],
-[class*="ProjectVision_"][class*="intro"] {
-  background:
-    radial-gradient(circle at 92% 8%, rgba(84,135,255,.20), transparent 34%),
-    linear-gradient(145deg, #fbfdff, #edf3ff) !important;
-  border-color: #d7e3f8 !important;
-}
-
-[class*="ProjectVision_"][class*="cardHeading"] > span,
-[class*="PermitAutopilot_"][class*="stepNumber"],
-[class*="PermitConcierge_"][class*="stepNumber"] {
-  background: linear-gradient(145deg, #437cff, #1f55d6) !important;
-  color: #fff !important;
-}
-
-/* Brand-name rhythm and typography. */
-:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotMark) strong {
-  letter-spacing: -.02em;
-  font-weight: 900 !important;
+/* Project Vision remains faithful but visibly remodeled. */
+[class*="ProjectVision_"][class*="compareCard"],
+[class*="ProjectVision_"][class*="versionCard"] {
+  box-shadow: 0 16px 32px rgba(15,36,69,.06) !important;
 }
 
 @media (max-width: 720px) {
-  :is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand) > span,
-  .pilotMark > span { width: 38px !important; height: 38px !important; flex-basis: 38px !important; }
+  .homeBrand::before,
+  .releaseDocument > header a::before,
+  .pilotBrandLockup::before,
+  .dashboardBrand::before,
+  .adminBrand::before,
+  .contractorBrand::before,
+  .marketplaceBrand::before {
+    width: 156px;
+    height: 22px;
+  }
 }
