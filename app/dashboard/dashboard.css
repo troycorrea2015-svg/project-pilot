@@ -2,7 +2,7 @@
   --ink: #142642;
   --navy: #0d1f38;
   --blue: #2f6df6;
-  --green: #1fa36b;
+  --green: #2f6df6;
   --muted: #6f7d90;
   --line: #dce5ef;
   --surface: #ffffff;
@@ -55,7 +55,7 @@
   display: grid;
   place-items: center;
   color: #fff;
-  background: linear-gradient(145deg, #3d7cff, #28a96f);
+  background: linear-gradient(145deg, #3d7cff, #2f6df6);
   font-weight: 900;
   box-shadow: 0 10px 26px rgba(47, 109, 246, 0.24);
 }
@@ -131,9 +131,9 @@
   flex: 0 0 9px;
   width: 9px;
   height: 9px;
-  background: #43d391;
+  background: #5d8fff;
   border-radius: 50%;
-  box-shadow: 0 0 0 5px rgba(67, 211, 145, 0.12);
+  box-shadow: 0 0 0 5px rgba(47, 109, 246, 0.12);
 }
 
 .sidebarStatus strong,
@@ -339,8 +339,8 @@
   align-items: center;
   gap: 7px;
   padding: 6px 9px;
-  color: #16825a;
-  background: #edf9f4;
+  color: #245dcc;
+  background: #eef4ff;
   border-radius: 99px;
   font-size: 9px;
   font-weight: 900;
@@ -350,9 +350,9 @@
 .livePill i {
   width: 7px;
   height: 7px;
-  background: #26b879;
+  background: #3477ff;
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(38, 184, 121, 0.12);
+  box-shadow: 0 0 0 4px rgba(47, 109, 246, 0.12);
 }
 
 .readinessBody {
@@ -943,8 +943,8 @@
 
 .workspaceCardTop b {
   padding: 6px 9px;
-  color: #16825a;
-  background: #edf9f4;
+  color: #245dcc;
+  background: #eef4ff;
   border-radius: 99px;
   font-size: 8px;
   letter-spacing: 0.12em;
@@ -1281,7 +1281,7 @@
 
 .signedInCategoryGrid button:hover:not(:disabled) {
   border-color: #8fc9bd;
-  box-shadow: 0 12px 26px rgba(20, 82, 73, 0.1);
+  box-shadow: 0 12px 26px rgba(47, 109, 246, 0.1);
 }
 
 .signedInCategoryGrid img {
@@ -1486,7 +1486,7 @@
 }
 
 .role-contractor .signedInVisualCopy {
-  background: linear-gradient(145deg, #f7fbff, #eef8f4);
+  background: linear-gradient(145deg, #f7fbff, #eef4ff);
 }
 
 .role-property_manager .signedInVisualCopy,

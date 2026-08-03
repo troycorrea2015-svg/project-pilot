@@ -60,15 +60,25 @@ function detectImageType(buffer) {
   return null;
 }
 
-function inferProjectMode(project, description = "") {
-  const haystack = `${project?.project_type || ""} ${project?.title || ""} ${project?.description || ""} ${description}`.toLowerCase();
+function detectProjectMode(text = "") {
+  const haystack = String(text || "").toLowerCase();
   if (/(deck|porch|patio|balcony)/.test(haystack)) return "deck";
   if (/(pool|spa|hot tub)/.test(haystack)) return "pool";
   if (/(roof|shingle|gutters?)/.test(haystack)) return "roof";
   if (/(kitchen|bath(room)?|interior|basement)/.test(haystack)) return "interior";
   if (/(driveway|garage|walkway|pavers?)/.test(haystack)) return "hardscape";
   if (/(landscap|yard|lawn|garden|tree|fence)/.test(haystack)) return "landscape";
-  return "general";
+  return "";
+}
+
+function inferProjectMode(project, description = "", designBrief = "", visionMessage = "") {
+  // The homeowner's approved vision must outrank an old or incorrectly named saved project.
+  const currentDirection = `${designBrief} ${visionMessage} ${description}`;
+  const currentMode = detectProjectMode(currentDirection);
+  if (currentMode) return currentMode;
+
+  const savedContext = `${project?.project_type || ""} ${project?.title || ""} ${project?.description || ""}`;
+  return detectProjectMode(savedContext) || "general";
 }
 
 function modeSpecificRules(mode) {
@@ -80,6 +90,7 @@ function modeSpecificRules(mode) {
         "Do not move, replace, enlarge, shrink, or redesign the home.",
         "If the home is only partially visible, do not invent or reveal new siding walls, roof faces, doors, windows, or house sections that were not visible in the supplied image.",
         "Do not move the deck to a different location. Improve the existing deck in place.",
+        "When consistent with the homeowner request, make the deck renovation visibly apparent through renewed boards, railings, stairs, trim, safety features, finish quality, and practical furnishings rather than only cleaning the scene.",
       ];
     case "pool":
       return [
@@ -136,9 +147,12 @@ function buildPrompt({
       : "The supplied image is the homeowner's real property photo and must remain the visual foundation.",
     "This must remain the same property, same camera position, same perspective, and same overall composition.",
     "Preserve every element that the homeowner did not explicitly ask to change, including property layout, yard shape, terrain, fixed structures, tree placement, outbuildings, horizon line, background landscape, lighting direction, and recognizable features.",
-    "Create a balanced remodel: keep the property unmistakably the same while making the requested project area look visibly renovated, repaired, finished, and upgraded. Split the difference between an unchanged before photo and a fantasy redesign.",
-    "Preserve roughly 75 to 85 percent of the original visual identity. Concentrate visible changes on realistic materials, finishes, fixtures, surfaces, safety improvements, organization, and requested functional upgrades.",
-    "The result must look like a credible completed renovation of this exact property, not merely a cleaned-up before photo and not a replacement property." ,
+    "Create a faithful but clearly noticeable remodel: keep the property unmistakably the same while making the requested project area look genuinely renovated, repaired, finished, and upgraded. Meet in the middle between an unchanged before photo and an unrealistic fantasy redesign.",
+    "Preserve roughly 68 to 78 percent of the original visual identity. The remaining visible change should be concentrated in the requested project area through believable new materials, finishes, fixtures, surfaces, safety improvements, organization, and functional upgrades.",
+    "The result must show a meaningful before-to-after difference. Do not stop at decluttering, staging furniture, or changing color alone when the approved design direction calls for an actual remodel.",
+    "Where appropriate to the request, include several clearly visible renovation details such as renewed surfaces, updated railings or trim, repaired structural finishes, improved fixtures, practical lighting, or other realistic scope elements—but do not add unrelated luxury features.",
+    "The result must look like a credible completed renovation of this exact property, not merely a cleaned-up before photo and not a replacement property.",
+    "The homeowner-approved design brief and latest refinement instructions outrank unrelated or outdated saved project labels.",
     "Do not move, replace, resize, or redesign the home unless the homeowner directly asks for a home addition or structural alteration.",
     "Do not invent new house walls, siding, roof sections, doors, windows, or hidden structure that are not visible in the supplied image.",
     "Do not shift the perspective, crop into a different camera position, replace the property, or create a new scene.",
@@ -447,7 +461,7 @@ export async function POST(request) {
       );
     }
 
-    const mode = inferProjectMode(project, description);
+    const mode = inferProjectMode(project, description, designBrief, visionMessage);
     const width = Number(inputAsset.width || source.width || 0);
     const height = Number(inputAsset.height || source.height || 0);
 

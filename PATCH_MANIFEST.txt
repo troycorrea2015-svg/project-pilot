@@ -1,9 +1,23 @@
-PROJECT PILOT — ADAPTIVE PROJECT VISION CONVERSATION UPDATE
-===========================================================
+PROJECT PILOT — SPRINT 3.1D PATCH MANIFEST
+================================================
 
-Changed or added files: 4
+Changed or added files: 18
 
+INSTALL_SPRINT_3_1D.txt
+SPRINT_3_1D_README.md
+app/admin/admin.css
 app/api/project-vision/generate/route.js
-app/api/project-vision/guide/route.js
+app/brand-system.css
+app/contractor/contractor.css
+app/contractors/contractors.css
+app/dashboard/dashboard.css
+app/icon.svg
+app/layout.js
+app/page.css
+app/project/[id]/project.css
+app/release.css
+components/PermitAutopilot.module.css
+components/PermitConcierge.module.css
 components/ProjectVision.js
 components/ProjectVision.module.css
+public/project-pilot-mark.svg

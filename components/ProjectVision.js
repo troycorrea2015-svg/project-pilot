@@ -9,6 +9,23 @@ const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const MAX_NORMALIZED_EDGE = 2048;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+const INITIAL_GENERATION_STEPS = [
+  "Locking the original camera angle and property layout…",
+  "Applying the homeowner-approved design direction…",
+  "Building a visibly remodeled version of the requested area…",
+  "Checking that the home and unrequested features stay in place…",
+  "Finishing materials, lighting, and realistic details…",
+  "Saving the proposed remodel to this project…",
+];
+
+const REFINEMENT_GENERATION_STEPS = [
+  "Loading the selected concept as the starting point…",
+  "Applying only the confirmed revision…",
+  "Keeping every unrequested detail unchanged…",
+  "Balancing a stronger remodel with the original property…",
+  "Finishing and saving the revised concept…",
+];
+
 function normalizedFilename(file) {
   const base = String(file.name || "project-photo")
     .replace(/\.[^/.]+$/, "")
@@ -107,6 +124,8 @@ export default function ProjectVision({ project, user }) {
   const [refinementBrief, setRefinementBrief] = useState("");
   const [refinementReady, setRefinementReady] = useState(false);
   const [visionHistoryReady, setVisionHistoryReady] = useState(false);
+  const [activeGenerationMode, setActiveGenerationMode] = useState("initial");
+  const [generationStep, setGenerationStep] = useState(0);
 
   const sourceAssets = useMemo(
     () => assets.filter((asset) => asset.asset_type === "source"),
@@ -187,6 +206,23 @@ export default function ProjectVision({ project, user }) {
       window.localStorage.removeItem(`project-vision-brief:${project.id}`);
     }
   }, [visionMessages, designMessages, designBrief, designBriefConfirmed, visionHistoryReady, project?.id]);
+
+  useEffect(() => {
+    if (!generating) {
+      setGenerationStep(0);
+      return undefined;
+    }
+
+    setGenerationStep(0);
+    const steps = activeGenerationMode === "refine"
+      ? REFINEMENT_GENERATION_STEPS
+      : INITIAL_GENERATION_STEPS;
+    const timer = window.setInterval(() => {
+      setGenerationStep((current) => Math.min(current + 1, steps.length - 1));
+    }, 5200);
+
+    return () => window.clearInterval(timer);
+  }, [generating, activeGenerationMode]);
 
   async function withSignedUrls(rows) {
     return Promise.all(
@@ -431,9 +467,10 @@ export default function ProjectVision({ project, user }) {
     event.preventDefault();
     if (!selectedSource || generating) return;
 
+    setActiveGenerationMode("initial");
     setGenerating(true);
     setError("");
-    setNotice("Project Vision is creating one balanced proposed remodel from the original photo. Keep this page open until it is saved.");
+    setNotice("Project Vision is building one faithful, visibly remodeled proposal from the original photo. Keep this page open while Su protects the layout and applies the approved design.");
 
     try {
       await requestConcepts({ generationMode: "initial" });
@@ -498,9 +535,10 @@ export default function ProjectVision({ project, user }) {
       return;
     }
 
+    setActiveGenerationMode("refine");
     setGenerating(true);
     setError("");
-    setNotice("Su is applying the confirmed refinement to the selected concept and creating one revised image.");
+    setNotice("Su is applying the confirmed refinement to the selected concept while keeping every unrequested detail locked.");
 
     try {
       const baseLabel = selectedConcept.caption || `Version ${selectedConcept.version_number}`;
@@ -633,6 +671,23 @@ export default function ProjectVision({ project, user }) {
 
       {error && <div className={styles.error}>{error}</div>}
       {notice && <div className={styles.notice}>{notice}</div>}
+      {generating && (() => {
+        const steps = activeGenerationMode === "refine" ? REFINEMENT_GENERATION_STEPS : INITIAL_GENERATION_STEPS;
+        const progress = Math.round(((generationStep + 1) / steps.length) * 100);
+        return (
+          <div className={styles.generationProgress} role="status" aria-live="polite">
+            <div className={styles.generationProgressTop}>
+              <div>
+                <strong>{activeGenerationMode === "refine" ? "Su is refining your concept" : "Su is creating your proposed remodel"}</strong>
+                <span>{steps[generationStep]}</span>
+              </div>
+              <b>{progress}%</b>
+            </div>
+            <div className={styles.generationTrack}><i style={{ width: `${progress}%` }} /></div>
+            <small>This progress display explains the current stage. The final image remains one API generation.</small>
+          </div>
+        );
+      })()}
 
       {!sourceAssets.length ? (
         <section className={styles.empty}>
@@ -767,7 +822,7 @@ export default function ProjectVision({ project, user }) {
                 <span>The result should clearly look renovated, but it must remain the same property, layout, structure placement, and camera angle. Unrequested details stay locked.</span>
               </div>
               <button className={styles.generateButton} type="submit" disabled={generating || !selectedSource}>
-                {generating ? "Creating balanced remodel…" : concepts.length ? "Generate Another Remodel" : "Generate Proposed Remodel"}
+                {generating ? "Creating faithful remodel…" : concepts.length ? "Generate Another Remodel" : "Generate Proposed Remodel"}
               </button>
               <small className={styles.disclaimer}>AI concepts are planning visuals only. They are not plans, approvals, cost guarantees, or proof of completed work.</small>
             </form>

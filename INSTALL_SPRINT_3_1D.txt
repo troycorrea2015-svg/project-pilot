@@ -1,0 +1,52 @@
+PROJECT PILOT — SPRINT 3.1D BRAND UNIFICATION + VISION POLISH
+==================================================================
+
+THIS IS A CUMULATIVE VISUAL/PROMPT UPDATE
+-----------------------------------------
+It keeps the installed Permit Autopilot, Permit Concierge, Su, and adaptive Project Vision workflow.
+It does not replace or rerun migrations 012 or 013.
+
+INSTALL
+-------
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Click Add file -> Upload files.
+4. Upload EVERYTHING INSIDE the extracted folder to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with:
+
+   Sprint 3.1D Brand Unification and Vision Polish
+
+7. Wait for Vercel to show the deployment as Ready.
+8. Hard refresh Project Pilot with Ctrl + Shift + R.
+
+WHAT CHANGES
+------------
+BRAND
+- Replaces legacy teal/green brand accents with deep navy, royal blue, cool blue tints, and white.
+- Applies the approved blue 3D Project Pilot mark to the homepage, dashboard, project workspace, admin, contractor, marketplace, error, and loading states.
+- Adds the new mark as the browser/site icon.
+- Standardizes primary buttons, selected states, sidebar accents, focus rings, cards, and decorative gradients.
+
+PROJECT VISION
+- Keeps the real property, camera angle, perspective, and fixed layout anchored.
+- Produces a more noticeable remodel than the prior overly conservative result.
+- Preserves about 68–78% of the original visual identity and concentrates meaningful changes in the requested project area.
+- Prevents an old or incorrectly named saved project from overriding the homeowner-approved design conversation.
+- Adds transparent generation-stage updates while the single image is being created or refined.
+- Continues generating only ONE image per click.
+
+NO EXTRA SETUP
+--------------
+- Do not run Supabase SQL.
+- Do not change the OpenAI key.
+- No new Vercel environment variable is required.
+- Keep MARKETPLACE_PAYMENTS_ENABLED=false unless marketplace checkout is intentionally activated later.
+
+TEST
+----
+1. Check the homepage, dashboard, a project, Permit Autopilot, Permit Concierge, admin, and contractor pages for the navy/blue brand system.
+2. Confirm the old single-letter P mark is replaced by the new blue 3D mark.
+3. Open Project Vision, approve a design brief, and generate one image.
+4. Confirm the progress panel advances through clear stages.
+5. Confirm the result is visibly remodeled but still clearly the same property and camera angle.

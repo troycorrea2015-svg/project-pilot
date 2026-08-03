@@ -1066,3 +1066,70 @@
     box-sizing: border-box;
   }
 }
+
+
+/* Sprint 3.1D — transparent generation progress */
+.generationProgress {
+  display: grid;
+  gap: 12px;
+  padding: 17px 18px;
+  color: #17345e;
+  background: linear-gradient(135deg, #f7faff, #edf3ff);
+  border: 1px solid #cfdcf4;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(25, 62, 118, .08);
+}
+
+.generationProgressTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.generationProgressTop > div {
+  display: grid;
+  gap: 4px;
+}
+
+.generationProgressTop strong {
+  color: #102544;
+  font-size: 14px;
+}
+
+.generationProgressTop span,
+.generationProgress small {
+  color: #61738c;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.generationProgressTop b {
+  min-width: 54px;
+  padding: 7px 10px;
+  color: #245dcc;
+  text-align: center;
+  background: #e5edff;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.generationTrack {
+  height: 8px;
+  overflow: hidden;
+  background: #dfe8f7;
+  border-radius: 999px;
+}
+
+.generationTrack i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #2f6df6, #6d9bff);
+  border-radius: inherit;
+  transition: width .6s ease;
+  animation: projectVisionProgressGlow 1.7s ease-in-out infinite;
+}
+
+@keyframes projectVisionProgressGlow {
+  50% { filter: brightness(1.12); box-shadow: 0 0 16px rgba(47,109,246,.45); }
+}
