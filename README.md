@@ -1,14 +1,7 @@
-# Project Pilot Clean Build
+# Project Vision — Adaptive Design Conversation
 
-Fresh Next.js application created with the official `create-next-app` tool.
+Su helps each homeowner identify the exact remodeled look they want through a natural, adaptive conversation. The workflow does not rely on a fixed quiz or canned style categories.
 
-## GitHub upload
-Upload the contents of this folder to the repository root. Do not upload the containing folder itself.
+The image prompt defaults to a balanced remodel: visibly renovated and finished, but still unmistakably the same property and source photograph.
 
-## Vercel
-Vercel should detect Next.js automatically. Leave Root Directory blank and Build Command/Install Command on defaults.
-
-## Test
-Address: 10 NW Front Street
-ZIP: 19963
-Project: Fence
+The update keeps one image per initial generation and one image per confirmed refinement.

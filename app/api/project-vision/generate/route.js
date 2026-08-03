@@ -120,6 +120,7 @@ function buildPrompt({
   generationMode,
   visionMessage,
   baseConceptCaption,
+  designBrief,
 }) {
   const projectContext = [project?.project_type, project?.title, project?.description]
     .filter(Boolean)
@@ -135,6 +136,9 @@ function buildPrompt({
       : "The supplied image is the homeowner's real property photo and must remain the visual foundation.",
     "This must remain the same property, same camera position, same perspective, and same overall composition.",
     "Preserve every element that the homeowner did not explicitly ask to change, including property layout, yard shape, terrain, fixed structures, tree placement, outbuildings, horizon line, background landscape, lighting direction, and recognizable features.",
+    "Create a balanced remodel: keep the property unmistakably the same while making the requested project area look visibly renovated, repaired, finished, and upgraded. Split the difference between an unchanged before photo and a fantasy redesign.",
+    "Preserve roughly 75 to 85 percent of the original visual identity. Concentrate visible changes on realistic materials, finishes, fixtures, surfaces, safety improvements, organization, and requested functional upgrades.",
+    "The result must look like a credible completed renovation of this exact property, not merely a cleaned-up before photo and not a replacement property." ,
     "Do not move, replace, resize, or redesign the home unless the homeowner directly asks for a home addition or structural alteration.",
     "Do not invent new house walls, siding, roof sections, doors, windows, or hidden structure that are not visible in the supplied image.",
     "Do not shift the perspective, crop into a different camera position, replace the property, or create a new scene.",
@@ -143,7 +147,8 @@ function buildPrompt({
     "Return one polished photorealistic concept with no labels, text, watermark, border, collage, or split screen.",
     projectContext ? `Saved project context: ${projectContext}` : "",
     `Original project request: ${description}`,
-    stylePreferences ? `Saved style and material preferences: ${stylePreferences}` : "",
+    designBrief ? `Homeowner-approved design brief from Su: ${designBrief}` : "",
+    stylePreferences ? `Additional saved style and material preferences: ${stylePreferences}` : "",
     budgetTier !== "Not specified"
       ? `Budget direction: ${budgetTier}. Keep the visible scope and finishes consistent with that budget range.`
       : "",
@@ -181,102 +186,94 @@ function shouldTryResponsesFallback(error) {
 }
 
 async function editWithImageApi({ imageBuffer, imageType, prompt, width, height }) {
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   const automaticSize = height > width * 1.12
     ? "1024x1536"
     : width > height * 1.12
       ? "1536x1024"
       : "1024x1024";
-  const models = [...new Set([process.env.OPENAI_IMAGE_MODEL, "gpt-image-1"].filter(Boolean))];
-  let lastError = null;
 
-  for (const model of models) {
-    const form = new FormData();
-    form.append("model", model);
-    form.append(
-      "image[]",
-      new Blob([imageBuffer], { type: imageType.mime }),
-      `project-vision-input.${imageType.extension}`
-    );
-    form.append("prompt", prompt);
-    form.append("size", process.env.OPENAI_IMAGE_SIZE || automaticSize);
-    form.append("quality", process.env.OPENAI_IMAGE_QUALITY || "medium");
-    form.append("output_format", "png");
+  const form = new FormData();
+  form.append("model", model);
+  form.append(
+    "image[]",
+    new Blob([imageBuffer], { type: imageType.mime }),
+    `project-vision-input.${imageType.extension}`
+  );
+  form.append("prompt", prompt);
+  form.append("size", process.env.OPENAI_IMAGE_SIZE || automaticSize);
+  form.append("quality", process.env.OPENAI_IMAGE_QUALITY || "medium");
+  form.append("output_format", "png");
+
+  if (model !== "gpt-image-2") {
     form.append("input_fidelity", process.env.OPENAI_IMAGE_INPUT_FIDELITY || "high");
-
-    const response = await fetch("https://api.openai.com/v1/images/edits", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-      body: form,
-      cache: "no-store",
-    });
-
-    const result = await response.json().catch(() => ({}));
-    if (response.ok) {
-      const base64Image = result?.data?.[0]?.b64_json;
-      if (!base64Image) throw new Error("The image editor returned no completed image.");
-      return {
-        base64Image,
-        requestId: response.headers.get("x-request-id") || "",
-        provider: `images-edits:${model}`,
-      };
-    }
-
-    lastError = providerError(result, "The AI image editor could not complete this visualization.", response.status);
-    if (![400, 404].includes(response.status) || model === models[models.length - 1]) break;
   }
 
-  throw lastError || new Error("The AI image editor could not complete this visualization.");
+  const response = await fetch("https://api.openai.com/v1/images/edits", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+    body: form,
+    cache: "no-store",
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw providerError(result, "The AI image editor could not complete this visualization.", response.status);
+  }
+
+  const base64Image = result?.data?.[0]?.b64_json;
+  if (!base64Image) throw new Error("The image editor returned no completed image.");
+
+  return {
+    base64Image,
+    requestId: response.headers.get("x-request-id") || "",
+    provider: "images-edits",
+  };
 }
 
 async function editWithResponsesApi({ imageBuffer, imageType, prompt }) {
-  const models = [...new Set([process.env.OPENAI_PROJECT_VISION_MODEL, "gpt-5"].filter(Boolean))];
+  const model = process.env.OPENAI_PROJECT_VISION_MODEL || "gpt-5.5";
   const imageUrl = `data:${imageType.mime};base64,${imageBuffer.toString("base64")}`;
-  let lastError = null;
 
-  for (const model of models) {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        store: false,
-        input: [
-          {
-            role: "user",
-            content: [
-              { type: "input_text", text: prompt },
-              { type: "input_image", image_url: imageUrl, detail: "high" },
-            ],
-          },
-        ],
-        tools: [{ type: "image_generation" }],
-      }),
-      cache: "no-store",
-    });
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: prompt },
+            { type: "input_image", image_url: imageUrl, detail: "high" },
+          ],
+        },
+      ],
+      tools: [{ type: "image_generation" }],
+    }),
+    cache: "no-store",
+  });
 
-    const result = await response.json().catch(() => ({}));
-    if (response.ok) {
-      const imageCall = (result?.output || []).find((item) => item?.type === "image_generation_call");
-      const base64Image = imageCall?.result || imageCall?.b64_json || "";
-      if (!base64Image) {
-        const outputText = clean(result?.output_text, 500);
-        throw new Error(outputText || "The fallback image editor returned no completed image.");
-      }
-      return {
-        base64Image,
-        requestId: response.headers.get("x-request-id") || result?.id || "",
-        provider: `responses-image-generation:${model}`,
-      };
-    }
-
-    lastError = providerError(result, "The fallback image editor could not complete this visualization.", response.status);
-    if (![400, 404].includes(response.status) || model === models[models.length - 1]) break;
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw providerError(result, "The fallback image editor could not complete this visualization.", response.status);
   }
 
-  throw lastError || new Error("The fallback image editor could not complete this visualization.");
+  const imageCall = (result?.output || []).find((item) => item?.type === "image_generation_call");
+  const base64Image = imageCall?.result || imageCall?.b64_json || "";
+  if (!base64Image) {
+    const outputText = clean(result?.output_text, 500);
+    throw new Error(outputText || "The fallback image editor returned no completed image.");
+  }
+
+  return {
+    base64Image,
+    requestId: response.headers.get("x-request-id") || result?.id || "",
+    provider: "responses-image-generation",
+  };
 }
 
 async function updateFailedRequest(service, requestId, error) {
@@ -311,7 +308,8 @@ export async function POST(request) {
     const description = clean(body.description, 1800);
     const stylePreferences = clean(body.stylePreferences, 900);
     const revisionNotes = clean(body.revisionNotes, 900);
-    const visionMessage = clean(body.visionMessage, 1200);
+    const visionMessage = clean(body.visionMessage, 1600);
+    const designBrief = clean(body.designBrief, 3000);
     const requestedBudget = clean(body.budgetTier, 80) || "Not specified";
     const budgetTier = ALLOWED_BUDGETS.has(requestedBudget) ? requestedBudget : "Not specified";
 
@@ -408,8 +406,8 @@ export async function POST(request) {
     }
 
     const requestDescription = generationMode === "refine"
-      ? `${description}\nAdd Your Vision refinement: ${visionMessage}`
-      : description;
+      ? `${description}\nConfirmed design direction: ${designBrief || "Not provided"}\nAdd Your Vision refinement: ${visionMessage}`
+      : `${description}\nConfirmed design direction: ${designBrief || "Not provided"}`;
 
     const { data: visionRequest, error: requestError } = await service
       .from("project_vision_requests")
@@ -419,7 +417,7 @@ export async function POST(request) {
         source_asset_id: source.id,
         project_description: requestDescription,
         budget_tier: budgetTier,
-        style_preferences: stylePreferences,
+        style_preferences: designBrief || stylePreferences,
         preserve_instructions:
           "Preserve the original property, home placement, structures, layout, perspective, camera angle, framing, and recognizable fixed features. Modify only what the homeowner explicitly requests and do not invent hidden house structure.",
         status: "processing",
@@ -480,6 +478,7 @@ export async function POST(request) {
         generationMode,
         visionMessage,
         baseConceptCaption: baseConcept?.caption || "",
+        designBrief,
       });
 
       let edited;

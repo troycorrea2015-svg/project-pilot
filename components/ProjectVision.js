@@ -8,12 +8,6 @@ const BUCKET = "project-vision";
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const MAX_NORMALIZED_EDGE = 2048;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const QUICK_VISION_PROMPTS = [
-  "Keep the layout, but make the materials more modern.",
-  "Make this more affordable without changing the main design.",
-  "Add more privacy and keep everything else the same.",
-  "Make the project area larger without moving the home.",
-];
 
 function normalizedFilename(file) {
   const base = String(file.name || "project-photo")
@@ -103,8 +97,15 @@ export default function ProjectVision({ project, user }) {
   const [budgetTier, setBudgetTier] = useState("Not specified");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [designInput, setDesignInput] = useState("");
+  const [designMessages, setDesignMessages] = useState([]);
+  const [designBrief, setDesignBrief] = useState("");
+  const [designBriefConfirmed, setDesignBriefConfirmed] = useState(false);
+  const [designGuideLoading, setDesignGuideLoading] = useState(false);
   const [visionInput, setVisionInput] = useState("");
   const [visionMessages, setVisionMessages] = useState([]);
+  const [refinementBrief, setRefinementBrief] = useState("");
+  const [refinementReady, setRefinementReady] = useState(false);
   const [visionHistoryReady, setVisionHistoryReady] = useState(false);
 
   const sourceAssets = useMemo(
@@ -150,13 +151,27 @@ export default function ProjectVision({ project, user }) {
   }, [concepts, selectedConceptId]);
 
   useEffect(() => {
+    setRefinementBrief("");
+    setRefinementReady(false);
+  }, [selectedConceptId]);
+
+  useEffect(() => {
     if (!project?.id) return;
     try {
-      const saved = window.localStorage.getItem(`project-vision-chat:${project.id}`);
-      const parsed = saved ? JSON.parse(saved) : [];
-      setVisionMessages(Array.isArray(parsed) ? parsed.slice(-20) : []);
+      const savedRefinement = window.localStorage.getItem(`project-vision-chat:${project.id}`);
+      const savedDesign = window.localStorage.getItem(`project-vision-design:${project.id}`);
+      const savedBrief = window.localStorage.getItem(`project-vision-brief:${project.id}`) || "";
+      const parsedRefinement = savedRefinement ? JSON.parse(savedRefinement) : [];
+      const parsedDesign = savedDesign ? JSON.parse(savedDesign) : [];
+      setVisionMessages(Array.isArray(parsedRefinement) ? parsedRefinement.slice(-20) : []);
+      setDesignMessages(Array.isArray(parsedDesign) ? parsedDesign.slice(-20) : []);
+      setDesignBrief(savedBrief);
+      setDesignBriefConfirmed(Boolean(savedBrief));
     } catch {
       setVisionMessages([]);
+      setDesignMessages([]);
+      setDesignBrief("");
+      setDesignBriefConfirmed(false);
     } finally {
       setVisionHistoryReady(true);
     }
@@ -164,11 +179,14 @@ export default function ProjectVision({ project, user }) {
 
   useEffect(() => {
     if (!visionHistoryReady || !project?.id) return;
-    window.localStorage.setItem(
-      `project-vision-chat:${project.id}`,
-      JSON.stringify(visionMessages.slice(-20))
-    );
-  }, [visionMessages, visionHistoryReady, project?.id]);
+    window.localStorage.setItem(`project-vision-chat:${project.id}`, JSON.stringify(visionMessages.slice(-20)));
+    window.localStorage.setItem(`project-vision-design:${project.id}`, JSON.stringify(designMessages.slice(-20)));
+    if (designBriefConfirmed && designBrief) {
+      window.localStorage.setItem(`project-vision-brief:${project.id}`, designBrief);
+    } else {
+      window.localStorage.removeItem(`project-vision-brief:${project.id}`);
+    }
+  }, [visionMessages, designMessages, designBrief, designBriefConfirmed, visionHistoryReady, project?.id]);
 
   async function withSignedUrls(rows) {
     return Promise.all(
@@ -278,14 +296,92 @@ export default function ProjectVision({ project, user }) {
     }
   }
 
-  function appendVisionMessage(role, text) {
-    const message = {
+  function createConversationMessage(role, text) {
+    return {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       role,
       text,
       createdAt: new Date().toISOString(),
     };
-    setVisionMessages((current) => [...current, message].slice(-20));
+  }
+
+  function appendVisionMessage(role, text) {
+    setVisionMessages((current) => [...current, createConversationMessage(role, text)].slice(-20));
+  }
+
+  async function requestDesignGuidance({ phase, messages, currentBrief = "" }) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) throw new Error("Your session expired. Sign in again and retry.");
+
+    const response = await fetch("/api/project-vision/guide", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        projectId: project.id,
+        phase,
+        messages: messages.map(({ role, text }) => ({ role, text })),
+        currentBrief,
+        selectedConcept: phase === "refine"
+          ? selectedConcept?.caption || `Version ${selectedConcept?.version_number || ""}`
+          : "",
+      }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Su could not continue the design conversation.");
+    return result;
+  }
+
+  async function guideInitialVision(event) {
+    event?.preventDefault?.();
+    if (designGuideLoading) return;
+
+    const text = designInput.trim();
+    if (text.length < 2) {
+      setError("Tell Su what you want the finished project to look or feel like.");
+      return;
+    }
+
+    const userMessage = createConversationMessage("user", text);
+    const nextMessages = [...designMessages, userMessage].slice(-20);
+    setDesignMessages(nextMessages);
+    setDesignInput("");
+    setDesignBriefConfirmed(false);
+    setDesignGuideLoading(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const result = await requestDesignGuidance({
+        phase: "initial",
+        messages: nextMessages,
+        currentBrief: designBrief,
+      });
+      const assistantText = result.message || "Tell me a little more about the result you are picturing.";
+      setDesignMessages((current) => [...current, createConversationMessage("assistant", assistantText)].slice(-20));
+      setDesignBrief(result.brief || "");
+      if (result.ready && result.brief) {
+        setNotice("Su has translated your answers into a clear design direction. Review it and select Use this vision.");
+      }
+    } catch (guideError) {
+      setError(guideError.message || "Su could not continue the design conversation.");
+    } finally {
+      setDesignGuideLoading(false);
+    }
+  }
+
+  function confirmDesignBrief() {
+    if (!designBrief) {
+      setError("Continue the conversation with Su until the design direction is ready.");
+      return;
+    }
+    setDesignBriefConfirmed(true);
+    setStylePreferences(designBrief);
+    setNotice("This design direction will guide the proposed remodel. You can still correct Su before generating.");
   }
 
   async function requestConcepts({ generationMode, visionMessage = "" }) {
@@ -315,6 +411,7 @@ export default function ProjectVision({ project, user }) {
         baseConceptId: generationMode === "refine" ? selectedConcept?.id : "",
         generationMode,
         visionMessage,
+        designBrief: designBriefConfirmed ? designBrief : "",
         description: cleanDescription,
         stylePreferences: stylePreferences.trim(),
         revisionNotes: revisionNotes.trim(),
@@ -336,12 +433,12 @@ export default function ProjectVision({ project, user }) {
 
     setGenerating(true);
     setError("");
-    setNotice("Project Vision is editing your original photo and creating one proposed concept. Keep this page open until it is saved.");
+    setNotice("Project Vision is creating one balanced proposed remodel from the original photo. Keep this page open until it is saved.");
 
     try {
-      const result = await requestConcepts({ generationMode: "initial" });
+      await requestConcepts({ generationMode: "initial" });
       setRevisionNotes("");
-      setNotice(`Project Vision created the proposed concept. Use Add Your Vision to keep refining it until it matches what you want.`);
+      setNotice("Project Vision created the proposed remodel. If it is not exact, tell Su what feels wrong and she will clarify the change before generating another image.");
     } catch (generationError) {
       setError(generationError.message || "Project Vision could not complete this request.");
       setNotice("");
@@ -350,35 +447,71 @@ export default function ProjectVision({ project, user }) {
     }
   }
 
-  async function refineVision(event) {
+  async function guideRefinement(event) {
     event.preventDefault();
-    if (generating) return;
+    if (designGuideLoading || generating) return;
 
-    const message = visionInput.trim();
-    if (message.length < 3) {
-      setError("Tell Su what you want changed in the selected concept.");
+    const text = visionInput.trim();
+    if (text.length < 2) {
+      setError("Tell Su what does not look right or what you want changed.");
       return;
     }
     if (!selectedConcept) {
-      setError("Choose a proposed concept before adding your vision.");
+      setError("Choose a proposed concept before refining your vision.");
       return;
     }
 
-    appendVisionMessage("user", message);
+    const userMessage = createConversationMessage("user", text);
+    const nextMessages = [...visionMessages, userMessage].slice(-20);
+    setVisionMessages(nextMessages);
     setVisionInput("");
+    setRefinementBrief("");
+    setRefinementReady(false);
+    setDesignGuideLoading(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const result = await requestDesignGuidance({
+        phase: "refine",
+        messages: nextMessages,
+        currentBrief: designBriefConfirmed ? designBrief : "",
+      });
+      const assistantText = result.message || "Tell me a little more about the change you want.";
+      setVisionMessages((current) => [...current, createConversationMessage("assistant", assistantText)].slice(-20));
+      setRefinementBrief(result.brief || "");
+      setRefinementReady(Boolean(result.ready && result.brief));
+      if (result.ready && result.brief) {
+        setNotice("Su understands the requested change. Review the refinement brief before using another image generation.");
+      }
+    } catch (guideError) {
+      setError(guideError.message || "Su could not continue the refinement conversation.");
+    } finally {
+      setDesignGuideLoading(false);
+    }
+  }
+
+  async function applyRefinement() {
+    if (!refinementReady || !refinementBrief || generating) return;
+    if (!selectedConcept) {
+      setError("Choose the concept you want Su to refine.");
+      return;
+    }
+
     setGenerating(true);
     setError("");
-    setNotice("Su is applying your vision to the selected concept and creating one refined concept.");
+    setNotice("Su is applying the confirmed refinement to the selected concept and creating one revised image.");
 
     try {
       const baseLabel = selectedConcept.caption || `Version ${selectedConcept.version_number}`;
-      const result = await requestConcepts({ generationMode: "refine", visionMessage: message });
-      const count = Number(result?.generatedCount || 1);
+      await requestConcepts({ generationMode: "refine", visionMessage: refinementBrief });
       appendVisionMessage(
         "assistant",
-        `I used ${baseLabel} as the starting point and created the refined concept. Review it, then tell me what to change next.`
+        `I applied the confirmed changes to ${baseLabel}. Review the revised concept and tell me what still does not match your vision.`
       );
-      setNotice(`Su created a refinement from your selected concept.`);
+      setRefinementBrief("");
+      setRefinementReady(false);
+      setNotice("Su created one revised concept from your confirmed instructions.");
     } catch (generationError) {
       const messageText = generationError.message || "Project Vision could not complete this refinement.";
       appendVisionMessage("assistant", `I could not complete that change: ${messageText}`);
@@ -482,7 +615,7 @@ export default function ProjectVision({ project, user }) {
           <p>PROJECT VISION</p>
           <h1>See the potential before construction begins.</h1>
           <span>
-            Upload your own property photo. Project Vision preserves the property and camera angle, creates one proposed concept, and then lets the homeowner keep refining it with Su.
+            Upload your own property photo. Su helps the homeowner describe the exact look they are searching for, then Project Vision creates a believable remodel that stays consistent with the real property.
           </span>
         </div>
         <button type="button" onClick={() => sourceInputRef.current?.click()} disabled={Boolean(uploading)}>
@@ -565,29 +698,76 @@ export default function ProjectVision({ project, user }) {
                   <option>Premium</option>
                 </select>
               </label>
-              <label>
-                Style or materials <small>(optional)</small>
-                <input
-                  value={stylePreferences}
-                  onChange={(event) => setStylePreferences(event.target.value)}
-                  placeholder="Modern, rustic, stamped concrete, dark siding…"
-                />
-              </label>
-              <label>
-                Revision to make <small>(optional)</small>
-                <textarea
-                  value={revisionNotes}
-                  onChange={(event) => setRevisionNotes(event.target.value)}
-                  placeholder="Example: Make the pool larger and move it closer to the back-right corner."
-                  rows="3"
-                />
-              </label>
+              <section className={styles.designGuide}>
+                <div className={styles.visionChatHeading}>
+                  <div>
+                    <p>FIND THE EXACT LOOK WITH SU</p>
+                    <h3>Describe it naturally. Su will help you narrow it down.</h3>
+                    <span>There is no fixed style quiz. Su asks one relevant question at a time based on your answers until the design direction matches what you mean.</span>
+                  </div>
+                  {designBriefConfirmed && <div className={styles.confirmedBadge}>Vision confirmed</div>}
+                </div>
+
+                <div className={styles.visionMessages} aria-live="polite">
+                  {!designMessages.length && (
+                    <div className={`${styles.visionMessage} ${styles.assistantMessage}`}>
+                      <strong>Su</strong>
+                      <span>Tell me in your own words what you want this project to look and feel like when it is finished. You do not need to know any design terms.</span>
+                    </div>
+                  )}
+                  {designMessages.map((message) => (
+                    <div
+                      className={`${styles.visionMessage} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`}
+                      key={message.id}
+                    >
+                      <strong>{message.role === "user" ? "You" : "Su"}</strong>
+                      <span>{message.text}</span>
+                    </div>
+                  ))}
+                  {designGuideLoading && (
+                    <div className={`${styles.visionMessage} ${styles.assistantMessage}`}>
+                      <strong>Su</strong>
+                      <span>Thinking about the next detail that will help define your look…</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.visionComposer}>
+                  <label htmlFor="project-vision-design-conversation">Your response</label>
+                  <textarea
+                    id="project-vision-design-conversation"
+                    value={designInput}
+                    onChange={(event) => setDesignInput(event.target.value)}
+                    placeholder="Example: I want it to look updated and finished, but still like my actual home—not too expensive or overly luxurious."
+                    rows="3"
+                    disabled={designGuideLoading || generating}
+                  />
+                  <div className={styles.visionComposerActions}>
+                    <button type="button" className={styles.guideButton} onClick={guideInitialVision} disabled={designGuideLoading || generating || designInput.trim().length < 2}>
+                      {designGuideLoading ? "Su is thinking…" : "Continue with Su"}
+                    </button>
+                  </div>
+                </div>
+
+                {designBrief && (
+                  <div className={styles.briefCard}>
+                    <div>
+                      <p>SU'S UNDERSTANDING OF YOUR VISION</p>
+                      <span>{designBrief}</span>
+                    </div>
+                    <button type="button" onClick={confirmDesignBrief} disabled={designGuideLoading || generating}>
+                      {designBriefConfirmed ? "Using this vision" : "Use this vision"}
+                    </button>
+                    <small>Something is off? Reply to Su above. She will revise this brief from your next response.</small>
+                  </div>
+                )}
+              </section>
               <div className={styles.preserveNote}>
-                <strong>Scene-lock rule</strong>
-                <span>The first concept starts from the original photo. Add Your Vision refinements start from the concept you select while locking every unrequested detail in place.</span>
+                <strong>Balanced-remodel rule</strong>
+                <span>The result should clearly look renovated, but it must remain the same property, layout, structure placement, and camera angle. Unrequested details stay locked.</span>
               </div>
               <button className={styles.generateButton} type="submit" disabled={generating || !selectedSource}>
-                {generating ? "Creating Project Vision concept…" : concepts.length ? "Generate New Concept" : "Generate Proposed Concept"}
+                {generating ? "Creating balanced remodel…" : concepts.length ? "Generate Another Remodel" : "Generate Proposed Remodel"}
               </button>
               <small className={styles.disclaimer}>AI concepts are planning visuals only. They are not plans, approvals, cost guarantees, or proof of completed work.</small>
             </form>
@@ -671,8 +851,8 @@ export default function ProjectVision({ project, user }) {
                   <div className={styles.visionChatHeading}>
                     <div>
                       <p>ADD YOUR VISION</p>
-                      <h3>Tell Su exactly what to change.</h3>
-                      <span>Select the concept you want to improve, then type exactly what should change next.</span>
+                      <h3>Tell Su what still does not match what you want.</h3>
+                      <span>Su will respond to what you say, ask only the clarification she needs, and prepare the exact revision before another image is generated.</span>
                     </div>
                     <div className={styles.selectedConceptBadge}>
                       Refining: {selectedConcept.caption || `Version ${selectedConcept.version_number}`}
@@ -683,7 +863,7 @@ export default function ProjectVision({ project, user }) {
                     {!visionMessages.length && (
                       <div className={`${styles.visionMessage} ${styles.assistantMessage}`}>
                         <strong>Su</strong>
-                        <span>Choose the closest option and type the changes you want. For example: “Keep this exact layout, make the railing black, use gray composite boards, and remove the furniture.”</span>
+                        <span>Tell me what feels wrong, too plain, too dramatic, missing, or different from what you pictured. I will help narrow the change down before using another image generation.</span>
                       </div>
                     )}
                     {visionMessages.map((message) => (
@@ -697,31 +877,38 @@ export default function ProjectVision({ project, user }) {
                     ))}
                   </div>
 
-                  <div className={styles.quickVisionPrompts}>
-                    {QUICK_VISION_PROMPTS.map((prompt) => (
-                      <button type="button" onClick={() => setVisionInput(prompt)} key={prompt}>
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
 
-                  <form className={styles.visionComposer} onSubmit={refineVision}>
-                    <label htmlFor="project-vision-refinement">Add your vision</label>
+
+                  <form className={styles.visionComposer} onSubmit={guideRefinement}>
+                    <label htmlFor="project-vision-refinement">Tell Su what you are looking for</label>
                     <textarea
                       id="project-vision-refinement"
                       value={visionInput}
                       onChange={(event) => setVisionInput(event.target.value)}
-                      placeholder="Type exactly what Su should keep, remove, move, resize, recolor, or replace. Unrequested details will stay locked."
+                      placeholder="Example: This is too different from my actual home. Keep the exact deck footprint and yard, but make the materials look newer and more finished."
                       rows="4"
-                      disabled={generating}
+                      disabled={generating || designGuideLoading}
                     />
                     <div className={styles.visionComposerActions}>
-                      <button type="submit" className={styles.refineButton} disabled={generating || visionInput.trim().length < 3}>
-                        {generating ? "Creating refinement…" : "Generate refinement"}
+                      <button type="submit" className={styles.guideButton} disabled={generating || designGuideLoading || visionInput.trim().length < 2}>
+                        {designGuideLoading ? "Su is thinking…" : "Continue with Su"}
                       </button>
                     </div>
-                    <small>Su uses the selected concept as the starting point and applies only the changes you request.</small>
+                    <small>No image is generated while Su is clarifying the look, which helps avoid wasting image credits on the wrong revision.</small>
                   </form>
+
+                  {refinementBrief && (
+                    <div className={styles.briefCard}>
+                      <div>
+                        <p>CONFIRMED REVISION SU WILL APPLY</p>
+                        <span>{refinementBrief}</span>
+                      </div>
+                      <button type="button" onClick={applyRefinement} disabled={!refinementReady || generating || designGuideLoading}>
+                        {generating ? "Creating revision…" : "Generate this revision"}
+                      </button>
+                      <small>Su will use the selected concept as the starting point and keep every unrequested detail unchanged.</small>
+                    </div>
+                  )}
                 </section>
               )}
             </section>

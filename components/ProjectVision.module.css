@@ -968,3 +968,101 @@
     max-width: 94%;
   }
 }
+
+.designGuide {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(145deg, #f8fbff, #eef5ff);
+  border: 1px solid #d8e5fb;
+  border-radius: 15px;
+}
+
+.confirmedBadge {
+  padding: 8px 10px;
+  color: #22613f;
+  white-space: nowrap;
+  background: #e8f8ef;
+  border: 1px solid #c8ead6;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.guideButton {
+  min-height: 43px;
+  padding: 0 14px;
+  color: #fff;
+  background: #2f6df6;
+  border: 0;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.guideButton:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.briefCard {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  color: #31465f;
+  background: #fff;
+  border: 1px solid #cdddf3;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(38, 66, 108, 0.06);
+}
+
+.briefCard > div {
+  display: grid;
+  gap: 6px;
+}
+
+.briefCard p {
+  margin: 0;
+  color: #3970df;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.briefCard span {
+  white-space: pre-wrap;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.briefCard button {
+  min-height: 42px;
+  padding: 0 14px;
+  color: #fff;
+  background: #1f5ed8;
+  border: 0;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.briefCard button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.briefCard small {
+  color: #75849a;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .confirmedBadge,
+  .guideButton {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

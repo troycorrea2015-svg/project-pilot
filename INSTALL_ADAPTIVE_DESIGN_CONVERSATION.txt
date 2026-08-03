@@ -1,0 +1,49 @@
+PROJECT PILOT — ADAPTIVE PROJECT VISION CONVERSATION UPDATE
+===========================================================
+
+This update implements the requested behavior directly:
+
+- No fixed style quiz.
+- No preset design questionnaire.
+- Su begins with an open conversation in the homeowner's own words.
+- Every follow-up question is selected from the homeowner's latest response and the details that are still unclear.
+- Su asks one relevant question at a time.
+- When the direction is clear, Su produces a precise design brief for homeowner approval.
+- Project Vision creates one balanced proposed remodel from the original photo.
+- The proposed image must visibly renovate the requested area while preserving the actual property, layout, structure placement, perspective, camera angle, and recognizable features.
+- After the first concept, the homeowner tells Su what does not match their vision.
+- Su clarifies the request before another image is generated, reducing wasted image credits.
+- A refinement is generated only after the homeowner reviews Su's exact revision brief.
+
+INSTALLATION
+------------
+1. Extract this ZIP.
+2. Open the project-pilot GitHub repository.
+3. Select Add file -> Upload files.
+4. Upload everything INSIDE the extracted folder to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with:
+
+   Make Project Vision adapt to each homeowner's responses
+
+7. Wait for Vercel to show the deployment as Ready.
+8. Hard refresh Project Pilot with Ctrl + Shift + R.
+
+TEST
+----
+1. Open Project Vision in a project.
+2. Upload or select an original photo.
+3. In Find the Exact Look with Su, enter:
+
+   I want this to look fully renovated and finished, but it still needs to look like my actual property. I do not want anything overly luxurious.
+
+4. Confirm that Su asks one relevant follow-up question rather than displaying a fixed list.
+5. Continue until Su produces a design brief.
+6. Select Use this vision.
+7. Generate the proposed remodel and confirm only one image is created.
+8. In Add Your Vision, explain what does not match.
+9. Confirm Su clarifies the requested change before offering Generate this revision.
+
+No new Supabase migration is required.
+No new Vercel environment variable is required.
+The existing OPENAI_API_KEY and assistant model variables are used.

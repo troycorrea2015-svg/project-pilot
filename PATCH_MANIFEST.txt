@@ -1,18 +1,9 @@
-PROJECT PILOT — SPRINT 3.1C PERMIT CONCIERGE PATCH MANIFEST
+PROJECT PILOT — ADAPTIVE PROJECT VISION CONVERSATION UPDATE
 ===========================================================
 
-Changed or added files:
+Changed or added files: 4
 
-app/admin/page.js
-app/admin/permit-concierge/[id]/page.js
-app/admin/permit-concierge/[id]/concierge.css
-app/api/permit-concierge/request/route.js
-components/PermitAutopilot.js
-components/PermitAutopilot.module.css
-components/PermitConcierge.js
-components/PermitConcierge.module.css
-supabase/migrations/013_permit_concierge_3_1c.sql
-RUN_THIS_IN_SUPABASE_013.sql
-INSTALL_SPRINT_3_1C_PERMIT_CONCIERGE.txt
-PATCH_MANIFEST.txt
-SHA256SUMS.txt
+app/api/project-vision/generate/route.js
+app/api/project-vision/guide/route.js
+components/ProjectVision.js
+components/ProjectVision.module.css
