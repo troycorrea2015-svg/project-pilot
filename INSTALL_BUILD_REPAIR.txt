@@ -1,0 +1,18 @@
+PROJECT PILOT — SPRINT 3.2A BUILD REPAIR
+
+The Vercel build failed because app/release.css contained literal \\n characters.
+This repair replaces that stylesheet with valid CSS.
+
+INSTALL
+1. Extract this ZIP.
+2. Open the project-pilot GitHub repository.
+3. Click Add file -> Upload files.
+4. Upload everything inside this repair folder to the repository root.
+5. Allow app/release.css to be replaced.
+6. Commit with:
+
+Fix Sprint 3.2A release CSS build
+
+7. Wait for Vercel to deploy again.
+
+No Supabase SQL or Vercel environment changes are required.

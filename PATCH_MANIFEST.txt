@@ -1,9 +1,3 @@
-app/page.js
-app/page.css
-app/brand-system.css
-app/layout.js
-public/project-pilot-lockup-dark.svg
-public/project-pilot-lockup-light.svg
-SPRINT_3_2A_README.md
-INSTALL_SPRINT_3_2A.txt
+app/release.css
+INSTALL_BUILD_REPAIR.txt
 PATCH_MANIFEST.txt
