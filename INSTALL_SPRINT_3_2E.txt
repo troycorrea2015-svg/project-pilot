@@ -1,0 +1,27 @@
+INSTALL — SPRINT 3.2E RECREATED HIGH-RESOLUTION HERO UPDATE
+
+Purpose:
+This update keeps the approved homepage layout and approved logo, but replaces the fuzzy screenshot-based hero image with a recreated high-resolution hero image so it stays much sharper across mobile, half-screen, and full-screen use.
+
+What this changes:
+- keeps the approved Project Pilot logo
+- keeps the approved homepage structure
+- replaces the old fuzzy hero image with a recreated sharp hero image
+- avoids relying on the blurry screenshot crop for the main house scene
+
+Steps:
+1. Download and extract this ZIP.
+2. Open the `project-pilot` GitHub repository.
+3. Click Add file → Upload files.
+4. Upload everything inside the extracted folder.
+5. Allow matching files to be replaced.
+6. Commit with this message:
+
+Sprint 3.2E recreated high-resolution hero update
+
+7. Wait for Vercel to deploy.
+8. Open the site and hard refresh:
+   - Windows: Ctrl + Shift + R
+
+No Supabase SQL required.
+No Vercel environment variable changes required.

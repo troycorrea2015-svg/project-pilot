@@ -120,7 +120,7 @@ export default function HomePage() {
             <div><b>▥</b><span><strong>Better Outcomes</strong><small>Plan with budgets, tasks, and real next steps</small></span></div>
           </div>
         </div>
-        <div className="heroVisualApproved"><img src="/homepage-hero-approved.png" alt="Approved Project Pilot hero" /></div>
+        <div className="heroVisualApproved"><img src="/homepage-hero-recreated-highres.png" alt="Approved Project Pilot hero" /></div>
       </section>
       <section className="dashboardPreview" id="solutions">
         <aside className="previewSidebar">
