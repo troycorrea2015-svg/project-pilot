@@ -630,9 +630,8 @@ export default function DashboardPage() {
     <main className="dashboardPage">
       <aside className="dashboardSidebar">
         <div>
-          <a href="/" className="dashboardBrand">
-            <span>P</span>
-            <strong>Project Pilot</strong>
+          <a href="/" className="dashboardBrand dashboardBrandImage">
+            <img src="/project-pilot-lockup-light.svg" alt="Project Pilot" />
           </a>
         </div>
 
@@ -742,26 +741,6 @@ export default function DashboardPage() {
               <b>?</b><span><strong>Get help</strong><small>Plain-language answers and common terms.</small></span>
             </button>
           </div>
-        </section>
-
-        <section className={`signedInVisualHero role-${accountRole}`}>
-          <div className="signedInVisualCopy">
-            <p>{workspaceProfile.eyebrow}</p>
-            <h2>{workspaceProfile.headline}</h2>
-            <span>{workspaceProfile.description}</span>
-            <div>
-              <button type="button" onClick={addProject} disabled={creating}>
-                {creating ? "Creating…" : "Start a New Project"}
-              </button>
-              <a href="#category-launchpad">Browse project categories</a>
-            </div>
-          </div>
-          <img
-            src={workspaceProfile.image}
-            alt={`${workspaceProfile.label} planning active projects`}
-            fetchPriority="high"
-            decoding="async"
-          />
         </section>
 
         <section className="categoryLaunchpad" id="category-launchpad">
