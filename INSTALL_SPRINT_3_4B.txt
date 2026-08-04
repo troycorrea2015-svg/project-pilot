@@ -1,0 +1,35 @@
+INSTALL — SPRINT 3.4B DIVERSE HOMEPAGE PEOPLE UPDATE
+
+Purpose:
+This update keeps the approved homepage look, keeps the house image at the top, and adds a broader, more diverse set of relatable people images to the homepage.
+
+What this changes:
+- keeps the approved Project Pilot logo
+- keeps the recreated high-resolution house hero image at the top
+- adds five homepage photo cards using the selected diverse image set
+- connects those cards to clear next-step actions users can click
+- keeps the rest of the homepage structure and functionality intact
+
+Files included:
+- app/page.js
+- app/page.css
+- public/homepage-logo-approved.png
+- public/homepage-hero-recreated-highres.png
+- public/homepage-person-1.png
+- public/homepage-person-2.png
+- public/homepage-person-3.png
+- public/homepage-person-4.png
+- public/homepage-person-5.png
+
+Install steps:
+1. Extract this ZIP.
+2. Open your Project Pilot GitHub repository.
+3. Upload the included app folder and public folder.
+4. Replace matching files when GitHub asks.
+5. Commit with this message:
+   Sprint 3.4B add diverse homepage people section
+6. Wait for Vercel to deploy.
+7. Hard refresh the site (Ctrl + Shift + R on Windows).
+
+No Supabase SQL is required.
+No Vercel environment changes are required.
