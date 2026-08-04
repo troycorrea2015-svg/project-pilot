@@ -21,13 +21,13 @@ const STAGES = [
 ];
 
 const NAV_ITEMS = [
-  ["overview", "Overview"],
-  ["vision", "Project Vision"],
-  ["flight", "Project Plan"],
-  ["pilot", "Project Assistant"],
-  ["permits", "Permit Autopilot"],
-  ["contractors", "Find Contractors"],
-  ["documents", "Files & Documents"],
+  ["overview", "Start Here"],
+  ["flight", "Step-by-Step Plan"],
+  ["permits", "Permits"],
+  ["vision", "Visualize"],
+  ["pilot", "Ask for Help"],
+  ["contractors", "Contractors"],
+  ["documents", "Files"],
   ["notes", "Notes"],
 ];
 
@@ -254,6 +254,7 @@ export default function ProjectWorkspacePage() {
   const [documents, setDocuments] = useState([]);
   const [waypoints, setWaypoints] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showWorkspaceGuide, setShowWorkspaceGuide] = useState(false);
   const [openWaypoint, setOpenWaypoint] = useState(null);
   const [draft, setDraft] = useState("");
   const [noteDraft, setNoteDraft] = useState("");
@@ -292,6 +293,16 @@ export default function ProjectWorkspacePage() {
       setActiveTab(requestedTab);
     }
   }, []);
+
+  useEffect(() => {
+    if (loading || !project) return;
+    try {
+      const completed = window.localStorage.getItem("project-pilot-workspace-guide-v1");
+      if (!completed) setShowWorkspaceGuide(true);
+    } catch {
+      setShowWorkspaceGuide(true);
+    }
+  }, [loading, project]);
 
   async function loadWorkspace() {
     setLoading(true);
@@ -805,6 +816,20 @@ export default function ProjectWorkspacePage() {
     }
   }
 
+  function dismissWorkspaceGuide() {
+    try {
+      window.localStorage.setItem("project-pilot-workspace-guide-v1", "complete");
+    } catch {
+      // The guide can still close when browser storage is unavailable.
+    }
+    setShowWorkspaceGuide(false);
+  }
+
+  function goToWorkspaceStep(tab) {
+    dismissWorkspaceGuide();
+    setActiveTab(tab);
+  }
+
   const setupItems = useMemo(
     () => [
       ["Project type", project?.project_type],
@@ -851,6 +876,25 @@ export default function ProjectWorkspacePage() {
 
   return (
     <main className="projectWorkspace">
+      {showWorkspaceGuide && (
+        <div className="workspaceGuideOverlay" role="dialog" aria-modal="true" aria-labelledby="workspaceGuideTitle">
+          <div className="workspaceGuideModal">
+            <button className="workspaceGuideClose" type="button" onClick={dismissWorkspaceGuide} aria-label="Close project guide">×</button>
+            <p>YOUR PROJECT WORKSPACE</p>
+            <h2 id="workspaceGuideTitle">You do not need to use every tool at once.</h2>
+            <span>Follow these steps in order. Project Pilot will save your progress and keep showing the next recommended action.</span>
+            <div className="workspaceGuideSteps">
+              <button type="button" onClick={() => goToWorkspaceStep("overview")}><b>1</b><div><strong>Start Here</strong><small>Review your next recommended action.</small></div></button>
+              <button type="button" onClick={() => goToWorkspaceStep("flight")}><b>2</b><div><strong>Follow the Plan</strong><small>Complete one project step at a time.</small></div></button>
+              <button type="button" onClick={() => goToWorkspaceStep("permits")}><b>3</b><div><strong>Prepare Permits</strong><small>Answer the permit questions and build the application.</small></div></button>
+              <button type="button" onClick={() => goToWorkspaceStep("documents")}><b>4</b><div><strong>Keep Files Together</strong><small>Upload plans, photos, estimates, and approvals.</small></div></button>
+            </div>
+            <button className="workspaceGuidePrimary" type="button" onClick={() => goToWorkspaceStep("overview")}>Show My Next Step</button>
+            <small>You can reopen this guide from the “How this works” button at the top of the project.</small>
+          </div>
+        </div>
+      )}
+
       <aside className="projectRail">
         <button className="backButton" onClick={() => router.push("/dashboard")}>← Dashboard</button>
 
@@ -879,10 +923,10 @@ export default function ProjectWorkspacePage() {
         </nav>
 
         <div className="railProgress">
-          <small>PROJECT READINESS</small>
+          <small>PROJECT PROGRESS</small>
           <strong>{readiness}%</strong>
           <div><span style={{ width: `${readiness}%` }} /></div>
-          <p>{completedCount} of {STAGES.length} steps complete</p>
+          <p>{completedCount} of {STAGES.length} plan steps complete</p>
         </div>
       </aside>
 
@@ -894,8 +938,9 @@ export default function ProjectWorkspacePage() {
             <span>{project.next_step}</span>
           </div>
           <div className="workspaceHeaderActions">
-            <button className="secondaryAction" onClick={() => setActiveTab("flight")}>Open Project Plan</button>
-            <button onClick={() => setActiveTab("pilot")}>Ask Project Assistant</button>
+            <button className="secondaryAction" onClick={() => setShowWorkspaceGuide(true)}>How this works</button>
+            <button className="secondaryAction" onClick={() => setActiveTab("flight")}>View My Plan</button>
+            <button onClick={() => setActiveTab("pilot")}>Ask for Help</button>
           </div>
         </header>
 
@@ -904,6 +949,19 @@ export default function ProjectWorkspacePage() {
 
         {activeTab === "overview" && (
           <div className="workspaceContent overviewContent">
+            <section className="simpleProjectPath" aria-label="Recommended project path">
+              <div className="simpleProjectPathHeading">
+                <div><p>THE SIMPLE PATH</p><h3>Complete these steps from left to right.</h3></div>
+                <span>Optional tools stay available, but these are the four steps most users need first.</span>
+              </div>
+              <div className="simpleProjectPathGrid">
+                <button className={setupCount >= 3 ? "complete" : "current"} type="button" onClick={() => setActiveTab("overview")}><b>{setupCount >= 3 ? "✓" : "1"}</b><span><strong>Project details</strong><small>Add the basic scope, address, budget, and timeline.</small></span></button>
+                <button className={completedCount > 0 ? "complete" : setupCount >= 3 ? "current" : ""} type="button" onClick={() => setActiveTab("flight")}><b>{completedCount > 0 ? "✓" : "2"}</b><span><strong>Project plan</strong><small>Follow one clear task at a time.</small></span></button>
+                <button className={permitChecked ? "complete" : completedCount > 0 ? "current" : ""} type="button" onClick={() => setActiveTab("permits")}><b>{permitChecked ? "✓" : "3"}</b><span><strong>Permit check</strong><small>Find the likely requirements and official route.</small></span></button>
+                <button className={permitChecked ? "current" : ""} type="button" onClick={() => setActiveTab("permits")}><b>4</b><span><strong>Application package</strong><small>Review answers, generate the packet, and enter the portal.</small></span></button>
+              </div>
+            </section>
+
             <section className="commandHero">
               <div className="commandHeroCopy">
                 <p>CURRENT OBJECTIVE</p>

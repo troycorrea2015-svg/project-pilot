@@ -178,9 +178,9 @@ export default function PermitApplicationBuilder({ project, user, permitResult }
     return (
       <section className={styles.builder}>
         <div className={styles.emptyState}>
-          <p>PERMIT APPLICATION BUILDER</p>
-          <h2>Start Permit Autopilot first.</h2>
-          <span>Complete the permit route and application interview above. Project Pilot will then turn those answers into a reviewed application packet and assisted portal-entry workspace.</span>
+          <p>PERMIT APPLICATION</p>
+          <h2>Complete the permit questions above first.</h2>
+          <span>Once those answers are saved, this section will organize them into an application package and guide you through the official portal.</span>
         </div>
       </section>
     );
@@ -190,25 +190,31 @@ export default function PermitApplicationBuilder({ project, user, permitResult }
     <section className={styles.builder}>
       <div className={styles.hero}>
         <div>
-          <p>PERMIT APPLICATION BUILDER</p>
-          <h2>Answer once. Build the application. Enter the official portal with everything prepared.</h2>
-          <span>Project Pilot converts the saved permit interview into a structured application packet, document manifest, and field-by-field portal entry guide.</span>
+          <p>COMPLETE YOUR PERMIT APPLICATION</p>
+          <h2>Project Pilot prepares the answers and walks you through the submission.</h2>
+          <span>Check the information, generate the application package, then copy each prepared answer into the official government portal.</span>
         </div>
-        <div className={styles.scoreCard}><strong>{packet?.completion || 0}%</strong><span>Application package readiness</span><small>{packet?.jurisdiction}</small></div>
+        <div className={styles.scoreCard}><strong>{packet?.completion || 0}%</strong><span>Application ready</span><small>{packet?.jurisdiction}</small></div>
+      </div>
+
+      <div className={styles.simpleSteps} aria-label="Permit application steps">
+        <article><b>1</b><span><strong>Check your answers</strong><small>Confirm the information Project Pilot prepared.</small></span></article>
+        <article><b>2</b><span><strong>Create the application</strong><small>Generate a printable package and document list.</small></span></article>
+        <article><b>3</b><span><strong>Submit through the portal</strong><small>Open the official site and enter the prepared values.</small></span></article>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
       {notice && <div className={styles.notice}>{notice}</div>}
 
       <div className={styles.tabRow}>
-        <button type="button" className={activePanel === "review" ? styles.activeTab : ""} onClick={() => setActivePanel("review")}>1. Review application</button>
-        <button type="button" className={activePanel === "packet" ? styles.activeTab : ""} onClick={() => setActivePanel("packet")}>2. Generate packet</button>
-        <button type="button" className={activePanel === "portal" ? styles.activeTab : ""} onClick={() => setActivePanel("portal")}>3. Assisted portal entry</button>
+        <button type="button" className={activePanel === "review" ? styles.activeTab : ""} onClick={() => setActivePanel("review")}>1. Check answers</button>
+        <button type="button" className={activePanel === "packet" ? styles.activeTab : ""} onClick={() => setActivePanel("packet")}>2. Create application</button>
+        <button type="button" className={activePanel === "portal" ? styles.activeTab : ""} onClick={() => setActivePanel("portal")}>3. Enter official portal</button>
       </div>
 
       {activePanel === "review" && (
         <div className={styles.panel}>
-          <div className={styles.panelHeading}><div><small>APPLICATION REVIEW</small><h3>Review every prepared answer before the packet is generated.</h3></div><span>{packet?.missingFields.length || 0} required answer(s) missing</span></div>
+          <div className={styles.panelHeading}><div><small>STEP 1 OF 3</small><h3>Check the information Project Pilot prepared.</h3></div><span>{packet?.missingFields.length || 0} required answer(s) missing</span></div>
           {Object.entries(groupedFields).map(([section, fields]) => (
             <section className={styles.fieldSection} key={section}>
               <h4>{section}</h4>
@@ -224,14 +230,14 @@ export default function PermitApplicationBuilder({ project, user, permitResult }
           <div className={styles.reviewConfirm}>
             <label><span>Applicant reviewing this packet</span><input value={reviewName} onChange={(event) => setReviewName(event.target.value)} placeholder="Full legal name" /></label>
             <label className={styles.checkLabel}><input type="checkbox" checked={reviewAccepted} onChange={(event) => setReviewAccepted(event.target.checked)} /><span>I reviewed the prepared information and understand that I must personally complete any required identity, certification, signature, payment, or professional-license step.</span></label>
-            <button type="button" onClick={savePacket} disabled={saving === "packet"}>{saving === "packet" ? "Generating application packet…" : "Generate Permit Application Packet"}</button>
+            <button type="button" onClick={savePacket} disabled={saving === "packet"}>{saving === "packet" ? "Generating application packet…" : "Create My Permit Application"}</button>
           </div>
         </div>
       )}
 
       {activePanel === "packet" && (
         <div className={styles.panel}>
-          <div className={styles.panelHeading}><div><small>SUBMISSION PACKAGE</small><h3>Your prepared permit application package.</h3></div><span>{permitCase.application_packet_status || "Not generated"}</span></div>
+          <div className={styles.panelHeading}><div><small>STEP 2 OF 3</small><h3>Download your prepared permit application.</h3></div><span>{permitCase.application_packet_status || "Not generated"}</span></div>
           <div className={styles.packetSummary}>
             <article><small>PACKET VERSION</small><strong>{permitCase.application_packet_version || packet?.version}</strong></article>
             <article><small>LAST GENERATED</small><strong>{formatDate(permitCase.application_packet_generated_at)}</strong></article>
@@ -239,21 +245,21 @@ export default function PermitApplicationBuilder({ project, user, permitResult }
             <article><small>SUBMISSION METHOD</small><strong>{packet?.submissionMethod}</strong></article>
           </div>
           <div className={styles.downloadGrid}>
-            <button type="button" onClick={downloadPacket}><strong>Download Application Packet</strong><span>Printable HTML packet with all prepared answers and document status.</span></button>
-            <button type="button" onClick={downloadFieldMap}><strong>Download Portal Field Map</strong><span>CSV mapping official portal labels to Project Pilot values.</span></button>
+            <button type="button" onClick={downloadPacket}><strong>Download My Application</strong><span>Printable HTML packet with all prepared answers and document status.</span></button>
+            <button type="button" onClick={downloadFieldMap}><strong>Download Portal Answer List</strong><span>CSV mapping official portal labels to Project Pilot values.</span></button>
             <button type="button" onClick={downloadJson}><strong>Download Structured Packet</strong><span>Machine-readable JSON for future form and portal integrations.</span></button>
           </div>
           <div className={styles.boundaryNote}><strong>Project Pilot prepares the application.</strong><span>The governing portal remains the official submission system unless a jurisdiction integration or authorized Permit Concierge filing route is available.</span></div>
-          <button type="button" className={styles.nextButton} onClick={() => setActivePanel("portal")}>Continue to Assisted Portal Entry →</button>
+          <button type="button" className={styles.nextButton} onClick={() => setActivePanel("portal")}>Continue to the Official Portal →</button>
         </div>
       )}
 
       {activePanel === "portal" && (
         <div className={styles.panel}>
-          <div className={styles.panelHeading}><div><small>ASSISTED PORTAL ENTRY</small><h3>Complete the official application without rethinking every answer.</h3></div><span>{completedPortalFields} of {portalTotal} fields entered</span></div>
+          <div className={styles.panelHeading}><div><small>STEP 3 OF 3</small><h3>Enter the prepared answers into the official portal.</h3></div><span>{completedPortalFields} of {portalTotal} fields entered</span></div>
           <div className={styles.portalTop}>
             <div><strong>{packet?.applicationLabel}</strong><span>{packet?.jurisdiction}</span></div>
-            {packet?.applicationUrl ? <a href={packet.applicationUrl} target="_blank" rel="noreferrer">Open Official Application ↗</a> : <span className={styles.noLink}>Official link needs confirmation</span>}
+            {packet?.applicationUrl ? <a href={packet.applicationUrl} target="_blank" rel="noreferrer">Open Official Permit Portal ↗</a> : <span className={styles.noLink}>Official link needs confirmation</span>}
           </div>
           <div className={styles.portalProgress}><i style={{ width: `${portalTotal ? Math.round((completedPortalFields / portalTotal) * 100) : 0}%` }} /></div>
           <div className={styles.portalFields}>

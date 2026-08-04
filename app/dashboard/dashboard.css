@@ -1603,3 +1603,48 @@
 
 /* Sprint 3.2C dashboard correction */
 .signedInVisualHero{display:none!important}.dashboardBrandImage::before{display:none!important;content:none!important}.dashboardBrandImage>img{display:block;width:172px;height:auto}.dashboardSidebar>div:first-child{min-height:48px;display:flex;align-items:center}.dashboardSidebar{background:linear-gradient(180deg,#07172f,#0a2140 58%,#0d2b58)!important}.dashboardSidebar nav a.active{background:rgba(74,128,255,.2)!important;box-shadow:inset 3px 0 0 #69a0ff!important}
+
+/* Sprint 3.4 — first-run simplicity */
+.dashboardSidebar nav .sidebarGuideButton{
+  width:100%;
+  min-height:40px;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.86);
+  text-align:left;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.dashboardSidebar nav .sidebarGuideButton:hover{background:rgba(255,255,255,.1);color:#fff}
+.simplifiedStartSection{position:relative}
+.simplifiedActionGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.simplifiedActionGrid>button{position:relative;min-height:112px;align-items:flex-start}
+.simplifiedActionGrid>button em{position:absolute;right:12px;top:10px;padding:4px 7px;border-radius:999px;background:#eaf2ff;color:#2f6df6;font-size:8px;font-style:normal;font-weight:900;letter-spacing:.08em}
+.simplifiedActionGrid .recommendedAction{border-color:#8eb4ff;box-shadow:0 10px 30px rgba(47,109,246,.12)}
+.secondaryStartLinks{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.secondaryStartLinks button{min-height:34px;padding:0 12px;border:1px solid #d7e2ef;border-radius:8px;background:#fff;color:#365273;font-size:10px;font-weight:800;cursor:pointer}
+.secondaryStartLinks button:hover{border-color:#9dbaf1;color:#2f6df6}
+.firstRunOverlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(4,15,31,.72);backdrop-filter:blur(8px)}
+.firstRunModal{position:relative;width:min(650px,100%);max-height:calc(100vh - 36px);overflow:auto;padding:30px;border:1px solid #d9e4f2;border-radius:20px;background:#fff;box-shadow:0 32px 90px rgba(2,16,40,.34)}
+.firstRunClose{position:absolute;right:14px;top:12px;width:34px;height:34px;border:0;border-radius:50%;background:#f0f4f9;color:#34506f;font-size:23px;line-height:1;cursor:pointer}
+.firstRunModal>p{margin:0;color:#2f6df6;font-size:10px;font-weight:900;letter-spacing:.18em}
+.firstRunModal h2{margin:8px 42px 0 0;font-size:clamp(28px,4vw,42px);line-height:1.02;letter-spacing:-.045em}
+.firstRunIntro{display:block;max-width:540px;margin-top:12px;color:#61738a;font-size:14px;line-height:1.65}
+.firstRunSteps{display:grid;gap:10px;margin-top:22px}
+.firstRunSteps article{display:grid;grid-template-columns:38px 1fr;gap:12px;align-items:start;padding:14px;border:1px solid #dce6f2;border-radius:12px;background:#fafcff}
+.firstRunSteps article>b{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#eaf2ff;color:#2f6df6;font-size:13px}
+.firstRunSteps strong,.firstRunSteps span{display:block}
+.firstRunSteps strong{font-size:13px}
+.firstRunSteps span{margin-top:4px;color:#687b92;font-size:11px;line-height:1.5}
+.firstRunActions{display:flex;gap:10px;margin-top:22px}
+.firstRunActions button{min-height:42px;padding:0 16px;border:0;border-radius:9px;background:#2f6df6;color:#fff;font-size:11px;font-weight:900;cursor:pointer}
+.firstRunActions .firstRunSecondary{border:1px solid #d5e0ed;background:#fff;color:#29415e}
+.firstRunModal>small{display:block;margin-top:14px;color:#7a8ba0;font-size:9px;line-height:1.5}
+.firstRunDashboard .missionControlGrid,.firstRunDashboard .flightPlanBanner,.firstRunDashboard .workspaceGrid{display:none}
+.firstRunDashboard .categoryLaunchpad{margin-bottom:18px}
+@media(max-width:900px){.simplifiedActionGrid{grid-template-columns:1fr!important}}
+@media(max-width:720px){.firstRunModal{padding:24px 18px}.firstRunActions{display:grid}.secondaryStartLinks{display:grid;grid-template-columns:1fr}.secondaryStartLinks button{width:100%}}

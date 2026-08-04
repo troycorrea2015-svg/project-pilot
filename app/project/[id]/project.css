@@ -955,3 +955,37 @@
     width: 100%;
   }
 }
+
+/* Sprint 3.4 — first-run simplicity */
+.workspaceGuideOverlay{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:18px;background:rgba(4,15,31,.74);backdrop-filter:blur(8px)}
+.workspaceGuideModal{position:relative;width:min(680px,100%);max-height:calc(100vh - 36px);overflow:auto;padding:30px;border:1px solid #d8e4f2;border-radius:20px;background:#fff;color:#112b4a;box-shadow:0 32px 90px rgba(2,16,40,.36)}
+.workspaceGuideClose{position:absolute;right:14px;top:12px;width:34px;height:34px;border:0;border-radius:50%;background:#eef3f8;color:#34506f;font-size:23px;cursor:pointer}
+.workspaceGuideModal>p{margin:0;color:#2f6df6;font-size:10px;font-weight:900;letter-spacing:.18em}
+.workspaceGuideModal h2{margin:8px 44px 0 0;font-size:clamp(28px,4vw,42px);line-height:1.02;letter-spacing:-.045em}
+.workspaceGuideModal>span{display:block;max-width:570px;margin-top:12px;color:#63758c;font-size:14px;line-height:1.65}
+.workspaceGuideSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:22px}
+.workspaceGuideSteps button{display:grid;grid-template-columns:38px 1fr;gap:11px;align-items:start;padding:14px;border:1px solid #dce6f2;border-radius:12px;background:#fafcff;color:#112b4a;text-align:left;cursor:pointer}
+.workspaceGuideSteps button:hover{border-color:#8eb4ff;background:#f6f9ff}
+.workspaceGuideSteps b{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#eaf2ff;color:#2f6df6;font-size:13px}
+.workspaceGuideSteps strong,.workspaceGuideSteps small{display:block}
+.workspaceGuideSteps strong{font-size:13px}
+.workspaceGuideSteps small{margin-top:4px;color:#6d7f94;font-size:10px;line-height:1.45}
+.workspaceGuidePrimary{min-height:42px;margin-top:20px;padding:0 16px;border:0;border-radius:9px;background:#2f6df6;color:#fff;font-size:11px;font-weight:900;cursor:pointer}
+.workspaceGuideModal>small{display:block;margin-top:13px;color:#7d8da1;font-size:9px;line-height:1.5}
+.simpleProjectPath{padding:18px;border:1px solid #dce6f2;border-radius:15px;background:#fff}
+.simpleProjectPathHeading{display:flex;align-items:end;justify-content:space-between;gap:20px}
+.simpleProjectPathHeading p{margin:0;color:#2f6df6;font-size:9px;font-weight:900;letter-spacing:.18em}
+.simpleProjectPathHeading h3{margin:5px 0 0;font-size:21px;letter-spacing:-.025em}
+.simpleProjectPathHeading>span{max-width:390px;color:#687b92;font-size:10px;line-height:1.5;text-align:right}
+.simpleProjectPathGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:15px}
+.simpleProjectPathGrid button{display:grid;grid-template-columns:32px 1fr;gap:9px;align-items:start;min-height:100px;padding:12px;border:1px solid #dce6f2;border-radius:11px;background:#fafcff;color:#193454;text-align:left;cursor:pointer}
+.simpleProjectPathGrid button:hover{border-color:#9bb9ef;background:#f6f9ff}
+.simpleProjectPathGrid button.current{border-color:#7ea6f6;box-shadow:0 8px 24px rgba(47,109,246,.1)}
+.simpleProjectPathGrid button.complete{border-color:#b9dfce;background:#f6fcf9}
+.simpleProjectPathGrid b{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#eaf2ff;color:#2f6df6;font-size:11px}
+.simpleProjectPathGrid button.complete b{background:#e4f5ec;color:#267a50}
+.simpleProjectPathGrid strong,.simpleProjectPathGrid small{display:block}
+.simpleProjectPathGrid strong{font-size:11px}
+.simpleProjectPathGrid small{margin-top:4px;color:#6d7e93;font-size:9px;line-height:1.45}
+@media(max-width:1000px){.simpleProjectPathGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.simpleProjectPathHeading{align-items:start;flex-direction:column}.simpleProjectPathHeading>span{text-align:left}}
+@media(max-width:720px){.workspaceGuideModal{padding:24px 18px}.workspaceGuideSteps,.simpleProjectPathGrid{grid-template-columns:1fr}.workspaceHeaderActions{flex-wrap:wrap}}

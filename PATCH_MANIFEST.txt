@@ -1,14 +1,10 @@
-Project Pilot Sprint 3.3 — Permit Application Builder
+Sprint 3.4 changed files
 
-NEW
+app/dashboard/page.js
+app/dashboard/dashboard.css
+app/project/[id]/page.js
+app/project/[id]/project.css
 components/PermitApplicationBuilder.js
 components/PermitApplicationBuilder.module.css
-lib/permit-application-builder.js
-supabase/migrations/015_permit_application_builder_3_3.sql
-RUN_THIS_IN_SUPABASE_015.sql
-INSTALL_SPRINT_3_3.txt
-SPRINT_3_3_README.md
-PATCH_MANIFEST.txt
-
-MODIFIED
-app/project/[id]/page.js
+INSTALL_SPRINT_3_4.txt
+SPRINT_3_4_README.md

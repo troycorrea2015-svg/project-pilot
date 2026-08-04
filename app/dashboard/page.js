@@ -227,6 +227,7 @@ export default function DashboardPage() {
   const [accountSaving, setAccountSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showProjectWizard, setShowProjectWizard] = useState(false);
+  const [showFirstRunGuide, setShowFirstRunGuide] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardForm, setWizardForm] = useState({
     title: "",
@@ -297,6 +298,16 @@ export default function DashboardPage() {
       subscription.unsubscribe();
     };
   }, [router]);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    try {
+      const completed = window.localStorage.getItem("project-pilot-first-run-guide-v1");
+      if (!completed) setShowFirstRunGuide(true);
+    } catch {
+      setShowFirstRunGuide(true);
+    }
+  }, [loading, user]);
 
   const averageProgress = useMemo(() => {
     if (!projects.length) return 0;
@@ -615,6 +626,20 @@ export default function DashboardPage() {
     addProject();
   }
 
+  function dismissFirstRunGuide() {
+    try {
+      window.localStorage.setItem("project-pilot-first-run-guide-v1", "complete");
+    } catch {
+      // The guide can still close when browser storage is unavailable.
+    }
+    setShowFirstRunGuide(false);
+  }
+
+  function startFirstProjectFromGuide() {
+    dismissFirstRunGuide();
+    addProject();
+  }
+
   if (loading || !user) {
     return <main className="dashboardLoading">Opening your dashboard…</main>;
   }
@@ -627,7 +652,7 @@ export default function DashboardPage() {
   const missionAngle = `${averageProgress * 3.6}deg`;
 
   return (
-    <main className="dashboardPage">
+    <main className={`dashboardPage ${projects.length ? "" : "firstRunDashboard"}`.trim()}>
       <aside className="dashboardSidebar">
         <div>
           <a href="/" className="dashboardBrand dashboardBrandImage">
@@ -636,15 +661,16 @@ export default function DashboardPage() {
         </div>
 
         <nav aria-label="Dashboard navigation">
-          <a className="active" href="/dashboard">Dashboard</a>
-          <a href="#projects">My Projects</a>
-          <a href="/contractors">Find Contractors</a>
-          <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permit Autopilot</a>
-          <a href={primaryProject ? `/project/${primaryProject.id}?tab=vision` : "#projects"}>Project Vision</a>
-          <a href="/help">Help Center</a>
+          <a className="active" href="/dashboard">Home</a>
+          <a href="#projects">Projects</a>
+          <a href={primaryProject ? `/project/${primaryProject.id}?tab=permits` : "#projects"}>Permits</a>
+          <a href={primaryProject ? `/project/${primaryProject.id}?tab=vision` : "#projects"}>Visualize</a>
+          <a href="/contractors">Contractors</a>
+          <a href="/help">Help</a>
+          <button className="sidebarGuideButton" type="button" onClick={() => setShowFirstRunGuide(true)}>How to use Project Pilot</button>
           {accountRole === "contractor" && <a href="/contractor">Contractor Center</a>}
           {isAdmin && <a href="/admin">Admin Control Center</a>}
-          <a href="/">Project Pilot Home</a>
+          <a href="/">Public Website</a>
         </nav>
 
         <div className="sidebarStatus">
@@ -681,6 +707,27 @@ export default function DashboardPage() {
       </aside>
 
       <section className="dashboardMain">
+        {showFirstRunGuide && (
+          <div className="firstRunOverlay" role="dialog" aria-modal="true" aria-labelledby="firstRunTitle">
+            <div className="firstRunModal">
+              <button className="firstRunClose" type="button" onClick={dismissFirstRunGuide} aria-label="Close guide">×</button>
+              <p>WELCOME TO PROJECT PILOT</p>
+              <h2 id="firstRunTitle">You only need to know what you want to improve.</h2>
+              <span className="firstRunIntro">Project Pilot guides the rest in plain English and always shows the next recommended action.</span>
+              <div className="firstRunSteps">
+                <article><b>1</b><div><strong>Create a project</strong><span>Choose the project type and add the property address.</span></div></article>
+                <article><b>2</b><div><strong>Follow the next step</strong><span>Complete one small task at a time instead of navigating everything at once.</span></div></article>
+                <article><b>3</b><div><strong>Prepare permits and documents</strong><span>Project Pilot turns your answers into a clear permit path and application package.</span></div></article>
+              </div>
+              <div className="firstRunActions">
+                <button type="button" onClick={primaryProject ? () => { dismissFirstRunGuide(); openPrimaryProject(); } : startFirstProjectFromGuide}>{primaryProject ? "Show My Next Step" : "Start My First Project"}</button>
+                <button className="firstRunSecondary" type="button" onClick={dismissFirstRunGuide}>Look Around First</button>
+              </div>
+              <small>You can reopen this guide anytime from “How to use Project Pilot” in the sidebar.</small>
+            </div>
+          </div>
+        )}
+
         <header className="dashboardHeader">
           <div>
             <p>YOUR DASHBOARD</p>
@@ -713,33 +760,29 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="guidedStartSection" aria-label="Choose your next action">
+        <section className="guidedStartSection simplifiedStartSection" aria-label="Choose your next action">
           <div className="guidedStartHeading">
             <div>
-              <p>WHAT WOULD YOU LIKE TO DO TODAY?</p>
-              <h2>Choose one clear next step.</h2>
+              <p>START HERE</p>
+              <h2>{primaryProject ? "Continue with one clear next step." : "Create your first project in a few minutes."}</h2>
             </div>
-            <span>Project Assistant can explain any page or unfamiliar term.</span>
+            <span>You do not need to understand permits or construction terms before starting.</span>
           </div>
-          <div className="guidedActionGrid">
-            <button type="button" onClick={() => addProject()}>
-              <b>+</b><span><strong>Start a new project</strong><small>Answer a few simple setup questions.</small></span>
+          <div className="guidedActionGrid simplifiedActionGrid">
+            <button className="recommendedAction" type="button" onClick={openPrimaryProject}>
+              <b>1</b><span><strong>{primaryProject ? "Continue my project" : "Start my first project"}</strong><small>{primaryProject ? primaryProject.title : "Tell us what you want to improve."}</small></span><em>RECOMMENDED</em>
             </button>
-            <button type="button" onClick={openPrimaryProject}>
-              <b>→</b><span><strong>Continue a project</strong><small>{primaryProject ? primaryProject.title : "Create your first project"}</small></span>
-            </button>
-            <button type="button" onClick={openPrimaryProject}>
-              <b>✓</b><span><strong>Start Permit Autopilot</strong><small>Prepare the application path, documents, and approval tracking.</small></span>
+            <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=permits`) : addProject()}>
+              <b>2</b><span><strong>Prepare my permit</strong><small>Answer simple questions and build the application.</small></span>
             </button>
             <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=vision`) : addProject()}>
-              <b>◫</b><span><strong>Visualize a project</strong><small>Turn your own photo into a realistic proposed result.</small></span>
+              <b>3</b><span><strong>Visualize the result</strong><small>Use a photo to preview the proposed improvement.</small></span>
             </button>
-            <button type="button" onClick={() => router.push("/contractors")}>
-              <b>⌂</b><span><strong>Find a contractor</strong><small>See unbiased Best Matches for your project.</small></span>
-            </button>
-            <button type="button" onClick={() => router.push("/help")}>
-              <b>?</b><span><strong>Get help</strong><small>Plain-language answers and common terms.</small></span>
-            </button>
+          </div>
+          <div className="secondaryStartLinks">
+            <button type="button" onClick={() => router.push("/contractors")}>Find a contractor</button>
+            <button type="button" onClick={() => router.push("/help")}>Get help</button>
+            <button type="button" onClick={() => setShowFirstRunGuide(true)}>Show me how it works</button>
           </div>
         </section>
 
