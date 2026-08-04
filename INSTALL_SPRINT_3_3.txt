@@ -1,0 +1,50 @@
+INSTALL — PROJECT PILOT SPRINT 3.3 PERMIT APPLICATION BUILDER
+
+This update adds the Permit Application Builder inside each project's Permits tab.
+
+IMPORTANT: Run the SQL migration before uploading the code.
+
+STEP 1 — SUPABASE
+1. Open Supabase.
+2. Open SQL Editor.
+3. Open RUN_THIS_IN_SUPABASE_015.sql from this package.
+4. Copy the entire file into the SQL Editor.
+5. Click Run.
+6. Confirm the query succeeds.
+
+STEP 2 — GITHUB
+1. Extract this ZIP.
+2. Open the project-pilot GitHub repository.
+3. Click Add file → Upload files.
+4. Upload these folders/files from the extracted package:
+   - app
+   - components
+   - lib
+   - supabase
+   - RUN_THIS_IN_SUPABASE_015.sql
+5. Replace matching files when prompted.
+6. Commit with:
+
+Sprint 3.3 add Permit Application Builder
+
+STEP 3 — VERCEL
+1. Wait for the deployment to finish.
+2. Open a project.
+3. Select the Permits tab.
+4. Start or open Permit Autopilot.
+5. Complete the application interview and link documents.
+6. Use Permit Application Builder to:
+   - review prepared application answers
+   - confirm applicant review
+   - generate the application packet
+   - download a printable application packet
+   - download the official-portal field map
+   - open the matched official portal
+   - copy each prepared value into the matching portal field
+   - track which portal fields have been entered
+
+No new environment variables are required.
+Marketplace payments remain unchanged and disabled.
+
+IMPORTANT PRODUCT BOUNDARY
+This feature prepares the permit application and assists official portal entry. It does not impersonate the applicant, sign legal certifications, pay government fees, create professional seals, or guarantee approval.

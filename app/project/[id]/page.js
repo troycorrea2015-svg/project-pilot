@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { readAssistantStream } from "../../../lib/assistant-stream";
 import ProjectVision from "../../../components/ProjectVision";
 import PermitAutopilot from "../../../components/PermitAutopilot";
+import PermitApplicationBuilder from "../../../components/PermitApplicationBuilder";
 import "./project.css";
 
 const STAGES = [
@@ -1293,6 +1294,11 @@ export default function ProjectWorkspacePage() {
               user={user}
               permitResult={permitResult}
               onOpenDocuments={() => setActiveTab("documents")}
+            />
+            <PermitApplicationBuilder
+              project={project}
+              user={user}
+              permitResult={permitResult}
             />
             <div className="sectionIntro splitIntro permitVisualIntro">
               <div>

@@ -1,7 +1,14 @@
-app/page.js
-app/page.css
-app/dashboard/page.js
-app/dashboard/dashboard.css
-public/project-pilot-modern-house.svg
-INSTALL_SPRINT_3_2C.txt
+Project Pilot Sprint 3.3 — Permit Application Builder
+
+NEW
+components/PermitApplicationBuilder.js
+components/PermitApplicationBuilder.module.css
+lib/permit-application-builder.js
+supabase/migrations/015_permit_application_builder_3_3.sql
+RUN_THIS_IN_SUPABASE_015.sql
+INSTALL_SPRINT_3_3.txt
+SPRINT_3_3_README.md
 PATCH_MANIFEST.txt
+
+MODIFIED
+app/project/[id]/page.js
