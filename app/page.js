@@ -11,13 +11,11 @@ const metrics = [
   ["Tasks Due Soon", "4", "View tasks →"],
   ["Budget Tracking", "$24,350", "$1,650 below target"],
 ];
-
 const projects = [
   ["Kitchen Remodel", "In Progress", 68, "Submit permit application"],
   ["Deck Addition", "Planning", 42, "Finalize budget"],
   ["Bathroom Renovation", "Needs Review", 71, "Address permit comments"],
 ];
-
 const contractors = ["Blue Ridge Contracting", "Hillside Builders", "Crafted Spaces"];
 const launchChecks = [
   "Guided permit process in plain English",
@@ -96,7 +94,7 @@ export default function HomePage() {
     <main className="homePage">
       <header className="heroHeader">
         <a className="homeBrand homeBrandImage" href="#top" aria-label="Project Pilot home">
-          <img src="/project-pilot-lockup-light.svg" alt="Project Pilot" />
+          <img src="/homepage-logo-approved.png" alt="Project Pilot" />
         </a>
         <nav>
           <a href="#how">How It Works</a>
@@ -107,7 +105,6 @@ export default function HomePage() {
         </nav>
         <a className="navCta" href="#access">Get Started</a>
       </header>
-
       <section className="heroPanel" id="top">
         <div className="heroCopy">
           <p className="eyebrow">YOUR HOME PROJECTS</p>
@@ -123,26 +120,16 @@ export default function HomePage() {
             <div><b>▥</b><span><strong>Better Outcomes</strong><small>Plan with budgets, tasks, and real next steps</small></span></div>
           </div>
         </div>
-
-        <div className="heroVisual">
-          <img src="/project-pilot-modern-house.svg" alt="Modern home at dusk" />
-          <aside className="assistantCard">
-            <strong>✦ AI Project Assistant</strong>
-            <p>Good morning! I can help with permits, budgets, contractors, and next steps.</p>
-            <a href="#access">Ask a question →</a>
-          </aside>
-        </div>
+        <div className="heroVisualApproved"><img src="/homepage-hero-approved.png" alt="Approved Project Pilot hero" /></div>
       </section>
-
       <section className="dashboardPreview" id="solutions">
         <aside className="previewSidebar">
-          <img src="/project-pilot-lockup-light.svg" alt="Project Pilot" />
+          <img src="/homepage-logo-approved.png" alt="Project Pilot" className="approvedSidebarLogo" />
           <nav>
             <span className="active">Dashboard</span><span>My Projects</span><span>Permits</span><span>Find Contractors</span><span>Messages</span><span>Documents</span><span>Payments</span><span>Settings</span>
           </nav>
           <div className="previewAssistant"><strong>✦ Project Assistant</strong><small>Ask anything</small></div>
         </aside>
-
         <div className="previewMain">
           <header><h2>Dashboard</h2><button type="button">+ New Project</button></header>
           <div className="metricGrid">
@@ -169,7 +156,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       <section className="featureRibbon" id="how">
         <article><strong>✧ AI Guidance</strong><span>Smarter answers every step of the way</span></article>
         <article><strong>▣ Permit Confidence</strong><span>Clear steps, fewer headaches</span></article>
@@ -177,7 +163,6 @@ export default function HomePage() {
         <article><strong>▥ Budget Control</strong><span>Track costs and stay on budget</span></article>
         <article><strong>⌂ Real Results</strong><span>Manage projects from idea to approval</span></article>
       </section>
-
       <section className="launchSection" id="resources">
         <div className="sectionHeading"><p className="eyebrow">WHY HOMEOWNERS USE PROJECT PILOT</p><h2>Everything you need to move from idea to approval — without losing track of the details.</h2><p>Plan visually, understand permits, organize documents, and keep the next step clear.</p></div>
         <div className="launchGrid">
@@ -185,28 +170,29 @@ export default function HomePage() {
           <div className="launchCard"><small>FOUNDING HOMEOWNER LAUNCH</small><strong>Built for real projects — decks, kitchens, bathrooms, additions, permits, and more.</strong><p>Start today and let Project Pilot guide the plan, visuals, permit path, and next action.</p><a href="#access">Create my account</a></div>
         </div>
       </section>
-
       <section className="pricingSection" id="pricing">
         <div><p className="eyebrow">LAUNCH PRICING</p><h2>Launch now and refine with real homeowners.</h2><p>Permit preparation, Project Vision, and Su stay connected in one workspace while daily limits help protect costs.</p></div>
         <div className="pricingCard"><span>FOUNDING ACCESS</span><strong>$0</strong><small>Invite homeowners, validate the workflow, and gather launch feedback.</small><a href="#access">Open Project Pilot</a></div>
       </section>
-
       <section className="accessSection" id="access">
         <div className="sectionHeading"><p className="eyebrow">GET STARTED</p><h2>Open your Project Pilot workspace.</h2><p>Create a homeowner account or sign back in to continue your projects.</p></div>
         <div className="accessCard">
           <div className="authTabs"><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create Account</button><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Log In</button></div>
           <form onSubmit={handleSubmit}>
-            {mode === "signup" && <><label>Full name<input value={name} onChange={e => setName(e.target.value)} required /></label><label>Account type<select value={role} onChange={e => setRole(e.target.value)}><option>Homeowner</option><option>Contractor</option><option>Property Manager</option><option>Developer</option></select></label></>}
-            <label>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-            <label>Password<input type="password" minLength="6" value={password} onChange={e => setPassword(e.target.value)} required /></label>
+            {mode === "signup" && <><label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label><label>Account type<select value={role} onChange={(event) => setRole(event.target.value)}><option>Homeowner</option><option>Contractor</option><option>Property Manager</option><option>Developer</option></select></label></>}
+            <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
+            <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength="6" placeholder="At least 6 characters" required /></label>
             {mode === "signin" && <button className="forgotButton" type="button" onClick={resetPassword}>Forgot password?</button>}
             <button className="authSubmit" type="submit" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Create My Account" : "Open My Projects"}</button>
           </form>
           {status && <p className="authStatus">{status}</p>}
         </div>
       </section>
-
-      <footer className="homeFooter"><img src="/project-pilot-lockup-light.svg" alt="Project Pilot" /><p>Plan every improvement around your home without losing track of the details.</p><small>Project Pilot provides planning support, permit guidance, visual concepts, and homeowner tools. Government approvals and professional determinations still require the appropriate authority or professional.</small></footer>
+      <footer className="homeFooter">
+        <img src="/homepage-logo-approved.png" alt="Project Pilot" />
+        <p>Plan every improvement around your home without losing track of the details.</p>
+        <small>Project Pilot provides planning support, permit guidance, visual concepts, and homeowner tools. Government approvals and professional determinations still require the appropriate authority or professional.</small>
+      </footer>
     </main>
   );
 }

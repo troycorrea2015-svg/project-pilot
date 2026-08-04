@@ -1,0 +1,21 @@
+INSTALL — SPRINT 3.2D APPROVED LOGO AND HERO MATCH
+
+This patch specifically fixes the two items the user called out:
+1. The logo changing again.
+2. The homepage hero not matching the approved screenshot.
+
+Steps:
+1. Extract this ZIP.
+2. Open the `project-pilot` GitHub repository.
+3. Click Add file → Upload files.
+4. Upload everything inside the extracted folder.
+5. Replace matching files.
+6. Commit with:
+
+Sprint 3.2D approved logo and hero match
+
+7. Wait for Vercel to deploy.
+8. Hard refresh the site with Ctrl + Shift + R.
+
+No Supabase SQL required.
+No Vercel environment changes required.
