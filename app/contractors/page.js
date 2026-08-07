@@ -5,327 +5,267 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import "./contractors.css";
 
-const DEFAULT_FORM = {
-  county: "",
-  zipCode: "",
-  budgetMin: "",
-  budgetMax: "",
-  desiredStart: "",
-  summary: "",
-  contactName: "",
-  contactEmail: "",
-  contactPhone: "",
-  projectAddress: "",
+const TRADE_OPTIONS = [
+  "general contractor",
+  "remodeling contractor",
+  "kitchen remodeling contractor",
+  "bathroom remodeling contractor",
+  "deck builder",
+  "roofing contractor",
+  "fence contractor",
+  "electrician",
+  "plumber",
+  "HVAC contractor",
+  "swimming pool contractor",
+  "concrete contractor",
+  "landscaping contractor",
+  "solar installer",
+  "land surveyor",
+  "architect",
+];
+
+const VERIFY_LINKS = {
+  contractorRegistry: "https://contractorregistry.delaware.gov/",
+  businessLicense: "https://revenue.delaware.gov/business-license-search/",
+  professionalLicense: "https://delpros.delaware.gov/oh_verifylicense",
 };
 
-function money(value) {
-  const number = Number(value || 0);
-  return number ? `$${number.toLocaleString("en-US")}` : "Not specified";
+function inferTrade(project) {
+  const text = `${project?.project_type || ""} ${project?.title || ""} ${project?.description || ""}`.toLowerCase();
+  if (/kitchen/.test(text)) return "kitchen remodeling contractor";
+  if (/bath(room)?|shower|tub/.test(text)) return "bathroom remodeling contractor";
+  if (/deck|porch/.test(text)) return "deck builder";
+  if (/roof|shingle/.test(text)) return "roofing contractor";
+  if (/fence/.test(text)) return "fence contractor";
+  if (/electric|panel|wiring|outlet|lighting/.test(text)) return "electrician";
+  if (/plumb|water heater|pipe|sewer/.test(text)) return "plumber";
+  if (/hvac|heat pump|air condition|furnace/.test(text)) return "HVAC contractor";
+  if (/pool|spa|hot tub/.test(text)) return "swimming pool contractor";
+  if (/concrete|driveway|slab|foundation/.test(text)) return "concrete contractor";
+  if (/landscap|patio|hardscape|yard/.test(text)) return "landscaping contractor";
+  if (/solar/.test(text)) return "solar installer";
+  if (/survey|property line|boundary/.test(text)) return "land surveyor";
+  if (/architect|addition|new construction/.test(text)) return "general contractor";
+  if (/remodel|renovat|finish|repair/.test(text)) return "remodeling contractor";
+  return "general contractor";
 }
 
-function textList(value) {
-  return Array.isArray(value) ? value.filter(Boolean) : [];
+function projectLocation(project) {
+  return project?.address || project?.location_label || project?.jurisdiction || "Delaware";
 }
 
-function normalize(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function calculateMatch(contractor, project, form) {
-  let score = 35;
-  const reasons = [];
-  const projectText = normalize(`${project?.project_type || ""} ${project?.title || ""} ${project?.description || ""}`);
-  const specialties = textList(contractor.specialties);
-  const specialtyMatch = specialties.find((item) => {
-    const term = normalize(item);
-    return term && (projectText.includes(term) || term.includes(normalize(project?.project_type)));
-  });
-
-  if (specialtyMatch) {
-    score += 35;
-    reasons.push(`Specializes in ${specialtyMatch}`);
-  } else if (specialties.length) {
-    reasons.push("Offers related project services");
-  }
-
-  const zip = normalize(form.zipCode || project?.address?.match(/\b\d{5}\b/)?.[0]);
-  const county = normalize(form.county || project?.jurisdiction);
-  const zipMatch = zip && textList(contractor.service_zip_codes).some((item) => normalize(item) === zip);
-  const countyMatch = county && textList(contractor.service_counties).some((item) => county.includes(normalize(item)) || normalize(item).includes(county));
-
-  if (zipMatch) {
-    score += 20;
-    reasons.push(`Serves ZIP code ${zip}`);
-  } else if (countyMatch) {
-    score += 15;
-    reasons.push("Serves the project county");
-  }
-
-  const budgetMax = Number(form.budgetMax || 0);
-  const minimum = Number(contractor.minimum_project_value || 0);
-  const maximum = contractor.maximum_project_value == null ? Infinity : Number(contractor.maximum_project_value);
-  if (budgetMax && budgetMax >= minimum && budgetMax <= maximum) {
-    score += 8;
-    reasons.push("Project size fits their typical range");
-  }
-
-  if (contractor.availability && !normalize(contractor.availability).includes("paused")) {
-    score += 5;
-    reasons.push(contractor.availability);
-  }
-
-  if (Number(contractor.response_rate || 0) >= 80) {
-    score += 4;
-    reasons.push("Strong response history");
-  }
-
-  if (Number(contractor.rating || 0) >= 4) {
-    score += 3;
-    reasons.push("Strong customer rating");
-  }
-
-  reasons.unshift("Verified Project Pilot contractor");
-  return { score: Math.min(99, Math.max(50, Math.round(score))), reasons: reasons.slice(0, 4) };
+function normalizeDelawareLocation(value) {
+  const clean = String(value || "").trim();
+  if (!clean) return "Delaware";
+  if (/\b(delaware|de)\b/i.test(clean) || /\b19\d{3}\b/.test(clean)) return clean;
+  return `${clean}, Delaware`;
 }
 
 export default function ContractorsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [contractors, setContractors] = useState([]);
-  const [requests, setRequests] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [selected, setSelected] = useState([]);
-  const [form, setForm] = useState(DEFAULT_FORM);
+  const [trade, setTrade] = useState("general contractor");
+  const [location, setLocation] = useState("Delaware");
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
+  const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY || "";
 
   useEffect(() => {
     let mounted = true;
+
     async function load() {
       const { data: authData } = await supabase.auth.getUser();
       const currentUser = authData?.user || null;
+      if (!mounted) return;
 
       if (!currentUser) {
-        const contractorResult = await supabase.rpc("list_public_contractors");
-        if (!mounted) return;
-        setContractors(Array.isArray(contractorResult.data) ? contractorResult.data : []);
-        if (contractorResult.error) setError(contractorResult.error.message?.includes("list_public_contractors") ? "The contractor network database update has not been installed yet." : contractorResult.error.message);
         setLoading(false);
         return;
       }
 
-      const [profileResult, projectResult, contractorResult, requestResult] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, role").eq("id", currentUser.id).single(),
-        supabase.from("projects").select("id, title, project_type, description, address, location_label, jurisdiction").eq("user_id", currentUser.id).order("updated_at", { ascending: false }),
-        supabase.rpc("list_public_contractors"),
-        supabase.rpc("get_my_marketplace_requests"),
-      ]);
+      setUser(currentUser);
+
+      const { data, error: projectError } = await supabase
+        .from("projects")
+        .select("id,title,project_type,description,address,location_label,jurisdiction,updated_at")
+        .eq("user_id", currentUser.id)
+        .order("updated_at", { ascending: false });
 
       if (!mounted) return;
-      setUser(currentUser);
-      setProfile(profileResult.data || null);
-      setProjects(projectResult.data || []);
-      setContractors(Array.isArray(contractorResult.data) ? contractorResult.data : []);
-      setRequests(Array.isArray(requestResult.data) ? requestResult.data : []);
+      if (projectError) setError(projectError.message);
+
+      const list = Array.isArray(data) ? data : [];
+      setProjects(list);
+
       const requestedProject = new URLSearchParams(window.location.search).get("project") || "";
-      const firstProject = requestedProject || projectResult.data?.[0]?.id || "";
-      setSelectedProjectId(firstProject);
-      setForm((current) => ({
-        ...current,
-        contactName: profileResult.data?.full_name || currentUser.user_metadata?.full_name || "",
-        contactEmail: currentUser.email || "",
-      }));
-      if (contractorResult.error && !String(contractorResult.error.message).includes("list_public_contractors")) setError(contractorResult.error.message);
-      if (requestResult.error && !String(requestResult.error.message).includes("get_my_marketplace_requests")) setError(requestResult.error.message);
+      const selectedId = list.some((item) => item.id === requestedProject)
+        ? requestedProject
+        : list[0]?.id || "";
+
+      setSelectedProjectId(selectedId);
       setLoading(false);
     }
-    load();
-    return () => { mounted = false; };
-  }, [router]);
 
-  const selectedProject = useMemo(() => projects.find((item) => item.id === selectedProjectId) || null, [projects, selectedProjectId]);
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const selectedProject = useMemo(
+    () => projects.find((item) => item.id === selectedProjectId) || null,
+    [projects, selectedProjectId]
+  );
 
   useEffect(() => {
     if (!selectedProject) return;
-    setForm((current) => ({
-      ...current,
-      summary: current.summary || selectedProject.description || `I would like quotes and availability for ${selectedProject.title}.`,
-      zipCode: current.zipCode || selectedProject.address?.match(/\b\d{5}\b/)?.[0] || "",
-      county: current.county || selectedProject.jurisdiction || "",
-      projectAddress: current.projectAddress || selectedProject.address || "",
-    }));
-    setSelected([]);
-    setSuccess("");
-  }, [selectedProjectId]);
+    setTrade(inferTrade(selectedProject));
+    setLocation(projectLocation(selectedProject));
+  }, [selectedProject]);
 
-  const matches = useMemo(() => contractors.map((contractor) => ({
-    ...contractor,
-    match: calculateMatch(contractor, selectedProject, form),
-  })).sort((a, b) => b.match.score - a.match.score), [contractors, selectedProject, form.county, form.zipCode, form.budgetMax]);
+  const searchLocation = normalizeDelawareLocation(location);
+  const searchQuery = `${trade} near ${searchLocation}`;
+  const encodedQuery = encodeURIComponent(searchQuery);
+  const embedUrl = embedKey
+    ? `https://www.google.com/maps/embed/v1/search?key=${encodeURIComponent(embedKey)}&q=${encodedQuery}`
+    : "";
+  const fullMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
 
-  function toggleContractor(id) {
-    setError("");
-    setSelected((current) => {
-      if (current.includes(id)) return current.filter((item) => item !== id);
-      if (current.length >= 3) {
-        setError("Choose no more than three contractors so each introduction remains valuable.");
-        return current;
-      }
-      return [...current, id];
-    });
+  if (loading) {
+    return <main className="contractorLoading">Opening local contractor search…</main>;
   }
 
-  async function submitRequest(event) {
-    event.preventDefault();
-    setError("");
-    setSuccess("");
-    if (!selectedProject) { setError("Choose a project first."); return; }
-    if (!selected.length) { setError("Choose at least one Best Match contractor."); return; }
-    if (form.summary.trim().length < 10) { setError("Add a little more detail about the project."); return; }
-
-    setSubmitting(true);
-    const selectedMatches = matches.filter((item) => selected.includes(item.user_id)).map((item) => ({
-      contractor_id: item.user_id,
-      score: item.match.score,
-      reasons: item.match.reasons,
-    }));
-
-    const { data, error: requestError } = await supabase.rpc("create_marketplace_lead", {
-      p_project_id: selectedProject.id,
-      p_matches: selectedMatches,
-      p_project_summary: form.summary.trim(),
-      p_county: form.county.trim(),
-      p_zip_code: form.zipCode.trim(),
-      p_budget_min: Number(form.budgetMin || 0),
-      p_budget_max: form.budgetMax ? Number(form.budgetMax) : null,
-      p_desired_start: form.desiredStart.trim(),
-      p_contact_name: form.contactName.trim(),
-      p_contact_email: form.contactEmail.trim(),
-      p_contact_phone: form.contactPhone.trim(),
-      p_project_address: form.projectAddress.trim(),
-    });
-
-    if (requestError) {
-      setError(requestError.message?.includes("create_marketplace_lead")
-        ? "The contractor network database update has not been installed yet. Run migration 010, then try again."
-        : requestError.message);
-      setSubmitting(false);
-      return;
-    }
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    fetch("/api/marketplace/notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData?.session?.access_token || ""}` },
-      body: JSON.stringify({ leadRequestId: data }),
-    }).catch(() => null);
-
-    const { data: refreshedRequests } = await supabase.rpc("get_my_marketplace_requests");
-    if (Array.isArray(refreshedRequests)) setRequests(refreshedRequests);
-    setSuccess("Your request was sent. Contractors will review the project before deciding whether to accept the introduction.");
-    setSelected([]);
-    setSubmitting(false);
-  }
-
-  if (loading) return <main className="marketplaceLoading">Finding verified contractors…</main>;
-
-  if (normalize(profile?.role).includes("contractor")) {
+  if (!user) {
     return (
-      <main className="marketplacePage compactMarketplace">
-        <header className="marketplaceTopbar"><a href="/dashboard" className="marketplaceBrand"><span>P</span><strong>Project Pilot</strong></a><a href="/contractor" className="primaryLink">Open Contractor Center</a></header>
-        <section className="contractorRedirect"><p>CONTRACTOR ACCOUNT</p><h1>Your leads and business profile are in Contractor Center.</h1><span>Best Match placement is earned from project fit, verification, service area, availability, and performance. It cannot be purchased.</span><button onClick={() => router.push("/contractor")}>Open Contractor Center</button></section>
+      <main className="contractorPage">
+        <header className="contractorTopbar">
+          <a href="/" className="contractorBrand"><img src="/project-pilot-lockup-light.svg" alt="Project Pilot" /></a>
+        </header>
+        <section className="signInPanel">
+          <p>LOCAL CONTRACTORS</p>
+          <h1>Sign in to search around your Project Pilot property.</h1>
+          <span>Project Pilot uses your saved project type and location to make the contractor search more useful on the first try.</span>
+          <button type="button" onClick={() => router.push("/#access")}>Sign In</button>
+        </section>
       </main>
     );
   }
 
   return (
-    <main className="marketplacePage">
-      <header className="marketplaceTopbar">
-        <a href="/dashboard" className="marketplaceBrand"><span>P</span><strong>Project Pilot</strong></a>
-        <nav>{user ? <a href="/dashboard">Dashboard</a> : <a href="/#access">Sign In</a>}<a href="/help">Help</a><a href="/terms">How introductions work</a></nav>
+    <main className="contractorPage">
+      <header className="contractorTopbar">
+        <a href="/dashboard" className="contractorBrand"><img src="/project-pilot-lockup-light.svg" alt="Project Pilot" /></a>
+        <nav><a href="/dashboard">Dashboard</a><a href="/support">Help</a></nav>
       </header>
 
-      <section className="marketplaceHero">
-        <div><p>BEST MATCH CONTRACTOR NETWORK</p><h1>Find professionals who fit the project—not whoever paid for placement.</h1><span>Project Pilot compares specialty, service area, verification, availability, typical project size, and performance. Contractors cannot buy a higher position.</span></div>
-        <aside><strong>{matches.length}</strong><span>verified contractors available in the current network</span></aside>
+      <section className="contractorHero">
+        <div>
+          <p>FIND LOCAL PROFESSIONALS</p>
+          <h1>Real local contractors, right inside Project Pilot.</h1>
+          <span>Project Pilot automatically builds a Google Maps search around the work and location saved in your project. Businesses shown do not need to be Project Pilot partners.</span>
+        </div>
+        <div className="freeBadge"><strong>$0 map usage</strong><span>Google Maps Embed</span></div>
       </section>
 
-      <section className="marketplaceWorkspace">
-        <aside className="requestBuilder">
-          <div className="sectionTitle"><p>YOUR PROJECT</p><h2>Tell contractors what you need.</h2></div>
-          {!user ? (
-            <div className="emptyState"><strong>Create a free homeowner account to request introductions.</strong><span>You can browse verified contractors now. After signing in, Project Pilot uses your project details to calculate personalized Best Matches.</span><button onClick={() => router.push("/#access")}>Create Account or Sign In</button></div>
-          ) : !projects.length ? (
-            <div className="emptyState"><strong>Create a project first.</strong><span>Project Pilot uses the project details to calculate Best Matches.</span><button onClick={() => router.push("/dashboard")}>Go to Dashboard</button></div>
+      <section className="contractorWorkspace">
+        <aside className="contractorControls">
+          <div className="controlHeading">
+            <p>SEARCH DETAILS</p>
+            <h2>Project Pilot starts with your project.</h2>
+          </div>
+
+          {projects.length ? (
+            <>
+              <label>
+                Project
+                <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.title}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Professional needed
+                <select value={trade} onChange={(event) => setTrade(event.target.value)}>
+                  {TRADE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              </label>
+
+              <label>
+                Search location
+                <input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Georgetown, DE 19947" />
+              </label>
+
+              <div className="queryPreview">
+                <small>SEARCHING FOR</small>
+                <strong>{searchQuery}</strong>
+              </div>
+
+              <a className="fullMapsButton" href={fullMapsUrl} target="_blank" rel="noreferrer">Open Full Google Maps Results ↗</a>
+
+              <button className="backProjectButton" type="button" onClick={() => selectedProject && router.push(`/project/${selectedProject.id}`)}>
+                Back to Project
+              </button>
+            </>
           ) : (
-            <form onSubmit={submitRequest}>
-              <label>Project<select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>
-              <label>Project summary<textarea value={form.summary} onChange={(event) => setForm({ ...form, summary: event.target.value })} placeholder="What do you want completed? Include size, condition, and important details." required /></label>
-              <div className="formSplit"><label>County<input value={form.county} onChange={(event) => setForm({ ...form, county: event.target.value })} placeholder="Sussex County" /></label><label>ZIP code<input value={form.zipCode} onChange={(event) => setForm({ ...form, zipCode: event.target.value })} placeholder="19968" /></label></div>
-              <div className="formSplit"><label>Budget minimum<input type="number" min="0" value={form.budgetMin} onChange={(event) => setForm({ ...form, budgetMin: event.target.value })} placeholder="5000" /></label><label>Budget maximum<input type="number" min="0" value={form.budgetMax} onChange={(event) => setForm({ ...form, budgetMax: event.target.value })} placeholder="15000" /></label></div>
-              <label>When would you like to start?<input value={form.desiredStart} onChange={(event) => setForm({ ...form, desiredStart: event.target.value })} placeholder="Within 30 days" /></label>
-
-              <div className="contactBlock"><p>CONTACT DETAILS</p><span>These are released only after a contractor accepts the introduction.</span><label>Name<input value={form.contactName} onChange={(event) => setForm({ ...form, contactName: event.target.value })} required /></label><label>Email<input type="email" value={form.contactEmail} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} required /></label><label>Phone<input value={form.contactPhone} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} /></label><label>Project address<input value={form.projectAddress} onChange={(event) => setForm({ ...form, projectAddress: event.target.value })} /></label></div>
-
-              <div className="selectedSummary"><strong>{selected.length} of 3 selected</strong><span>Contractors see the fixed introduction fee before accepting. Homeowners are not charged.</span></div>
-              {error && <div className="marketplaceError">{error}</div>}
-              {success && <div className="marketplaceSuccess">{success}</div>}
-              <button className="requestButton" disabled={submitting || !selected.length}>{submitting ? "Sending request…" : "Request introductions"}</button>
-            </form>
+            <div className="emptyControl">
+              <strong>Create a project first.</strong>
+              <span>Once you have a project, Project Pilot can automatically search around its location and project type.</span>
+              <button type="button" onClick={() => router.push("/dashboard")}>Go to Dashboard</button>
+            </div>
           )}
+
+          {error && <p className="contractorError">{error}</p>}
         </aside>
 
-        <section className="matchResults">
-          <div className="resultsHeading"><div><p>{selectedProject ? "BEST MATCHES" : "VERIFIED CONTRACTORS"}</p><h2>{selectedProject ? "Choose up to three contractors." : "Browse professionals serving the Delmarva region."}</h2></div><span>Ranking is independent of payment.</span></div>
-          {!matches.length ? (
-            <div className="noMatches"><strong>No verified contractors are available yet.</strong><span>Project Pilot is onboarding professional partners. Your project remains saved while the network grows.</span></div>
-          ) : matches.map((contractor) => {
-            const checked = selected.includes(contractor.user_id);
-            return (
-              <article key={contractor.user_id} className={`matchCard ${checked ? "selected" : ""}`}>
-                <div className={`matchScore ${selectedProject ? "" : "publicScore"}`}><strong>{selectedProject ? `${contractor.match.score}%` : "✓"}</strong><span>{selectedProject ? "Best Match" : "Verified"}</span></div>
-                <div className="matchInfo">
-                  <div className="verifiedLine"><span>VERIFIED</span>{contractor.rating > 0 && <b>{Number(contractor.rating).toFixed(1)} ★</b>}</div>
-                  <h3>{contractor.business_name}</h3>
-                  <p>{contractor.description || "Verified contractor serving Project Pilot customers."}</p>
-                  <div className="matchReasons">{contractor.match.reasons.map((reason) => <span key={reason}>✓ {reason}</span>)}</div>
-                  <div className="contractorFacts"><span>{textList(contractor.specialties).slice(0, 4).join(" · ") || "General contracting"}</span><span>{contractor.minimum_project_value || contractor.maximum_project_value ? `${money(contractor.minimum_project_value)}–${contractor.maximum_project_value ? money(contractor.maximum_project_value) : "No maximum"}` : "All project sizes"}</span></div>
-                </div>
-                <button type="button" onClick={() => user ? toggleContractor(contractor.user_id) : router.push("/#access")}>{user ? (checked ? "Selected ✓" : "Choose contractor") : "Sign in to request"}</button>
-              </article>
-            );
-          })}
+        <section className="mapPanel">
+          <div className="mapHeading">
+            <div><p>LOCAL RESULTS</p><h2>Browse the area without leaving Project Pilot.</h2></div>
+            <span>Google Maps</span>
+          </div>
+
+          {!projects.length ? (
+            <div className="mapPlaceholder"><strong>No project selected yet.</strong><span>Create a project to start local contractor search.</span></div>
+          ) : !embedKey ? (
+            <div className="mapPlaceholder setupNeeded">
+              <strong>One free Google setup step remains.</strong>
+              <span>Add <code>NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY</code> in Vercel after enabling the free Maps Embed API.</span>
+            </div>
+          ) : (
+            <div className="mapFrameWrap">
+              <iframe
+                key={embedUrl}
+                title={`Google Maps results for ${searchQuery}`}
+                src={embedUrl}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          )}
         </section>
       </section>
 
-      <section className="homeownerRequests">
-        <div className="resultsHeading"><div><p>MY INTRODUCTION REQUESTS</p><h2>Track the contractors you selected.</h2></div><span>Homeowners are never charged</span></div>
-        {!user ? (
-          <div className="noMatches"><strong>Your requests will be tracked here after you sign in.</strong><span>Create a project, select up to three contractors, and follow each introduction from request to acceptance.</span></div>
-        ) : !requests.length ? (
-          <div className="noMatches"><strong>No introduction requests yet.</strong><span>Choose a project and up to three Best Match contractors above.</span></div>
-        ) : (
-          <div className="requestStatusList">
-            {requests.map((request) => (
-              <article className="requestStatusCard" key={request.id}>
-                <div className="requestStatusTop"><div><small>{request.project_type || "PROJECT"}</small><h3>{request.project_title}</h3><span>{request.county || request.zip_code || "Project location"} · {new Date(request.created_at).toLocaleDateString("en-US")}</span></div><b>{request.status}</b></div>
-                <p>{request.project_summary}</p>
-                <div className="requestMatchStatuses">
-                  {(request.matches || []).map((match) => (
-                    <div key={match.id}>
-                      <span><strong>{match.business_name || "Contractor"}</strong><small>{match.match_score}% Best Match</small></span>
-                      <b className={`requestState state${match.status}`}>{match.status === "Accepted" && ["Paid", "Waived"].includes(match.payment_status) ? "Accepted — contractor can contact you" : match.payment_status === "Refunded" ? "Introduction refunded" : match.payment_status === "Credited" ? "Introduction credited" : match.status}</b>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+      <section className="verificationSection">
+        <div className="verificationIntro">
+          <p>VERIFY BEFORE YOU HIRE</p>
+          <h2>Project Pilot keeps the official Delaware checks one click away.</h2>
+          <span>Google results are discovery tools. Use the official state resources below to verify registration or licensing before choosing a professional.</span>
+        </div>
+        <div className="verificationGrid">
+          <a href={VERIFY_LINKS.contractorRegistry} target="_blank" rel="noreferrer"><strong>Construction Contractor Registry</strong><span>Check Delaware contractor registration ↗</span></a>
+          <a href={VERIFY_LINKS.businessLicense} target="_blank" rel="noreferrer"><strong>Business License Search</strong><span>Check Delaware business licensing ↗</span></a>
+          <a href={VERIFY_LINKS.professionalLicense} target="_blank" rel="noreferrer"><strong>DELPROS License Verification</strong><span>Check regulated professional licenses ↗</span></a>
+        </div>
+      </section>
+
+      <section className="contractorDisclaimer">
+        <strong>About these results</strong>
+        <p>Businesses displayed through Google Maps are third-party listings and are not automatically affiliated with, endorsed by, sponsored by, or verified by Project Pilot. Homeowners should independently verify licensing or registration, insurance, references, availability, estimates, contracts, and suitability before hiring.</p>
       </section>
     </main>
   );

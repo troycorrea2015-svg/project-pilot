@@ -989,3 +989,52 @@
 .simpleProjectPathGrid small{margin-top:4px;color:#6d7e93;font-size:9px;line-height:1.45}
 @media(max-width:1000px){.simpleProjectPathGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.simpleProjectPathHeading{align-items:start;flex-direction:column}.simpleProjectPathHeading>span{text-align:left}}
 @media(max-width:720px){.workspaceGuideModal{padding:24px 18px}.workspaceGuideSteps,.simpleProjectPathGrid{grid-template-columns:1fr}.workspaceHeaderActions{flex-wrap:wrap}}
+
+
+/* Sprint 3.4C — signed-in brand consistency */
+.pilotMarkImage {
+  width: max-content;
+  max-width: 100%;
+  text-decoration: none;
+  opacity: 1 !important;
+}
+
+.pilotMarkImage::before,
+.pilotMarkImage::after {
+  display: none !important;
+  content: none !important;
+}
+
+.pilotMarkImage > img {
+  display: block;
+  width: 172px;
+  max-width: 100%;
+  height: auto;
+  opacity: 1 !important;
+}
+
+.pilotBriefTop > img {
+  width: 43px;
+  height: 43px;
+  display: block;
+  flex: 0 0 43px;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 10px 26px rgba(47, 109, 246, 0.22);
+}
+
+.permitEmptyResult > img {
+  width: 48px;
+  height: 48px;
+  display: block;
+  flex: 0 0 48px;
+  object-fit: contain;
+  border-radius: 15px;
+  box-shadow: 0 10px 26px rgba(47, 109, 246, 0.2);
+}
+
+@media (max-width: 900px) {
+  .pilotMarkImage > img {
+    width: 154px;
+  }
+}

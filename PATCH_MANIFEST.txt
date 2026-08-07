@@ -1,10 +1,11 @@
-Sprint 3.4 changed files
-
-app/dashboard/page.js
-app/dashboard/dashboard.css
+app/contractors/page.js
+app/contractors/contractors.css
 app/project/[id]/page.js
 app/project/[id]/project.css
-components/PermitApplicationBuilder.js
-components/PermitApplicationBuilder.module.css
-INSTALL_SPRINT_3_4.txt
-SPRINT_3_4_README.md
+public/project-pilot-lockup-light.svg
+public/project-pilot-mark.svg
+INSTALL_SPRINT_3_4E.txt
+FREE_GOOGLE_MAPS_SETUP.txt
+SPRINT_3_4E_README.md
+PATCH_MANIFEST.txt
+SHA256SUMS.txt

@@ -1,0 +1,64 @@
+FREE GOOGLE MAPS EMBED SETUP — PROJECT PILOT
+
+Google Maps Embed is the no-per-search-cost contractor-map option used by Sprint 3.4E.
+
+STEP 1 — OPEN GOOGLE CLOUD
+Go to Google Cloud Console and sign in.
+
+STEP 2 — CREATE OR SELECT A PROJECT
+Create a project named something like:
+Project Pilot Maps
+
+STEP 3 — ATTACH BILLING
+Google currently requires a billing account for Maps Embed even though Maps Embed requests themselves are available at no charge.
+
+STEP 4 — ENABLE ONLY MAPS EMBED API
+Open APIs & Services → Library.
+Search for:
+Maps Embed API
+Enable it.
+
+You do NOT need to enable Places API (New) for this Sprint.
+
+STEP 5 — CREATE AN API KEY
+Open APIs & Services → Credentials.
+Choose Create Credentials → API key.
+
+STEP 6 — RESTRICT THE KEY
+Application restrictions:
+Websites / HTTP referrers
+
+Add:
+https://www.projectpiloting.com/*
+https://projectpiloting.com/*
+
+If you test on a Vercel preview URL, temporarily add the exact preview-domain pattern you use, then remove it when testing is complete.
+
+API restrictions:
+Restrict key → Maps Embed API only
+
+STEP 7 — ADD TO VERCEL
+In Vercel:
+Project Pilot → Settings → Environment Variables
+
+Name:
+NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
+
+Value:
+Paste the restricted Google Maps API key.
+
+Add it to Production. Add Preview only if you want the embedded map to work on preview deployments.
+
+STEP 8 — REDEPLOY
+Redeploy Project Pilot after adding the environment variable.
+
+STEP 9 — TEST
+1. Sign in.
+2. Open a saved project.
+3. Open Contractors.
+4. Click Find Local Contractors.
+5. Confirm an interactive Google map appears with businesses near that project's location.
+6. Change the professional type and confirm the map refreshes.
+
+SECURITY NOTE
+This is a NEXT_PUBLIC key because Google's iframe needs it in the browser. That is expected. Security comes from restricting the key to your website referrers and Maps Embed API only.

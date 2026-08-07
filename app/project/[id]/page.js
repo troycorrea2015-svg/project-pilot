@@ -898,10 +898,9 @@ export default function ProjectWorkspacePage() {
       <aside className="projectRail">
         <button className="backButton" onClick={() => router.push("/dashboard")}>← Dashboard</button>
 
-        <div className="pilotMark">
-          <span>P</span>
-          <strong>Project Pilot</strong>
-        </div>
+        <a href="/dashboard" className="pilotMark pilotMarkImage" aria-label="Project Pilot dashboard">
+          <img src="/project-pilot-lockup-light.svg" alt="Project Pilot" />
+        </a>
 
         <div className="projectSummary">
           <small>CURRENT PROJECT</small>
@@ -1045,7 +1044,7 @@ export default function ProjectWorkspacePage() {
 
               <article className="missionCard pilotBriefCard">
                 <div className="pilotBriefTop">
-                  <span>P</span>
+                  <img src="/project-pilot-mark.svg" alt="" aria-hidden="true" />
                   <div>
                     <p>PROJECT ASSISTANT</p>
                     <h3>Stay focused on the next decision.</h3>
@@ -1556,7 +1555,7 @@ export default function ProjectWorkspacePage() {
               </section>
             ) : (
               <section className="permitEmptyResult">
-                <span>P</span>
+                <img src="/project-pilot-mark.svg" alt="" aria-hidden="true" />
                 <div><h2>Permit guidance is ready.</h2><p>Enter the property address, ZIP code, and project type. Project Pilot will organize a practical checklist and official starting points.</p></div>
               </section>
             )}
@@ -1703,22 +1702,22 @@ export default function ProjectWorkspacePage() {
           <section className="workspacePanel contractorProjectPanel">
             <div className="panelHeading">
               <div>
-                <p>BEST MATCH CONTRACTOR NETWORK</p>
-                <h2>Find verified professionals who fit this project.</h2>
+                <p>LOCAL CONTRACTOR SEARCH</p>
+                <h2>Find real professionals near this project.</h2>
               </div>
             </div>
             <div className="contractorProjectBody">
               <div>
-                <h3>Ranking is based on fit—not payment.</h3>
-                <p>Project Pilot compares specialty, service area, verification, availability, typical project size, and performance. Contractors cannot purchase a higher position.</p>
+                <h3>Project Pilot searches around your saved project location.</h3>
+                <p>Browse real nearby businesses on an interactive Google Map for the type of work your project needs, then use Project Pilot’s Delaware verification links before hiring.</p>
                 <ul>
-                  <li>Choose up to three contractors.</li>
-                  <li>Contractors review an anonymized project summary first.</li>
-                  <li>Your contact details are released only after a contractor accepts the introduction.</li>
-                  <li>Homeowners are not charged for requesting introductions.</li>
+                  <li>The interactive map uses Google Maps Embed and does not require contractors to be affiliated with Project Pilot.</li>
+                  <li>Project Pilot uses the project type and saved location to build the search automatically.</li>
+                  <li>Business details stay inside the Google Maps interface instead of being copied into Project Pilot.</li>
+                  <li>Always verify registration, licensing, insurance, references, and project fit before hiring.</li>
                 </ul>
               </div>
-              <button type="button" onClick={() => router.push(`/contractors?project=${project.id}`)}>See Best Matches for This Project</button>
+              <button type="button" onClick={() => router.push(`/contractors?project=${project.id}`)}>Find Local Contractors</button>
             </div>
           </section>
         )}
