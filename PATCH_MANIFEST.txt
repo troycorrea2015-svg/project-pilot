@@ -1,11 +1,16 @@
-app/contractors/page.js
-app/contractors/contractors.css
+PROJECT PILOT SPRINT 3.5 — PATCH MANIFEST
+=========================================
+
+app/dashboard/page.js
+app/dashboard/dashboard.css
 app/project/[id]/page.js
 app/project/[id]/project.css
+app/api/pilot/route.js
+components/GuidanceAssistant.js
+lib/assistant-stream.js
 public/project-pilot-lockup-light.svg
 public/project-pilot-mark.svg
-INSTALL_SPRINT_3_4E.txt
-FREE_GOOGLE_MAPS_SETUP.txt
-SPRINT_3_4E_README.md
+INSTALL_SPRINT_3_5.txt
+SPRINT_3_5_README.md
 PATCH_MANIFEST.txt
 SHA256SUMS.txt

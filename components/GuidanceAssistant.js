@@ -8,8 +8,8 @@ import { readAssistantStream } from "../lib/assistant-stream";
 const PAGE_GUIDANCE = {
   dashboard: {
     title: "Your Dashboard",
-    explanation: "This page shows your projects, the next recommended action, recent activity, and the tools available for your account type.",
-    next: "Choose Continue Project if you already started one, or Start a New Project to create a guided plan.",
+    explanation: "This page is the simple starting point for Project Pilot. Describe a new project in one sentence or continue an existing project with Su.",
+    next: "If you are starting, type what you want to build, repair, or improve. If you already have a project, choose Continue with Su.",
     links: [
       { label: "Go to My Projects", href: "/dashboard#projects" },
       { label: "Open Help Center", href: "/help" },
@@ -17,8 +17,8 @@ const PAGE_GUIDANCE = {
   },
   project: {
     title: "Your Project",
-    explanation: "This workspace keeps the project plan, costs, permits, contractor planning, files, notes, Project Vision, and conversation together.",
-    next: "Open Project Assistant and ask about your specific saved project, or continue the recommended next step shown in the workspace.",
+    explanation: "This workspace keeps everything for one project together, but you do not need to learn every tool. Su can guide the project one step at a time.",
+    next: "Ask Su what to do next. When a specific tool is needed, Su can give you a Take me there button.",
     links: [
       { label: "Return to Dashboard", href: "/dashboard" },
       { label: "Open Help Center", href: "/help" },
@@ -34,12 +34,12 @@ const PAGE_GUIDANCE = {
     ],
   },
   contractors: {
-    title: "Best Match Contractors",
-    explanation: "This page ranks verified contractors by project fit, service area, availability, project size, and performance. Contractors cannot pay for a higher position.",
-    next: "Choose a saved project, add missing details, and select up to three contractors for an introduction request.",
+    title: "Local Contractors",
+    explanation: "This page helps you search for nearby businesses around the saved project location. Local results are not automatically Project Pilot partners or verified contractors.",
+    next: "Confirm the project and location, browse nearby options, and use the available Delaware registration or license checks before hiring.",
     links: [
       { label: "Return to Dashboard", href: "/dashboard" },
-      { label: "Read How Introductions Work", href: "/terms" },
+      { label: "Open Help Center", href: "/help" },
     ],
   },
   contractor: {
@@ -89,9 +89,16 @@ export default function GuidanceAssistant() {
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [navigation, setNavigation] = useState(null);
   const [error, setError] = useState("");
 
   const guidance = useMemo(() => PAGE_GUIDANCE[getPageKey(pathname)], [pathname]);
+
+  function followNavigation(item) {
+    if (!item?.href) return;
+    setOpen(false);
+    router.push(item.href);
+  }
 
   async function askSu(prompt) {
     const cleanPrompt = String(prompt || "").trim();
@@ -101,6 +108,7 @@ export default function GuidanceAssistant() {
     setError("");
     setAnswer("");
     setPendingAction(null);
+    setNavigation(null);
 
     try {
       const { data } = await supabase.auth.getSession();
@@ -131,6 +139,10 @@ export default function GuidanceAssistant() {
 
       setAnswer(payload?.message?.message || "Su could not prepare an answer.");
       setPendingAction(payload?.action || null);
+      setNavigation(payload?.navigation || null);
+      if (payload?.navigation?.auto && payload.navigation.href) {
+        window.setTimeout(() => followNavigation(payload.navigation), 300);
+      }
     } catch (requestError) {
       setError(requestError.message || "Su could not respond.");
     } finally {
@@ -174,7 +186,8 @@ export default function GuidanceAssistant() {
 
       setAnswer(payload?.message?.message || "Su updated the project.");
       setPendingAction(null);
-      window.setTimeout(() => window.location.reload(), 900);
+      setNavigation(payload?.navigation || null);
+      if (!payload?.navigation) window.setTimeout(() => window.location.reload(), 900);
     } catch (actionError) {
       setError(actionError.message || "Su could not apply that change.");
     } finally {
@@ -209,11 +222,11 @@ export default function GuidanceAssistant() {
           </header>
 
           <div className="assistantBody">
-            <p>Ask about this page or your saved project. Su can explain the issue and, inside a project, propose updates it can complete after you approve them.</p>
+            <p>Tell Su what you are trying to do. Su can explain the next step, update approved project details, and give you a direct button to the Project Pilot screen you need.</p>
 
             <div className="assistantQuickActions">
               <button type="button" onClick={() => askSu("Explain this page using my saved account or project context. Tell me what matters most right now.")} disabled={loading}>Explain this page</button>
-              <button type="button" onClick={() => askSu("What is my single best next step here, based on my saved project progress?")} disabled={loading}>Show my next step</button>
+              <button type="button" onClick={() => askSu("What is my single best next step here, based on my saved project progress? Tell me the exact Project Pilot section where I should do it.")} disabled={loading}>Show my next step</button>
             </div>
 
             {loading && !answer && <div className="assistantAnswer" role="status">Su is reviewing the saved context…</div>}
@@ -245,6 +258,19 @@ export default function GuidanceAssistant() {
                     Not now
                   </button>
                 </div>
+              </div>
+            )}
+            {navigation && !loading && (
+              <div className="assistantAnswer" style={{ marginTop: 10, border: "1px solid #b9ccef", background: "#f4f8ff" }}>
+                <strong style={{ display: "block", color: "#173056" }}>{navigation.label}</strong>
+                <span style={{ display: "block", marginTop: 5, color: "#617792", fontSize: 12, lineHeight: 1.45 }}>{navigation.description}</span>
+                <button
+                  type="button"
+                  onClick={() => followNavigation(navigation)}
+                  style={{ width: "100%", minHeight: 40, marginTop: 10, border: 0, borderRadius: 9, background: "#2f6df6", color: "white", fontWeight: 850, cursor: "pointer" }}
+                >
+                  Take me there →
+                </button>
               </div>
             )}
             {error && <div className="assistantAnswer" role="alert">{error}</div>}

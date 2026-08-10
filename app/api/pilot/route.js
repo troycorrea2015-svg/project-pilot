@@ -29,6 +29,19 @@ const PROJECT_UPDATE_FIELDS = new Set([
   "next_step",
 ]);
 
+const NAVIGATION_AREAS = {
+  overview: { label: "Open Next Step", description: "Return to the project's single recommended next action." },
+  pilot: { label: "Continue with Su", description: "Keep working with Su one question at a time." },
+  permits: { label: "Open Permits", description: "Continue permit research, application preparation, or official portal steps." },
+  vision: { label: "Open Visualize", description: "Use Project Vision with a photo of the property." },
+  contractors: { label: "Find Local Contractors", description: "Open the contractor finder for this project." },
+  documents: { label: "Open Files", description: "Upload or review plans, photos, estimates, approvals, and other project files." },
+  flight: { label: "Open Full Plan", description: "Review the full step-by-step project plan." },
+  notes: { label: "Open Notes", description: "Review or add project decisions and reminders." },
+  dashboard: { label: "Return to Dashboard", description: "Go back to the Project Pilot dashboard." },
+};
+
+
 function clean(value, maximum = 4000) {
   return typeof value === "string" ? value.trim().slice(0, maximum) : "";
 }
@@ -104,6 +117,10 @@ function buildInstructions() {
     "For safety-critical structural, electrical, gas, major plumbing, roofing, excavation, or hazardous-material work, recommend the appropriate licensed professional or official inspection without being alarmist.",
     "Start with the useful answer, not filler such as I can help with that. The first sentence should directly answer the question whenever possible.",
     "When the user seems stuck, reduce the problem to the next one to three concrete steps and tell them exactly where to do each step in Project Pilot.",
+    "Project Pilot is now designed around guided navigation. When there is a specific in-app place where the user should act, name that section exactly: Next Step, Ask Su, Permits, Visualize, Contractors, Files, Full Plan, Notes, or Dashboard.",
+    "Do not make the user hunt through menus. If the next action belongs in a specific section, say 'Open [section]' in the response so the interface can offer a Take me there button.",
+    "When GUIDED ONBOARDING is active, ask only one setup question at a time. If the user gives a clear missing project type, description, or address in direct response to that question, use propose_project_update even if they did not explicitly say save; the confirmation card remains the user's approval step.",
+    "For guided onboarding, do not require a project name, budget, timeline, or construction terminology before helping. A project idea plus the project type and address is enough to begin permit and next-step guidance.",
     "When a supported project change would solve the problem, offer the change through a proposal tool instead of sending the user away to edit it manually.",
     "For next-step questions, use incomplete stages, saved next step, missing project details, documents, permits, budget, and target dates to recommend one priority action.",
     "Keep most answers concise, direct, and useful. Aim for roughly 60 to 180 words unless safety or a complex explanation genuinely requires more. Use a small numbered list only when steps are helpful.",
@@ -145,6 +162,7 @@ function buildProjectContext({ project, waypoints, documents, history, pagePath,
     `Incomplete stages: ${incomplete.length ? incomplete.join(", ") : "None recorded"}`,
     `Saved documents: ${documentNames.length ? documentNames.join(", ") : "None"}`,
     `Current page: ${pagePath || `/project/${project.id}`}`,
+    `GUIDED ONBOARDING: ${clientContext?.guidedOnboarding ? "ACTIVE — ask one question at a time and propose saving clear setup answers" : "Not active"}`,
     `CURRENT IN-APP ESTIMATOR CONTEXT\n${safeJson(clientContext?.estimator, 3000)}`,
     recentConversation ? `RECENT CONVERSATION\n${recentConversation}` : "RECENT CONVERSATION\nNo earlier messages.",
   ].join("\n");
@@ -269,23 +287,157 @@ function normalizeProposal(functionCall) {
   return null;
 }
 
+
+function navigationFor(area, projectId, auto = false) {
+  const meta = NAVIGATION_AREAS[area];
+  if (!meta) return null;
+
+  if (area === "dashboard") {
+    return { area, tab: null, href: "/dashboard", auto, ...meta };
+  }
+
+  if (!projectId) return null;
+
+  if (area === "contractors") {
+    return { area, tab: null, href: `/contractors?project=${encodeURIComponent(projectId)}`, auto, ...meta };
+  }
+
+  return {
+    area,
+    tab: area,
+    href: `/project/${encodeURIComponent(projectId)}?tab=${area}`,
+    auto,
+    ...meta,
+  };
+}
+
+function explicitNavigationArea(text) {
+  const value = clean(text, 5000).toLowerCase();
+  if (!value) return "";
+  if (/\b(dashboard|home screen|project list)\b/.test(value)) return "dashboard";
+  if (/\b(contractor|professional|builder|quote|bid)\b/.test(value)) return "contractors";
+  if (/\b(permit|approval|application|jurisdiction|inspection)\b/.test(value)) return "permits";
+  if (/\b(visualize|visualise|vision|design|photo|render|before and after)\b/.test(value)) return "vision";
+  if (/\b(upload|file|document|drawing|plan file|estimate file|contract|receipt)\b/.test(value)) return "documents";
+  if (/\b(full plan|project plan|step-by-step|steps|progress|waypoint)\b/.test(value)) return "flight";
+  if (/\b(note|notes|reminder)\b/.test(value)) return "notes";
+  if (/\b(ask su|assistant|help me set|project setup)\b/.test(value)) return "pilot";
+  return "";
+}
+
+function namedNavigationArea(text) {
+  const match = clean(text, 5000).match(/\bOpen\s+(Next Step|Ask Su|Permits|Visualize|Contractors|Files|Full Plan|Notes|Dashboard)\b/i);
+  if (!match) return "";
+  const label = match[1].toLowerCase();
+  if (label === "next step") return "overview";
+  if (label === "ask su") return "pilot";
+  if (label === "visualize") return "vision";
+  if (label === "files") return "documents";
+  if (label === "full plan") return "flight";
+  return label;
+}
+
+function buildNavigation({ message, answer, project }) {
+  const directArea = explicitNavigationArea(message);
+  const explicitMove = /\b(take me to|bring me to|go to|open (?:the )?|send me to)\b/i.test(message || "");
+  if (directArea && explicitMove) return navigationFor(directArea, project?.id, true);
+
+  const namedArea = namedNavigationArea(answer);
+  if (namedArea) return navigationFor(namedArea, project?.id, false);
+
+  const answerArea = explicitNavigationArea(answer);
+  if (answerArea) return navigationFor(answerArea, project?.id, false);
+
+  if (!project) return null;
+
+  if (/\b(what should i do next|what do i do next|next step|where do i start|where should i go)\b/i.test(message || "")) {
+    if (!project.project_type || !project.description || !project.address) {
+      return navigationFor("pilot", project.id, false);
+    }
+
+    const next = clean(project.next_step, 1000).toLowerCase();
+    if (/permit|approval|jurisdiction|application|inspection/.test(next) || !project.permit_research) return navigationFor("permits", project.id, false);
+    if (/document|file|plan|estimate|contract|record/.test(next)) return navigationFor("documents", project.id, false);
+    if (/contractor|professional|quote|bid/.test(next)) return navigationFor("contractors", project.id, false);
+    if (/vision|photo|design|visual/.test(next)) return navigationFor("vision", project.id, false);
+    return navigationFor("overview", project.id, false);
+  }
+
+  return null;
+}
+
+async function advanceGuidedProject(service, user, project) {
+  if (!project) return project;
+
+  let nextStep = "Continue setup with Su";
+  let status = project.status || "Getting Started";
+  let progress = Number(project.progress || 0);
+
+  if (!project.project_type) {
+    nextStep = "Tell Su what kind of project this is";
+    progress = Math.max(progress, 7);
+  } else if (!project.description) {
+    nextStep = "Describe the finished result to Su";
+    progress = Math.max(progress, 9);
+  } else if (!project.address) {
+    nextStep = "Tell Su the project address";
+    progress = Math.max(progress, 10);
+  } else {
+    nextStep = "Check permits and approvals for the project address";
+    status = "Planning";
+    progress = Math.max(progress, 20);
+  }
+
+  if (project.next_step === nextStep && project.status === status && Number(project.progress || 0) === progress) {
+    return project;
+  }
+
+  const { data, error } = await service
+    .from("projects")
+    .update({ next_step: nextStep, status, progress, updated_at: new Date().toISOString() })
+    .eq("id", project.id)
+    .eq("user_id", user.id)
+    .select("*")
+    .single();
+
+  if (error || !data) throw new Error(`The guided project could not advance: ${error?.message || "unknown error"}`);
+  return data;
+}
+
+function guidedFollowUp(project) {
+  if (!project?.project_type) {
+    return { message: "Saved. What kind of project is this? For example: deck, kitchen remodel, bathroom, fence, shed, pool, addition, or something else.", navigation: null };
+  }
+  if (!project?.description) {
+    return { message: "Saved. In one sentence, what do you want the finished project to accomplish?", navigation: null };
+  }
+  if (!project?.address) {
+    return { message: "Saved. What is the project address? I need the location before I can guide permits and nearby contractor steps.", navigation: null };
+  }
+  return {
+    message: "Saved. That is enough information to start. The next step is to check permits and approvals for this project address.",
+    navigation: navigationFor("permits", project.id, false),
+  };
+}
+
 function defaultProposalMessage(action) {
   if (!action) return "I can help with that.";
-  return `I can do that for you. Review the proposed change below, then choose Apply changes.`;
+  return `I can do that for you. Review the proposed change below, then approve it to continue.`;
 }
 
 
-function chooseAssistantProfile(message, project) {
+function chooseAssistantProfile(message, project, guidedOnboarding = false) {
   const normalized = clean(message, 4000).toLowerCase();
   const requiresGuidance = Boolean(project) && (
+    guidedOnboarding ||
     normalized.length > 140 ||
     /\b(next step|what should|how do|why|budget|estimate|cost|permit|approval|inspection|contractor|timeline|schedule|document|file|missing|risk|code|requirement|plan|scope|material|diy|professional|fix|change|update|save|correct|add|remove|mark|complete|reopen|due date)\b/.test(normalized)
   );
 
   if (requiresGuidance) {
     return {
-      model: process.env.OPENAI_ASSISTANT_MODEL || "gpt-5-mini",
-      fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-4o-mini",
+      model: process.env.OPENAI_ASSISTANT_MODEL || "gpt-5.6-luna",
+      fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-5.4-mini",
       maxOutputTokens: 650,
       allowTools: true,
       route: "guided",
@@ -293,8 +445,8 @@ function chooseAssistantProfile(message, project) {
   }
 
   return {
-    model: process.env.OPENAI_ASSISTANT_FAST_MODEL || "gpt-5-nano",
-    fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-4o-mini",
+    model: process.env.OPENAI_ASSISTANT_FAST_MODEL || "gpt-5.4-nano",
+    fallbackModel: process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-5.4-mini",
     maxOutputTokens: 380,
     allowTools: false,
     route: "fast",
@@ -302,20 +454,17 @@ function chooseAssistantProfile(message, project) {
 }
 
 async function startOpenAIRequest(requestBody, preferredModel, fallbackModel) {
-  const candidates = [...new Set([preferredModel, fallbackModel, "gpt-5-mini", "gpt-4o-mini"].filter(Boolean))];
+  const candidates = [...new Set([preferredModel, fallbackModel].filter(Boolean))];
   let lastMessage = "OpenAI could not answer this question.";
 
   for (const model of candidates) {
-    const modelBody = { ...requestBody, model };
-    if (!String(model).startsWith("gpt-5")) delete modelBody.reasoning;
-
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(modelBody),
+      body: JSON.stringify({ ...requestBody, model }),
       cache: "no-store",
     });
 
@@ -387,6 +536,7 @@ function createAssistantStream({
   user,
   project,
   userRow,
+  userPrompt,
   model,
 }) {
   const encoder = new TextEncoder();
@@ -430,6 +580,7 @@ function createAssistantStream({
         const action = functionCall ? normalizeProposal(functionCall) : null;
         const answer = visibleText.trim() || extractResponseText(completedPayload || {}) || defaultProposalMessage(action);
         if (!answer) throw new Error("Project Assistant returned an empty response.");
+        const navigation = buildNavigation({ message: userPrompt, answer, project });
 
         let assistantRow = {
           id: `assistant-${Date.now()}`,
@@ -446,6 +597,7 @@ function createAssistantStream({
           type: "done",
           message: assistantRow,
           action,
+          navigation,
           project,
           userMessage: userRow,
           model,
@@ -634,11 +786,16 @@ export async function POST(request) {
       if (!project) return NextResponse.json({ error: "That project could not be opened." }, { status: 404 });
 
       const result = await applyConfirmedAction({ service, user, project, action: body.confirmAction });
-      const assistantRow = await saveAssistantMessage(service, user.id, project.id, result.completion);
+      const guided = body.guidedOnboarding === true;
+      const guidedProject = guided ? await advanceGuidedProject(service, user, result.project) : result.project;
+      const followUp = guided ? guidedFollowUp(guidedProject) : null;
+      const completion = followUp?.message || result.completion;
+      const assistantRow = await saveAssistantMessage(service, user.id, project.id, completion);
 
       return NextResponse.json({
         message: assistantRow,
-        project: result.project,
+        navigation: followUp?.navigation || null,
+        project: guidedProject,
         waypoints: result.waypoints,
         actionApplied: true,
       });
@@ -728,7 +885,7 @@ export async function POST(request) {
 
     const clientContext = body.clientContext && typeof body.clientContext === "object" ? body.clientContext : {};
     const context = buildProjectContext({ project, waypoints, documents, history, pagePath, clientContext });
-    const profile = chooseAssistantProfile(message, project);
+    const profile = chooseAssistantProfile(message, project, clientContext?.guidedOnboarding === true);
     const wantsStream = body.stream === true;
     const requestBody = {
       store: false,
@@ -764,6 +921,7 @@ export async function POST(request) {
         user,
         project,
         userRow,
+        userPrompt: message,
         model: selectedModel,
       });
 
@@ -782,6 +940,7 @@ export async function POST(request) {
     const action = functionCall ? normalizeProposal(functionCall) : null;
     const answer = extractResponseText(payload) || defaultProposalMessage(action);
     if (!answer) throw new Error("Project Assistant returned an empty response.");
+    const navigation = buildNavigation({ message, answer, project });
 
     let assistantRow = {
       id: `assistant-${Date.now()}`,
@@ -797,6 +956,7 @@ export async function POST(request) {
     return NextResponse.json({
       message: assistantRow,
       action,
+      navigation,
       project,
       userMessage: userRow,
       model: selectedModel,

@@ -1648,3 +1648,54 @@
 .firstRunDashboard .categoryLaunchpad{margin-bottom:18px}
 @media(max-width:900px){.simplifiedActionGrid{grid-template-columns:1fr!important}}
 @media(max-width:720px){.firstRunModal{padding:24px 18px}.firstRunActions{display:grid}.secondaryStartLinks{display:grid;grid-template-columns:1fr}.secondaryStartLinks button{width:100%}}
+
+/* Sprint 3.5 — Su Guided Autopilot: one-sentence project start */
+.suStartCard{
+  margin-top:22px;
+  padding:clamp(22px,3vw,34px);
+  border:1px solid #d9e4f2;
+  border-radius:24px;
+  background:linear-gradient(145deg,#ffffff 0%,#f6f9ff 100%);
+  box-shadow:0 18px 48px rgba(17,43,81,.08);
+}
+.suStartCopy{max-width:780px}
+.suStartCopy>p{margin:0;color:#2f6df6;font-size:10px;font-weight:950;letter-spacing:.16em}
+.suStartCopy h2{margin:9px 0 0;color:#0b2447;font-size:clamp(28px,4vw,44px);line-height:1.02;letter-spacing:-.045em}
+.suStartCopy>span{display:block;max-width:720px;margin-top:12px;color:#64758a;font-size:14px;line-height:1.65}
+.suContinueCard{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px 20px;margin-top:22px;padding:18px 20px;border:1px solid #cfe0fa;border-radius:16px;background:#eef5ff}
+.suContinueCard small{grid-column:1;color:#2f6df6;font-size:9px;font-weight:950;letter-spacing:.14em}
+.suContinueCard strong{grid-column:1;color:#102846;font-size:18px}
+.suContinueCard span{grid-column:1;color:#61738a;font-size:12px;line-height:1.45}
+.suContinueCard button{grid-column:2;grid-row:1/4;min-height:46px;padding:0 18px;border:0;border-radius:11px;background:#2f6df6;color:#fff;font-weight:900;cursor:pointer}
+.suProjectComposer{margin-top:22px;padding:20px;border:1px solid #d8e3f0;border-radius:18px;background:#fff}
+.suProjectComposer>label{display:block;margin-bottom:9px;color:#173458;font-size:13px;font-weight:900}
+.suProjectInputRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:stretch}
+.suProjectInputRow textarea{width:100%;min-height:86px;padding:14px 15px;border:1px solid #c9d7e8;border-radius:12px;background:#fff;color:#152b49;font:inherit;line-height:1.5;resize:vertical;outline:none}
+.suProjectInputRow textarea:focus{border-color:#6595ff;box-shadow:0 0 0 3px rgba(47,109,246,.11)}
+.suProjectInputRow>button{min-width:145px;padding:0 18px;border:0;border-radius:12px;background:linear-gradient(135deg,#3277ff,#2461e9);color:#fff;font:inherit;font-weight:900;cursor:pointer}
+.suProjectInputRow>button:disabled{opacity:.5;cursor:not-allowed}
+.suIdeaChips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.suIdeaChips button{padding:8px 10px;border:1px solid #d5e1ef;border-radius:999px;background:#f8fbff;color:#45617f;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.suIdeaChips button:hover{border-color:#8db0f5;color:#245ecb;background:#eef5ff}
+.suProjectComposer>small{display:block;margin-top:11px;color:#78889c;font-size:10px;line-height:1.5}
+.suQuickRoutes{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:16px}
+.suQuickRoutes>span{margin-right:4px;color:#728197;font-size:10px;font-weight:800}
+.suQuickRoutes button{padding:8px 11px;border:1px solid #d5e0ed;border-radius:9px;background:#fff;color:#405a78;font:inherit;font-size:10px;font-weight:850;cursor:pointer}
+.dashboardHelpStrip{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:20px 0 32px;padding:18px 20px;border-radius:16px;background:#0a284f;color:#fff}
+.dashboardHelpStrip div{display:grid;gap:4px}
+.dashboardHelpStrip strong{font-size:14px}
+.dashboardHelpStrip span{color:#b8cae5;font-size:11px;line-height:1.5}
+.dashboardHelpStrip button{flex:0 0 auto;min-height:40px;padding:0 16px;border:0;border-radius:10px;background:#fff;color:#15345b;font-weight:900;cursor:pointer}
+.firstRunDashboard .dashboardSection{display:block}
+.firstRunDashboard .suStartCard{margin-bottom:18px}
+@media(max-width:760px){
+  .suContinueCard{grid-template-columns:1fr}
+  .suContinueCard small,.suContinueCard strong,.suContinueCard span,.suContinueCard button{grid-column:1;grid-row:auto}
+  .suContinueCard button{width:100%;margin-top:5px}
+  .suProjectInputRow{grid-template-columns:1fr}
+  .suProjectInputRow>button{min-height:48px}
+  .dashboardHelpStrip{align-items:flex-start;flex-direction:column}
+  .dashboardHelpStrip button{width:100%}
+}
+/* Keep project cards useful without turning them into another form-like dashboard. */
+.projectMetaGrid{display:none}

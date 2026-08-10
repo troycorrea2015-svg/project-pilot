@@ -21,13 +21,13 @@ const STAGES = [
 ];
 
 const NAV_ITEMS = [
-  ["overview", "Start Here"],
-  ["flight", "Step-by-Step Plan"],
+  ["overview", "Next Step"],
+  ["pilot", "Ask Su"],
   ["permits", "Permits"],
   ["vision", "Visualize"],
-  ["pilot", "Ask for Help"],
   ["contractors", "Contractors"],
   ["documents", "Files"],
+  ["flight", "Full Plan"],
   ["notes", "Notes"],
 ];
 
@@ -242,6 +242,41 @@ function calculateProjectEstimate(item, form, mode) {
   };
 }
 
+
+function guidedSetupQuestion(project) {
+  if (!project?.project_type) {
+    return "I have your project idea. What kind of project is this? For example: deck, kitchen remodel, bathroom, fence, shed, pool, addition, or something else.";
+  }
+  if (!project?.description) {
+    return "In one sentence, what do you want the finished project to accomplish?";
+  }
+  if (!project?.address) {
+    return "What is the project address? I need the location before I can guide the permit and local-contractor steps.";
+  }
+  return "I have enough information to start guiding this project. Ask me what to do next, or I can take you straight to the permit check.";
+}
+
+function recommendedProjectArea(project, permitChecked) {
+  if (!project?.project_type || !project?.description || !project?.address) {
+    return { tab: "pilot", label: "Continue with Su", description: "Su will collect the one missing detail needed to move forward." };
+  }
+
+  const next = String(project?.next_step || "").toLowerCase();
+  if (!permitChecked || /permit|approval|jurisdiction|application/.test(next)) {
+    return { tab: "permits", label: "Open Permits", description: "Check the governing authority and begin the permit path." };
+  }
+  if (/document|file|plan|estimate|contract|record/.test(next)) {
+    return { tab: "documents", label: "Open Files", description: "Add or review the project documents needed for the next step." };
+  }
+  if (/contractor|professional|quote|bid/.test(next)) {
+    return { tab: "contractors", label: "Find Contractors", description: "Open the local contractor finder for this saved project." };
+  }
+  if (/vision|photo|design|visual/.test(next)) {
+    return { tab: "vision", label: "Open Visualize", description: "Use your property photo to work through the design direction." };
+  }
+  return { tab: "flight", label: "Open Full Plan", description: "See the next incomplete project step without filling out another form." };
+}
+
 export default function ProjectWorkspacePage() {
   const { id } = useParams();
   const router = useRouter();
@@ -254,6 +289,7 @@ export default function ProjectWorkspacePage() {
   const [documents, setDocuments] = useState([]);
   const [waypoints, setWaypoints] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [guidedOnboarding, setGuidedOnboarding] = useState(false);
   const [showWorkspaceGuide, setShowWorkspaceGuide] = useState(false);
   const [openWaypoint, setOpenWaypoint] = useState(null);
   const [draft, setDraft] = useState("");
@@ -288,21 +324,16 @@ export default function ProjectWorkspacePage() {
   }, [messages, sending, activeTab]);
 
   useEffect(() => {
-    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    const params = new URLSearchParams(window.location.search);
+    const requestedTab = params.get("tab");
     if (requestedTab && NAV_ITEMS.some(([key]) => key === requestedTab)) {
       setActiveTab(requestedTab);
     }
+    setGuidedOnboarding(params.get("onboarding") === "1");
   }, []);
 
-  useEffect(() => {
-    if (loading || !project) return;
-    try {
-      const completed = window.localStorage.getItem("project-pilot-workspace-guide-v1");
-      if (!completed) setShowWorkspaceGuide(true);
-    } catch {
-      setShowWorkspaceGuide(true);
-    }
-  }, [loading, project]);
+  // The workspace guide is now opt-in so new users land directly on the task at hand.
+
 
   async function loadWorkspace() {
     setLoading(true);
@@ -417,6 +448,23 @@ export default function ProjectWorkspacePage() {
     );
   }
 
+  function followAssistantNavigation(navigation) {
+    if (!navigation) return;
+
+    if (navigation.tab && NAV_ITEMS.some(([key]) => key === navigation.tab)) {
+      setActiveTab(navigation.tab);
+      setGuidedOnboarding(false);
+      try {
+        window.history.replaceState({}, "", `/project/${id}?tab=${navigation.tab}`);
+      } catch {
+        // Navigation still works through local state if history replacement is unavailable.
+      }
+      return;
+    }
+
+    if (navigation.href) router.push(navigation.href);
+  }
+
   async function sendMessage(event) {
     event.preventDefault();
     const cleanDraft = draft.trim();
@@ -458,6 +506,7 @@ export default function ProjectWorkspacePage() {
           message: cleanDraft,
           stream: true,
           clientContext: {
+            guidedOnboarding,
             estimator: {
               projectType: estimateProject.label,
               enteredProjectType: estimateType,
@@ -501,10 +550,13 @@ export default function ProjectWorkspacePage() {
 
       setMessages((current) => current.map((entry) =>
         entry.id === streamingAssistantId
-          ? { ...data.message, action: data.action || null, streaming: false }
+          ? { ...data.message, action: data.action || null, navigation: data.navigation || null, streaming: false }
           : entry
       ));
       if (data.project) setProject(data.project);
+      if (data.navigation?.auto) {
+        window.setTimeout(() => followAssistantNavigation(data.navigation), 350);
+      }
     } catch (requestError) {
       setError(requestError.message || "Project Assistant could not respond.");
       setMessages((current) => current.filter((message) =>
@@ -531,7 +583,7 @@ export default function ProjectWorkspacePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${sessionData?.session?.access_token}`,
         },
-        body: JSON.stringify({ projectId: id, confirmAction: entry.action }),
+        body: JSON.stringify({ projectId: id, confirmAction: entry.action, guidedOnboarding }),
       });
 
       const data = await response.json();
@@ -541,7 +593,7 @@ export default function ProjectWorkspacePage() {
         ...current.map((item) =>
           item.id === entry.id ? { ...item, action: null, actionApplied: true } : item
         ),
-        data.message,
+        { ...data.message, navigation: data.navigation || null },
       ]);
       if (data.project) {
         setProject(data.project);
@@ -865,6 +917,7 @@ export default function ProjectWorkspacePage() {
   const estimateMeasure = resolveMeasure(estimateForm, estimateProject);
   const professionalEstimate = calculateProjectEstimate(estimateProject, estimateForm, "pro");
   const diyEstimate = calculateProjectEstimate(estimateProject, estimateForm, "diy");
+  const recommendedArea = recommendedProjectArea(project, permitChecked);
 
   if (loading) {
     return <main className="workspaceLoading">Opening your project…</main>;
@@ -881,16 +934,15 @@ export default function ProjectWorkspacePage() {
           <div className="workspaceGuideModal">
             <button className="workspaceGuideClose" type="button" onClick={dismissWorkspaceGuide} aria-label="Close project guide">×</button>
             <p>YOUR PROJECT WORKSPACE</p>
-            <h2 id="workspaceGuideTitle">You do not need to use every tool at once.</h2>
-            <span>Follow these steps in order. Project Pilot will save your progress and keep showing the next recommended action.</span>
+            <h2 id="workspaceGuideTitle">You can let Su drive the project.</h2>
+            <span>You do not need to understand every tab. Ask Su what to do next, answer one question at a time, and use the Take me there button when Su identifies the next screen.</span>
             <div className="workspaceGuideSteps">
-              <button type="button" onClick={() => goToWorkspaceStep("overview")}><b>1</b><div><strong>Start Here</strong><small>Review your next recommended action.</small></div></button>
-              <button type="button" onClick={() => goToWorkspaceStep("flight")}><b>2</b><div><strong>Follow the Plan</strong><small>Complete one project step at a time.</small></div></button>
-              <button type="button" onClick={() => goToWorkspaceStep("permits")}><b>3</b><div><strong>Prepare Permits</strong><small>Answer the permit questions and build the application.</small></div></button>
-              <button type="button" onClick={() => goToWorkspaceStep("documents")}><b>4</b><div><strong>Keep Files Together</strong><small>Upload plans, photos, estimates, and approvals.</small></div></button>
+              <button type="button" onClick={() => goToWorkspaceStep("pilot")}><b>1</b><div><strong>Ask Su</strong><small>Say what you are trying to accomplish or what is confusing.</small></div></button>
+              <button type="button" onClick={() => goToWorkspaceStep("overview")}><b>2</b><div><strong>Follow one next step</strong><small>The project always keeps one recommended action visible.</small></div></button>
+              <button type="button" onClick={() => goToWorkspaceStep("permits")}><b>3</b><div><strong>Only open tools when needed</strong><small>Su can take you to permits, files, contractors, visualization, or the full plan.</small></div></button>
             </div>
-            <button className="workspaceGuidePrimary" type="button" onClick={() => goToWorkspaceStep("overview")}>Show My Next Step</button>
-            <small>You can reopen this guide from the “How this works” button at the top of the project.</small>
+            <button className="workspaceGuidePrimary" type="button" onClick={() => goToWorkspaceStep("pilot")}>Let Su Guide Me</button>
+            <small>You can reopen this explanation from the “How this works” button.</small>
           </div>
         </div>
       )}
@@ -910,7 +962,7 @@ export default function ProjectWorkspacePage() {
         </div>
 
         <nav className="workspaceNav" aria-label="Project workspace navigation">
-          {NAV_ITEMS.map(([key, label]) => (
+          {NAV_ITEMS.slice(0, 6).map(([key, label]) => (
             <button
               className={activeTab === key ? "active" : ""}
               onClick={() => setActiveTab(key)}
@@ -919,6 +971,18 @@ export default function ProjectWorkspacePage() {
               {label}
             </button>
           ))}
+          <details className="workspaceMoreNav" open={NAV_ITEMS.slice(6).some(([key]) => key === activeTab)}>
+            <summary>More</summary>
+            {NAV_ITEMS.slice(6).map(([key, label]) => (
+              <button
+                className={activeTab === key ? "active" : ""}
+                onClick={() => setActiveTab(key)}
+                key={key}
+              >
+                {label}
+              </button>
+            ))}
+          </details>
         </nav>
 
         <div className="railProgress">
@@ -938,8 +1002,7 @@ export default function ProjectWorkspacePage() {
           </div>
           <div className="workspaceHeaderActions">
             <button className="secondaryAction" onClick={() => setShowWorkspaceGuide(true)}>How this works</button>
-            <button className="secondaryAction" onClick={() => setActiveTab("flight")}>View My Plan</button>
-            <button onClick={() => setActiveTab("pilot")}>Ask for Help</button>
+            <button onClick={() => setActiveTab("pilot")}>Ask Su</button>
           </div>
         </header>
 
@@ -947,195 +1010,44 @@ export default function ProjectWorkspacePage() {
         {notice && <div className="workspaceAlert successAlert">{notice}</div>}
 
         {activeTab === "overview" && (
-          <div className="workspaceContent overviewContent">
-            <section className="simpleProjectPath" aria-label="Recommended project path">
-              <div className="simpleProjectPathHeading">
-                <div><p>THE SIMPLE PATH</p><h3>Complete these steps from left to right.</h3></div>
-                <span>Optional tools stay available, but these are the four steps most users need first.</span>
-              </div>
-              <div className="simpleProjectPathGrid">
-                <button className={setupCount >= 3 ? "complete" : "current"} type="button" onClick={() => setActiveTab("overview")}><b>{setupCount >= 3 ? "✓" : "1"}</b><span><strong>Project details</strong><small>Add the basic scope, address, budget, and timeline.</small></span></button>
-                <button className={completedCount > 0 ? "complete" : setupCount >= 3 ? "current" : ""} type="button" onClick={() => setActiveTab("flight")}><b>{completedCount > 0 ? "✓" : "2"}</b><span><strong>Project plan</strong><small>Follow one clear task at a time.</small></span></button>
-                <button className={permitChecked ? "complete" : completedCount > 0 ? "current" : ""} type="button" onClick={() => setActiveTab("permits")}><b>{permitChecked ? "✓" : "3"}</b><span><strong>Permit check</strong><small>Find the likely requirements and official route.</small></span></button>
-                <button className={permitChecked ? "current" : ""} type="button" onClick={() => setActiveTab("permits")}><b>4</b><span><strong>Application package</strong><small>Review answers, generate the packet, and enter the portal.</small></span></button>
-              </div>
-            </section>
-
-            <section className="commandHero">
-              <div className="commandHeroCopy">
-                <p>CURRENT OBJECTIVE</p>
-                <h1>{project.next_step}</h1>
-                <span>
-                  Project Assistant keeps the plan, documents, decisions, and next actions connected in one place.
-                </span>
-                <div className="commandHeroActions">
-                  <button onClick={() => setActiveTab("flight")}>Review Project Plan</button>
-                  <button className="heroSecondary" onClick={() => setActiveTab("pilot")}>Ask Project Assistant</button>
+          <div className="workspaceContent overviewContent simpleOverviewContent">
+            <section className="guidedNextStepHero">
+              <div className="guidedNextStepCopy">
+                <p>YOUR NEXT STEP</p>
+                <h1>{project.next_step || recommendedArea.description}</h1>
+                <span>You do not need to decide which Project Pilot tool to use. This button opens the place where you can complete the next action.</span>
+                <div className="guidedNextStepActions">
+                  <button type="button" onClick={() => recommendedArea.tab === "contractors" ? router.push(`/contractors?project=${project.id}`) : setActiveTab(recommendedArea.tab)}>{recommendedArea.label} →</button>
+                  <button type="button" className="guidedSecondary" onClick={() => setActiveTab("pilot")}>Ask Su instead</button>
                 </div>
               </div>
-              <div className="commandHeroVisual">
-                <img src={projectVisual(project)} alt={`${project.title} project visual with people and project context`} fetchPriority="high" decoding="async" />
-                <div className="readinessRing" style={{ "--progress": `${readiness}%` }}>
-                  <strong>{readiness}%</strong>
-                  <span>ready to start</span>
-                </div>
+              <div className="guidedProgressBadge">
+                <strong>{readiness}%</strong>
+                <span>project progress</span>
               </div>
             </section>
 
-            <section className="missionGrid">
-              <article className="missionCard flightCard">
-                <div className="cardHeadingRow">
-                  <div>
-                    <p>STEP-BY-STEP PROJECT PLAN</p>
-                    <h3>{completedCount} of {STAGES.length} steps complete</h3>
-                  </div>
-                  <button onClick={() => setActiveTab("flight")}>Manage Plan</button>
-                </div>
+            <section className="simpleProjectSnapshot">
+              <div className="simpleSnapshotHeading">
+                <div><p>PROJECT SNAPSHOT</p><h2>Only the information that matters right now.</h2></div>
+                <button type="button" onClick={() => setActiveTab("pilot")}>Change something with Su</button>
+              </div>
+              <div className="simpleSnapshotGrid">
+                <div><span>Project</span><strong>{project.project_type || "Su will help identify it"}</strong></div>
+                <div><span>Location</span><strong>{project.address || "Still needed"}</strong></div>
+                <div><span>Status</span><strong>{project.status || "Getting Started"}</strong></div>
+                <div><span>Files</span><strong>{documents.length}</strong></div>
+              </div>
+            </section>
 
-                <div className="flightStrip" aria-label="Project Plan progress">
-                  {STAGES.map((stage, index) => {
-                    const waypoint = waypointFor(index);
-                    const current = index === currentStageIndex && !waypoint.completed;
-                    return (
-                      <button
-                        className={`${waypoint.completed ? "complete" : ""} ${current ? "current" : ""}`}
-                        key={stage.key}
-                        onClick={() => {
-                          setOpenWaypoint(index);
-                          setActiveTab("flight");
-                        }}
-                      >
-                        <span>{waypoint.completed ? "✓" : index + 1}</span>
-                        <small>{stage.label}</small>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="nextWaypointCard">
-                  <div>
-                    <small>NEXT STEP</small>
-                    <strong>{nextWaypoint.label}</strong>
-                    <span>{nextWaypoint.description}</span>
-                  </div>
-                  <div>
-                    <small>TARGET DATE</small>
-                    <strong>{formatDate(nextWaypointRecord.due_date)}</strong>
-                  </div>
-                </div>
-              </article>
-
-              <article className="missionCard permitPreviewCard">
-                <div className="cardHeadingRow">
-                  <div>
-                    <p>PROJECT VISION</p>
-                    <h3>Visualize the proposed result using your own property photo.</h3>
-                  </div>
-                  <button onClick={() => setActiveTab("vision")}>Open Visualizer</button>
-                </div>
-                <div className="permitStatusPreview ready">
-                  <span>◫</span>
-                  <div>
-                    <strong>Original photo → AI concept → actual completed result</strong>
-                    <p>Project Vision preserves the uploaded property and edits only the project changes you request.</p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="missionCard pilotBriefCard">
-                <div className="pilotBriefTop">
-                  <img src="/project-pilot-mark.svg" alt="" aria-hidden="true" />
-                  <div>
-                    <p>PROJECT ASSISTANT</p>
-                    <h3>Stay focused on the next decision.</h3>
-                  </div>
-                </div>
-                <blockquote>{project.next_step}</blockquote>
-                <div className="briefStats">
-                  <div><small>SETUP</small><strong>{setupCount}/6</strong></div>
-                  <div><small>FILES</small><strong>{documents.length}</strong></div>
-                  <div><small>MESSAGES</small><strong>{messages.length}</strong></div>
-                </div>
-                <button onClick={() => setActiveTab("pilot")}>Ask Project Assistant</button>
-              </article>
-
-              <article className="missionCard binderCard">
-                <div className="cardHeadingRow">
-                  <div>
-                    <p>FILES & DOCUMENTS</p>
-                    <h3>{documents.length} saved document{documents.length === 1 ? "" : "s"}</h3>
-                  </div>
-                  <button onClick={() => setActiveTab("documents")}>Open Files</button>
-                </div>
-                {documents.length ? (
-                  <div className="recentDocuments">
-                    {documents.slice(0, 3).map((document) => (
-                      <button key={document.id} onClick={() => openDocument(document)}>
-                        <span>{fileLabel(document)}</span>
-                        <div>
-                          <strong>{document.file_name}</strong>
-                          <small>{new Date(document.created_at).toLocaleDateString()}</small>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="emptyMiniCard">
-                    <strong>No files attached yet.</strong>
-                    <span>Add plans, photos, estimates, permits, or contracts.</span>
-                    <button onClick={() => setActiveTab("documents")}>Add First Document</button>
-                  </div>
-                )}
-              </article>
-
-              <article className="missionCard projectFactsCard">
-                <div className="cardHeadingRow">
-                  <div>
-                    <p>PROJECT SNAPSHOT</p>
-                    <h3>{setupCount} of 6 setup details captured</h3>
-                  </div>
-                  <button onClick={() => setActiveTab("pilot")}>Complete Setup</button>
-                </div>
-                <div className="projectFacts">
-                  {setupItems.map(([label, value]) => (
-                    <div className={value ? "complete" : ""} key={label}>
-                      <span>{value ? "✓" : "○"}</span>
-                      <small>{label}</small>
-                      <strong>{value || "Still needed"}</strong>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article className="missionCard permitPreviewCard">
-                <div className="cardHeadingRow">
-                  <div>
-                    <p>PERMITS & APPROVALS</p>
-                    <h3>{permitChecked ? "Jurisdiction check saved" : "Start Permit Autopilot"}</h3>
-                  </div>
-                  <button onClick={() => setActiveTab("permits")}>{permitChecked ? "Review Check" : "Run Check"}</button>
-                </div>
-                <div className={`permitStatusPreview ${permitChecked ? "ready" : "pending"}`}>
-                  <span>{permitChecked ? "✓" : "!"}</span>
-                  <div>
-                    <strong>{permitChecked ? permitResult.title : "Location verification required"}</strong>
-                    <p>{permitChecked ? permitResult.jurisdictionStatus : "Match the authority, prepare the application interview, organize required files, and track approval from one place."}</p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="missionCard notesPreviewCard">
-                <div className="cardHeadingRow">
-                  <div>
-                    <p>PROJECT NOTES</p>
-                    <h3>Decisions and reminders</h3>
-                  </div>
-                  <button onClick={() => setActiveTab("notes")}>Edit Notes</button>
-                </div>
-                <p className="notePreview">
-                  {project.notes?.trim() || "No project notes have been added yet. Use this space for measurements, contacts, decisions, questions, and reminders."}
-                </p>
-              </article>
+            <section className="simpleToolShelf">
+              <div><p>TOOLS</p><h2>Open these only when you need them.</h2></div>
+              <div className="simpleToolButtons">
+                <button type="button" onClick={() => setActiveTab("permits")}><strong>Permits</strong><span>Requirements and applications</span></button>
+                <button type="button" onClick={() => setActiveTab("vision")}><strong>Visualize</strong><span>See the project on your property</span></button>
+                <button type="button" onClick={() => router.push(`/contractors?project=${project.id}`)}><strong>Contractors</strong><span>Find local professionals</span></button>
+                <button type="button" onClick={() => setActiveTab("documents")}><strong>Files</strong><span>Plans, photos, estimates, approvals</span></button>
+              </div>
             </section>
           </div>
         )}
@@ -1241,6 +1153,12 @@ export default function ProjectWorkspacePage() {
 
         {activeTab === "pilot" && (
           <div className="pilotPanel">
+            {guidedOnboarding && (
+              <div className="guidedOnboardingBanner">
+                <strong>SU GUIDED SETUP</strong>
+                <span>No project form. Answer one question at a time and Su will organize the project for you.</span>
+              </div>
+            )}
             <header className="pilotHeader">
               <img className="pilotVisualAvatar" src="/pilot-guide.jpg" alt="Project Pilot guide" />
               <div>
@@ -1256,7 +1174,7 @@ export default function ProjectWorkspacePage() {
                   <div className="messageAvatar">P</div>
                   <div>
                     <strong>Project Assistant</strong>
-                    <p>Tell me what is difficult. I can explain it, help estimate it, update saved project details, and complete Project Plan actions after you approve them.</p>
+                    <p>{guidedOnboarding ? guidedSetupQuestion(project) : "Tell me what you are trying to do. I can explain it, organize project details, and take you to the right screen for the next step."}</p>
                   </div>
                 </article>
               )}
@@ -1293,7 +1211,7 @@ export default function ProjectWorkspacePage() {
                             onClick={() => applyAssistantAction(entry)}
                             disabled={Boolean(applyingAction)}
                           >
-                            {applyingAction === entry.id ? "Applying…" : "Apply changes"}
+                            {applyingAction === entry.id ? "Saving…" : guidedOnboarding ? "Save & Continue" : "Apply changes"}
                           </button>
                           <button
                             type="button"
@@ -1307,6 +1225,18 @@ export default function ProjectWorkspacePage() {
                         <span className="assistantActionSafety">Nothing changes until you approve it.</span>
                       </div>
                     )}
+                    {entry.navigation && !entry.streaming && (
+                      <div className="assistantNavigationCard">
+                        <small>NEXT STEP READY</small>
+                        <div>
+                          <strong>{entry.navigation.label}</strong>
+                          <span>{entry.navigation.description || "Open the exact Project Pilot screen for this step."}</span>
+                        </div>
+                        <button type="button" onClick={() => followAssistantNavigation(entry.navigation)}>
+                          Take me there →
+                        </button>
+                      </div>
+                    )}
                     {entry.actionApplied && <span className="assistantActionApplied">✓ Change applied</span>}
                   </div>
                 </article>
@@ -1317,10 +1247,9 @@ export default function ProjectWorkspacePage() {
 
             <div className="composerArea">
               <div className="assistantPromptChips" aria-label="Common questions">
-                <button type="button" onClick={() => setDraft("Explain what I should do next in plain language.")}>What should I do next?</button>
-                <button type="button" onClick={() => setDraft("Explain the permit and approval steps for this project.")}>Explain permits</button>
-                <button type="button" onClick={() => setDraft("What information or documents am I missing?")}>What am I missing?</button>
-                <button type="button" onClick={() => setDraft("Help me correct the saved budget for this project.")}>Fix my budget</button>
+                <button type="button" onClick={() => setDraft("What should I do next? Take me to the right place if there is a screen I need.")}>What do I do next?</button>
+                <button type="button" onClick={() => setDraft("Take me to the permit step I need for this project.")}>Take me to permits</button>
+                <button type="button" onClick={() => setDraft("What information or documents am I missing, and where do I add them?")}>What am I missing?</button>
               </div>
               <form onSubmit={sendMessage}>
                 <textarea
@@ -1339,362 +1268,81 @@ export default function ProjectWorkspacePage() {
                   {sending ? "Sending…" : "Send"}
                 </button>
               </form>
-              <small>Su can use saved details, estimator results, and recent conversation—and can update project details or plan steps after you approve the change.</small>
+              <small>Su uses the saved project to guide one step at a time. When a Project Pilot screen is needed, use “Take me there” instead of hunting through the menus.</small>
             </div>
           </div>
         )}
 
         {activeTab === "permits" && (
-          <div className="workspaceContent permitContent">
+          <div className="workspaceContent permitContent simplePermitContent">
+            <section className={`permitSimpleStart ${permitChecked ? "ready" : ""}`}>
+              <div>
+                <p>PERMITS — ONE STEP AT A TIME</p>
+                <h1>{permitChecked ? "Your permit route is ready." : "First, match this project to the right permit office."}</h1>
+                <span>
+                  {permitChecked
+                    ? "Continue into Permit Autopilot below. It asks one question at a time and keeps the application process organized."
+                    : "Project Pilot already uses the saved project details. You only need to add something below if it is missing."}
+                </span>
+              </div>
+
+              {!permitChecked && (
+                <form className="permitSimpleForm" onSubmit={runPermitLookup}>
+                  <div className="permitSimpleFacts">
+                    <div><small>PROJECT</small><strong>{permitForm.project || "Still needed"}</strong></div>
+                    <div><small>PROPERTY</small><strong>{permitForm.address || "Still needed"}</strong></div>
+                  </div>
+
+                  {!permitForm.project && (
+                    <label>
+                      <span>What kind of project is this?</span>
+                      <input value={permitForm.project} onChange={(event) => setPermitForm((current) => ({ ...current, project: event.target.value }))} placeholder="Deck, fence, addition…" />
+                    </label>
+                  )}
+                  {!permitForm.address && (
+                    <label>
+                      <span>Project address</span>
+                      <input value={permitForm.address} onChange={(event) => setPermitForm((current) => ({ ...current, address: event.target.value }))} placeholder="Street address, city, state" />
+                    </label>
+                  )}
+                  {!permitForm.zip && (
+                    <label>
+                      <span>ZIP code</span>
+                      <input inputMode="numeric" maxLength={5} value={permitForm.zip} onChange={(event) => setPermitForm((current) => ({ ...current, zip: event.target.value.replace(/\D/g, "").slice(0, 5) }))} placeholder="19968" />
+                    </label>
+                  )}
+
+                  {permitError && <div className="permitInlineError">{permitError}</div>}
+                  <button type="submit" disabled={permitLoading || !permitForm.address.trim() || !/^\d{5}$/.test(permitForm.zip) || !permitForm.project.trim()}>
+                    {permitLoading ? "Checking…" : "Check My Permit Route"}
+                  </button>
+                  <button className="permitAskSuButton" type="button" onClick={() => setActiveTab("pilot")}>I need help with this</button>
+                </form>
+              )}
+
+              {permitChecked && (
+                <div className="permitSimpleReady">
+                  <span>✓</span>
+                  <div><small>MATCHED AUTHORITY</small><strong>{permitResult?.jurisdiction || project.jurisdiction || "Permit authority matched"}</strong></div>
+                  <button type="button" onClick={() => setActiveTab("pilot")}>Ask Su a permit question</button>
+                </div>
+              )}
+            </section>
+
             <PermitAutopilot
               project={project}
               user={user}
               permitResult={permitResult}
               onOpenDocuments={() => setActiveTab("documents")}
             />
-            <PermitApplicationBuilder
-              project={project}
-              user={user}
-              permitResult={permitResult}
-            />
-            <div className="sectionIntro splitIntro permitVisualIntro">
-              <div>
-                <p>PERMITS & APPROVALS</p>
-                <h1>Build a verified path before regulated work begins.</h1>
-                <span>Project Pilot organizes the address, likely governing office, required-document checklist, and official resources. Final requirements must be confirmed with the governing authority.</span>
-              </div>
-              <div className="permitGuideVisual">
-                <img src="/permit-guide.jpg" alt="Project planning guide holding a tablet" loading="lazy" decoding="async" />
-                {permitChecked && <span className="permitSavedBadge">✓ CHECK SAVED</span>}
-              </div>
-            </div>
 
-            <div className="permitWorkspaceGrid">
-              <form className="permitLookupCard" onSubmit={runPermitLookup}>
-                <div className="permitCardHeading">
-                  <span>01</span>
-                  <div><small>PROPERTY CHECK</small><h2>Confirm the project location.</h2></div>
-                </div>
-
-                <label>
-                  <span>Street address</span>
-                  <input
-                    value={permitForm.address}
-                    onChange={(event) => setPermitForm((current) => ({ ...current, address: event.target.value }))}
-                    placeholder="101 Main Street, Milton, DE"
-                  />
-                </label>
-
-                <div className="permitFormRow">
-                  <label>
-                    <span>ZIP code</span>
-                    <input
-                      inputMode="numeric"
-                      maxLength={5}
-                      value={permitForm.zip}
-                      onChange={(event) => setPermitForm((current) => ({ ...current, zip: event.target.value.replace(/\D/g, "").slice(0, 5) }))}
-                      placeholder="19968"
-                    />
-                  </label>
-                  <label>
-                    <span>Project type</span>
-                    <input
-                      value={permitForm.project}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        setPermitForm((current) => ({ ...current, project: nextValue }));
-                        setEstimateForm((current) => ({ ...current, projectType: nextValue }));
-                      }}
-                      placeholder="Deck"
-                    />
-                  </label>
-                </div>
-
-                {permitError && <div className="permitInlineError">{permitError}</div>}
-
-                <button className="permitLookupButton" disabled={permitLoading}>
-                  {permitLoading ? "Checking address and resources…" : permitChecked ? "Refresh Permit Check" : "Run Permit Check"}
-                </button>
-                <small className="permitDisclaimer">Planning support only. Always confirm current forms, fees, approvals, and inspections with the responsible authority.</small>
-              </form>
-
-              <article className="permitMapCard">
-                <div className="permitCardHeading">
-                  <span>02</span>
-                  <div><small>LOCATION MAP</small><h2>{permitResult?.matchedAddress || project.address || "Map pending"}</h2></div>
-                </div>
-                {permitMap ? (
-                  <iframe title="Project location map" src={permitMap} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-                ) : (
-                  <div className="mapPlaceholder"><strong>No mapped location yet.</strong><span>Run the permit check to match the address and display the project area.</span></div>
-                )}
-              </article>
-            </div>
-
-            {permitResult ? (
-              <section className="permitResults exactPermitResults">
-                <header>
-                  <div><p>VERIFIED PERMIT MATCH</p><h2>{permitResult.title}</h2></div>
-                  <span>{permitResult.applicationStatus?.label || permitResult.jurisdictionStatus}</span>
-                </header>
-
-                <p className="permitSummary">{permitResult.summary}</p>
-
-                <div className="authorityMatchCard">
-                  <div className="authorityMatchTop">
-                    <div>
-                      <small>GOVERNING AUTHORITY MATCH</small>
-                      <h3>{permitResult.jurisdiction}</h3>
-                    </div>
-                    <span className={`authorityConfidence ${permitResult.jurisdictionConfidence || "medium"}`}>
-                      {(permitResult.jurisdictionConfidence || "review").toUpperCase()} CONFIDENCE
-                    </span>
-                  </div>
-                  <p>{permitResult.jurisdictionReason || permitResult.jurisdictionStatus}</p>
-
-                  {permitResult.coverage && (
-                    <div className={`permitCoverageBadge ${permitResult.coverage.status === "supported" ? "supported" : "outside"}`}>
-                      <strong>{permitResult.coverage.status === "supported" ? "Release coverage confirmed" : "Outside current release area"}</strong>
-                      <span>{permitResult.coverage.coverageDescription || permitResult.coverage.region} · verified {permitResult.coverage.verifiedAt}</span>
-                    </div>
-                  )}
-
-                  {permitResult.requiredAuthorities?.length > 0 && (
-                    <div className="requiredAuthorityList">
-                      <small>REQUIRED AUTHORITY WORKFLOW</small>
-                      {permitResult.requiredAuthorities.map((authority, index) => (
-                        <a href={authority.url} target="_blank" rel="noreferrer" key={`${authority.name}-${authority.role}`}>
-                          <span>{index + 1}</span>
-                          <div>
-                            <strong>{authority.name}</strong>
-                            <small>{authority.role}{authority.phone ? ` · ${authority.phone}` : ""}</small>
-                          </div>
-                          <b>↗</b>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="geographyFacts">
-                    <div><small>INCORPORATED PLACE</small><strong>{permitResult.locationGeography?.incorporatedPlace || "No incorporated-place match"}</strong></div>
-                    <div><small>COUNTY</small><strong>{permitResult.locationGeography?.county || "Confirm manually"}</strong></div>
-                    <div><small>STATE</small><strong>{permitResult.locationGeography?.state || permitResult.coverage?.matchedState || "Confirm manually"}</strong></div>
-                    <div><small>ADDRESS SOURCE</small><strong>{permitResult.locationGeography?.source || "Address match"}</strong></div>
-                  </div>
-                </div>
-
-                {permitResult.primaryApplication ? (
-                  <article className="primaryPermitApplication">
-                    <div className="primaryPermitBadge">
-                      <span>✓</span>
-                      <div>
-                        <small>{permitResult.primaryApplication.verificationLabel || "OFFICIAL APPLICATION"}</small>
-                        <strong>{permitResult.applicationStatus?.label || "Official permit resource located"}</strong>
-                      </div>
-                    </div>
-                    <h3>{permitResult.primaryApplication.label}</h3>
-                    <p>{permitResult.primaryApplication.description}</p>
-                    <div className="primaryPermitMeta">
-                      <span>Authority: <strong>{permitResult.primaryApplication.authority}</strong></span>
-                      <span>Method: <strong>{permitResult.primaryApplication.method}</strong></span>
-                      <span>Verified: <strong>{permitResult.primaryApplication.verifiedAt}</strong></span>
-                    </div>
-                    <a href={permitResult.primaryApplication.url} target="_blank" rel="noreferrer">
-                      {permitResult.primaryApplication.actionLabel || "Open official application"} ↗
-                    </a>
-                    <small className="applicationExplanation">{permitResult.applicationStatus?.explanation}</small>
-                  </article>
-                ) : (
-                  <article className="primaryPermitApplication needsReview">
-                    <div className="primaryPermitBadge"><span>!</span><div><small>APPLICATION REVIEW</small><strong>Exact application not yet verified</strong></div></div>
-                    <p>Confirm the responsible permit office before using a specific form.</p>
-                  </article>
-                )}
-
-                <div className="permitResultGrid">
-                  <article>
-                    <small>RECOMMENDED COURSE</small>
-                    <ol>{permitResult.steps?.map((step) => <li key={step}>{step}</li>)}</ol>
-                  </article>
-                  <article>
-                    <small>PREPARE THESE DOCUMENTS</small>
-                    <ul>{permitResult.documents?.map((document) => <li key={document}>{document}</li>)}</ul>
-                  </article>
-                </div>
-
-                <div className="permitDraftReadiness">
-                  <div>
-                    <small>AI APPLICATION PREPARATION</small>
-                    <h3>Project data that can feed a future permit draft</h3>
-                    <p>Pilot will never submit an application without the user's review and explicit permission.</p>
-                  </div>
-                  <div className="draftFieldGrid">
-                    {permitResult.draftFields?.map((field) => (
-                      <div className={field.ready ? "ready" : "missing"} key={field.key}>
-                        <span>{field.ready ? "✓" : "○"}</span>
-                        <div><strong>{field.label}</strong><small>{field.ready ? field.value : "Still needed"}</small></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="officialResources applicationResourceList">
-                  <div><small>OFFICIAL APPLICATIONS & SUPPORTING RESOURCES</small><strong>Open only sources published by the matched government authority.</strong></div>
-                  <div>
-                    {(permitResult.applications || permitResult.sources || []).map((resource) => (
-                      <a key={resource.id || resource.url} href={resource.url} target="_blank" rel="noreferrer">
-                        <span>{resource.verificationLabel || "Official resource"}</span>
-                        <strong>{resource.label}</strong>
-                        <small>{resource.description || "Open official source"}</small>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-
-                <p className="permitLegalNote">{permitResult.disclaimer}</p>
-              </section>
-            ) : (
-              <section className="permitEmptyResult">
-                <img src="/project-pilot-mark.svg" alt="" aria-hidden="true" />
-                <div><h2>Permit guidance is ready.</h2><p>Enter the property address, ZIP code, and project type. Project Pilot will organize a practical checklist and official starting points.</p></div>
-              </section>
+            {permitResult && (
+              <PermitApplicationBuilder
+                project={project}
+                user={user}
+                permitResult={permitResult}
+              />
             )}
-
-            <section className="estimatePlannerSection">
-              <div className="sectionIntro splitIntro">
-                <div>
-                  <p>COST ESTIMATOR + DIY</p>
-                  <h1>Price the project before you commit to the next move.</h1>
-                  <span>Use Project Pilot to compare a professional path and a do-it-yourself path. Estimates are planning ranges only and should be validated before purchasing or signing contracts.</span>
-                </div>
-                <span className="permitSavedBadge">DIY + PRO</span>
-              </div>
-
-              <div className="estimatePlannerGrid">
-                <article className="estimateCard estimateControlsCard">
-                  <div className="estimateCardHeading">
-                    <span>03</span>
-                    <div><small>ESTIMATE INPUTS</small><h2>Set the project scope.</h2></div>
-                  </div>
-
-                  <div className="estimateControlGrid">
-                    <label>
-                      <span>Project type</span>
-                      <input
-                        value={estimateForm.projectType || permitForm.project || project.project_type || ""}
-                        onChange={(event) => setEstimateForm((current) => ({ ...current, projectType: event.target.value }))}
-                        placeholder="Deck"
-                      />
-                    </label>
-
-                    <label>
-                      <span>Scope size</span>
-                      <select
-                        value={estimateForm.size}
-                        onChange={(event) => setEstimateForm((current) => ({ ...current, size: event.target.value }))}
-                      >
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                      </select>
-                    </label>
-
-                    <label>
-                      <span>Finish level</span>
-                      <select
-                        value={estimateForm.quality}
-                        onChange={(event) => setEstimateForm((current) => ({ ...current, quality: event.target.value }))}
-                      >
-                        <option value="budget">Budget</option>
-                        <option value="standard">Standard</option>
-                        <option value="premium">Premium</option>
-                      </select>
-                    </label>
-
-                    <label>
-                      <span>Custom {estimateProject.unit} (optional)</span>
-                      <input
-                        inputMode="decimal"
-                        value={estimateForm.customMeasure}
-                        onChange={(event) => setEstimateForm((current) => ({ ...current, customMeasure: event.target.value.replace(/[^0-9.]/g, "") }))}
-                        placeholder={String(estimateProject.defaultMeasure)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="estimateInputFootnote">
-                    <strong>{estimateProject.label}</strong>
-                    <span>Estimate basis: {estimateMeasure.toLocaleString()} {estimateProject.unit}</span>
-                  </div>
-                </article>
-
-                <article className="estimateCard estimateSummaryCard professionalSummaryCard">
-                  <img className="estimatePeopleImage" src="/home-cost-planning.jpg" alt="Homeowner reviewing project costs" />
-                  <div className="estimateCardHeading">
-                    <span>04</span>
-                    <div><small>PROFESSIONAL ROUTE</small><h2>{currency(professionalEstimate.total)} expected</h2></div>
-                  </div>
-                  <div className="estimateRangeRow">
-                    <div><small>LOW</small><strong>{currency(professionalEstimate.low)}</strong></div>
-                    <div><small>EXPECTED</small><strong>{currency(professionalEstimate.total)}</strong></div>
-                    <div><small>HIGH</small><strong>{currency(professionalEstimate.high)}</strong></div>
-                  </div>
-                  <div className="estimateBreakdownList">
-                    <div><span>Materials</span><strong>{currency(professionalEstimate.materials)}</strong></div>
-                    <div><span>Labor</span><strong>{currency(professionalEstimate.labor)}</strong></div>
-                    <div><span>Permits / fees</span><strong>{currency(professionalEstimate.permits)}</strong></div>
-                    <div><span>Contingency</span><strong>{currency(professionalEstimate.contingency)}</strong></div>
-                  </div>
-                </article>
-
-                <article className="estimateCard estimateSummaryCard diySummaryCard">
-                  <img className="estimatePeopleImage" src="/home-diy-builder.jpg" alt="DIY builder working on a home project" />
-                  <div className="estimateCardHeading">
-                    <span>05</span>
-                    <div><small>DIY ROUTE</small><h2>{currency(diyEstimate.total)} expected</h2></div>
-                  </div>
-                  <div className="estimateRangeRow">
-                    <div><small>LOW</small><strong>{currency(diyEstimate.low)}</strong></div>
-                    <div><small>EXPECTED</small><strong>{currency(diyEstimate.total)}</strong></div>
-                    <div><small>HIGH</small><strong>{currency(diyEstimate.high)}</strong></div>
-                  </div>
-                  <div className="estimateBreakdownList">
-                    <div><span>Materials</span><strong>{currency(diyEstimate.materials)}</strong></div>
-                    <div><span>Tools / equipment</span><strong>{currency(diyEstimate.tools)}</strong></div>
-                    <div><span>Permits / fees</span><strong>{currency(diyEstimate.permits)}</strong></div>
-                    <div><span>Contingency</span><strong>{currency(diyEstimate.contingency)}</strong></div>
-                  </div>
-                </article>
-
-                <article className="estimateCard estimateMaterialsCard">
-                  <div className="estimateCardHeading">
-                    <span>06</span>
-                    <div><small>MATERIALS + PLANNING NOTES</small><h2>What this project usually needs.</h2></div>
-                  </div>
-                  <ul className="estimateMaterialList">
-                    {estimateProject.materials.map((item) => <li key={item}>{item}</li>)}
-                  </ul>
-                  <div className="diyTipList">
-                    {estimateProject.diyTips.map((tip) => (
-                      <div key={tip}><strong>Tip</strong><span>{tip}</span></div>
-                    ))}
-                  </div>
-                </article>
-
-                <article className="estimateCard estimateResourcesCard">
-                  <div className="estimateCardHeading">
-                    <span>07</span>
-                    <div><small>DIY LEARNING LINKS</small><h2>Open training before you build.</h2></div>
-                  </div>
-                  <div className="diyResourceList">
-                    {estimateProject.tutorials.map((resource) => (
-                      <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer">{resource.label} ↗</a>
-                    ))}
-                  </div>
-                  <p className="estimateDisclaimer">DIY resources are starting points only. Confirm local code, product instructions, and safety requirements before doing the work yourself.</p>
-                </article>
-              </div>
-            </section>
           </div>
         )}
 

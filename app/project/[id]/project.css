@@ -1038,3 +1038,87 @@
     width: 154px;
   }
 }
+
+/* Sprint 3.5 — Su Guided Autopilot */
+.guidedOnboardingBanner{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #cfe0fa;background:#eef5ff;color:#234b80}
+.guidedOnboardingBanner strong{flex:0 0 auto;font-size:9px;letter-spacing:.14em;color:#2f6df6}
+.guidedOnboardingBanner span{font-size:11px;line-height:1.45}
+.simpleOverviewContent{display:grid;gap:16px}
+.guidedNextStepHero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:28px;padding:clamp(24px,4vw,40px);border:1px solid #d6e2f0;border-radius:24px;background:linear-gradient(145deg,#fff 0%,#f3f7ff 100%);box-shadow:0 18px 50px rgba(15,42,80,.08)}
+.guidedNextStepCopy>p{margin:0;color:#2f6df6;font-size:10px;font-weight:950;letter-spacing:.15em}
+.guidedNextStepCopy h1{max-width:800px;margin:10px 0 0;color:#0b2549;font-size:clamp(30px,4.2vw,48px);line-height:1.03;letter-spacing:-.045em}
+.guidedNextStepCopy>span{display:block;max-width:720px;margin-top:13px;color:#63758b;font-size:13px;line-height:1.6}
+.guidedNextStepActions{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.guidedNextStepActions button{min-height:46px;padding:0 18px;border:0;border-radius:11px;background:#2f6df6;color:#fff;font:inherit;font-weight:900;cursor:pointer}
+.guidedNextStepActions .guidedSecondary{border:1px solid #cbd9e9;background:#fff;color:#334d6d}
+.guidedProgressBadge{width:142px;height:142px;display:grid;place-items:center;align-content:center;border-radius:50%;background:#0a2b56;color:#fff;box-shadow:0 16px 38px rgba(10,43,86,.18)}
+.guidedProgressBadge strong{font-size:32px;line-height:1}
+.guidedProgressBadge span{margin-top:6px;color:#bcd0ec;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
+.simpleProjectSnapshot,.simpleToolShelf{padding:22px;border:1px solid #dce5ef;border-radius:18px;background:#fff}
+.simpleSnapshotHeading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.simpleSnapshotHeading p,.simpleToolShelf>div:first-child p{margin:0;color:#2f6df6;font-size:9px;font-weight:950;letter-spacing:.14em}
+.simpleSnapshotHeading h2,.simpleToolShelf>div:first-child h2{margin:6px 0 0;color:#132d4d;font-size:20px}
+.simpleSnapshotHeading button{padding:9px 12px;border:1px solid #d1deec;border-radius:9px;background:#fff;color:#3b5878;font-weight:850;cursor:pointer}
+.simpleSnapshotGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.simpleSnapshotGrid>div{padding:14px;border-radius:12px;background:#f7f9fc}
+.simpleSnapshotGrid span,.simpleSnapshotGrid strong{display:block}
+.simpleSnapshotGrid span{color:#7c8998;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.simpleSnapshotGrid strong{margin-top:6px;color:#1f3857;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.simpleToolShelf{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}
+.simpleToolButtons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.simpleToolButtons button{display:grid;gap:4px;padding:14px;border:1px solid #d8e3f0;border-radius:12px;background:#f9fbfe;color:#1b3659;text-align:left;font:inherit;cursor:pointer}
+.simpleToolButtons button:hover{border-color:#8db1f4;background:#f0f6ff}
+.simpleToolButtons strong{font-size:12px}
+.simpleToolButtons span{color:#718197;font-size:10px;line-height:1.4}
+.assistantNavigationCard{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:5px 16px;margin-top:12px;padding:14px;border:1px solid #bcd0f2;border-radius:13px;background:#f2f7ff}
+.assistantNavigationCard>small{grid-column:1;color:#2f6df6;font-size:8px;font-weight:950;letter-spacing:.12em}
+.assistantNavigationCard>div{grid-column:1;display:grid;gap:3px}
+.assistantNavigationCard strong{color:#17365d;font-size:13px}
+.assistantNavigationCard span{color:#657990;font-size:10px;line-height:1.45}
+.assistantNavigationCard>button{grid-column:2;grid-row:1/3;min-height:40px;padding:0 14px;border:0;border-radius:9px;background:#2f6df6;color:#fff;font-weight:900;cursor:pointer}
+@media(max-width:820px){
+  .guidedNextStepHero{grid-template-columns:1fr}
+  .guidedProgressBadge{width:104px;height:104px}
+  .simpleSnapshotGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .simpleToolShelf{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .guidedOnboardingBanner{align-items:flex-start;flex-direction:column}
+  .guidedNextStepActions{display:grid;grid-template-columns:1fr;width:100%}
+  .guidedNextStepActions button{width:100%}
+  .simpleSnapshotHeading{align-items:flex-start;flex-direction:column}
+  .simpleSnapshotHeading button{width:100%}
+  .simpleSnapshotGrid,.simpleToolButtons{grid-template-columns:1fr}
+  .assistantNavigationCard{grid-template-columns:1fr}
+  .assistantNavigationCard>small,.assistantNavigationCard>div,.assistantNavigationCard>button{grid-column:1;grid-row:auto}
+  .assistantNavigationCard>button{width:100%;margin-top:4px}
+}
+.workspaceMoreNav{margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.1)}
+.workspaceMoreNav summary{padding:10px 12px;color:#9fb4cf;font-size:10px;font-weight:850;cursor:pointer;list-style:none}
+.workspaceMoreNav summary::-webkit-details-marker{display:none}
+.workspaceMoreNav summary::after{content:"+";float:right}
+.workspaceMoreNav[open] summary::after{content:"−"}
+.workspaceMoreNav button{width:100%}
+.permitSimpleStart{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.75fr);gap:22px;align-items:start;padding:24px;border:1px solid #d8e4f1;border-radius:20px;background:linear-gradient(145deg,#fff,#f5f9ff)}
+.permitSimpleStart>div:first-child>p{margin:0;color:#2f6df6;font-size:9px;font-weight:950;letter-spacing:.14em}
+.permitSimpleStart>div:first-child h1{margin:8px 0 0;color:#102a4b;font-size:clamp(24px,3vw,34px);line-height:1.08}
+.permitSimpleStart>div:first-child>span{display:block;margin-top:10px;color:#65778d;font-size:12px;line-height:1.6}
+.permitSimpleForm{display:grid;gap:10px;padding:16px;border:1px solid #d4e0ee;border-radius:14px;background:#fff}
+.permitSimpleFacts{display:grid;gap:8px}
+.permitSimpleFacts>div{padding:10px 11px;border-radius:10px;background:#f6f8fb}
+.permitSimpleFacts small,.permitSimpleFacts strong{display:block}
+.permitSimpleFacts small{color:#7b8999;font-size:8px;font-weight:900;letter-spacing:.08em}
+.permitSimpleFacts strong{margin-top:4px;color:#213c5c;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.permitSimpleForm label{display:grid;gap:5px;color:#435a75;font-size:10px;font-weight:850}
+.permitSimpleForm input{min-height:43px;padding:0 11px;border:1px solid #cad8e8;border-radius:9px;background:#fff;color:#173353;font:inherit;outline:none}
+.permitSimpleForm input:focus{border-color:#6d9bfa;box-shadow:0 0 0 3px rgba(47,109,246,.1)}
+.permitSimpleForm>button{min-height:43px;border:0;border-radius:9px;background:#2f6df6;color:#fff;font-weight:900;cursor:pointer}
+.permitSimpleForm>button:disabled{opacity:.48;cursor:not-allowed}
+.permitSimpleForm>.permitAskSuButton{border:1px solid #d0dcea;background:#fff;color:#3d5675}
+.permitSimpleReady{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center;padding:16px;border:1px solid #c8ddcf;border-radius:14px;background:#f4fbf6}
+.permitSimpleReady>span{grid-row:1/3;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#e0f5e5;color:#24743c;font-weight:950}
+.permitSimpleReady small,.permitSimpleReady strong{display:block}
+.permitSimpleReady small{color:#5e7e69;font-size:8px;font-weight:900;letter-spacing:.08em}
+.permitSimpleReady strong{margin-top:4px;color:#244c31;font-size:12px;line-height:1.4}
+.permitSimpleReady button{grid-column:1/3;min-height:41px;border:1px solid #c8d8e9;border-radius:9px;background:#fff;color:#3a5575;font-weight:850;cursor:pointer}
+@media(max-width:820px){.permitSimpleStart{grid-template-columns:1fr}}

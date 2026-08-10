@@ -131,6 +131,34 @@ function projectImage(project) {
   return "/home-planning-people.jpg";
 }
 
+
+function inferGuidedProjectType(value) {
+  const text = String(value || "").toLowerCase();
+  const matches = [
+    ["deck", "Deck"], ["patio", "Deck / Patio"], ["kitchen", "Kitchen Remodel"],
+    ["bathroom", "Bathroom Remodel"], ["bath", "Bathroom Remodel"], ["fence", "Fence"],
+    ["shed", "Shed"], ["garage", "Garage"], ["pool", "Pool"], ["addition", "Addition"],
+    ["roof", "Roofing"], ["driveway", "Driveway"], ["basement", "Basement Remodel"],
+    ["renovation", "Renovation"], ["remodel", "Remodel"], ["repair", "Home Repair"],
+  ];
+  return matches.find(([term]) => text.includes(term))?.[1] || "";
+}
+
+function guidedProjectTitle(projectType) {
+  if (!projectType) return "My Home Project";
+  if (/remodel/i.test(projectType)) return projectType;
+  return `${projectType} Project`;
+}
+
+function accountProjectRole(user) {
+  const role = normalizeAccountRole(user?.user_metadata?.role);
+  if (role === "contractor") return "Contractor";
+  if (role === "project_manager") return "Project Manager";
+  if (role === "property_manager") return "Property Manager";
+  if (role === "developer") return "Developer / Investor";
+  return "Owner";
+}
+
 function clampProgress(value) {
   const number = Number(value) || 0;
   return Math.min(100, Math.max(0, number));
@@ -226,6 +254,7 @@ export default function DashboardPage() {
   const [dashboardError, setDashboardError] = useState("");
   const [accountSaving, setAccountSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [projectIdea, setProjectIdea] = useState("");
   const [showProjectWizard, setShowProjectWizard] = useState(false);
   const [showFirstRunGuide, setShowFirstRunGuide] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -299,15 +328,8 @@ export default function DashboardPage() {
     };
   }, [router]);
 
-  useEffect(() => {
-    if (loading || !user) return;
-    try {
-      const completed = window.localStorage.getItem("project-pilot-first-run-guide-v1");
-      if (!completed) setShowFirstRunGuide(true);
-    } catch {
-      setShowFirstRunGuide(true);
-    }
-  }, [loading, user]);
+  // The welcome guide is now opt-in. The main dashboard itself is the guided experience.
+
 
   const averageProgress = useMemo(() => {
     if (!projects.length) return 0;
@@ -345,6 +367,63 @@ export default function DashboardPage() {
       date: formatUpdatedDate(project.updated_at || project.created_at),
     }));
   }, [projects]);
+
+  async function startProjectWithSu(event, presetIdea = "") {
+    event?.preventDefault?.();
+    if (!user || creating) return;
+
+    const idea = String(presetIdea || projectIdea || "").trim();
+    if (idea.length < 5) {
+      setDashboardError("Tell Su what you want to build, repair, or improve in one sentence.");
+      window.setTimeout(() => document.getElementById("project-idea-input")?.focus(), 50);
+      return;
+    }
+
+    setCreating(true);
+    setDashboardError("");
+
+    const projectType = inferGuidedProjectType(idea);
+    const title = guidedProjectTitle(projectType);
+
+    const { data, error } = await supabase
+      .from("projects")
+      .insert({
+        user_id: user.id,
+        title,
+        project_type: projectType || null,
+        description: idea,
+        address: null,
+        location_label: "Location not added",
+        project_role: accountProjectRole(user),
+        target_timeline: null,
+        budget: null,
+        status: "Getting Started",
+        progress: projectType ? 10 : 7,
+        next_step: projectType
+          ? "Tell Su the project address"
+          : "Tell Su what kind of project this is",
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      setDashboardError(error?.message || "Project Pilot could not start the project.");
+      setCreating(false);
+      return;
+    }
+
+    setProjects((current) => [data, ...current]);
+    setProjectIdea("");
+    setCreating(false);
+    router.push(`/project/${data.id}?tab=pilot&onboarding=1`);
+  }
+
+  function focusProjectIdea() {
+    window.setTimeout(() => {
+      document.getElementById("project-idea-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("project-idea-input")?.focus();
+    }, 30);
+  }
 
   async function createProject(template = {}) {
     if (!user || creating) return;
@@ -619,11 +698,11 @@ export default function DashboardPage() {
 
   function openPrimaryProject() {
     if (primaryProject) {
-      router.push(`/project/${primaryProject.id}`);
+      router.push(`/project/${primaryProject.id}?tab=pilot`);
       return;
     }
 
-    addProject();
+    focusProjectIdea();
   }
 
   function dismissFirstRunGuide() {
@@ -637,7 +716,7 @@ export default function DashboardPage() {
 
   function startFirstProjectFromGuide() {
     dismissFirstRunGuide();
-    addProject();
+    focusProjectIdea();
   }
 
   if (loading || !user) {
@@ -712,12 +791,12 @@ export default function DashboardPage() {
             <div className="firstRunModal">
               <button className="firstRunClose" type="button" onClick={dismissFirstRunGuide} aria-label="Close guide">×</button>
               <p>WELCOME TO PROJECT PILOT</p>
-              <h2 id="firstRunTitle">You only need to know what you want to improve.</h2>
-              <span className="firstRunIntro">Project Pilot guides the rest in plain English and always shows the next recommended action.</span>
+              <h2 id="firstRunTitle">Tell Su what you want to do. That is enough to start.</h2>
+              <span className="firstRunIntro">No project form to figure out. Su asks one question at a time, saves approved answers, and points you directly to the screen for the next task.</span>
               <div className="firstRunSteps">
-                <article><b>1</b><div><strong>Create a project</strong><span>Choose the project type and add the property address.</span></div></article>
-                <article><b>2</b><div><strong>Follow the next step</strong><span>Complete one small task at a time instead of navigating everything at once.</span></div></article>
-                <article><b>3</b><div><strong>Prepare permits and documents</strong><span>Project Pilot turns your answers into a clear permit path and application package.</span></div></article>
+                <article><b>1</b><div><strong>Describe the idea</strong><span>Example: “I want to replace my back deck and make it larger.”</span></div></article>
+                <article><b>2</b><div><strong>Answer one question</strong><span>Su only asks for information when it is actually needed.</span></div></article>
+                <article><b>3</b><div><strong>Follow Su</strong><span>When permits, files, contractors, or visualization are next, Su takes you to the right place.</span></div></article>
               </div>
               <div className="firstRunActions">
                 <button type="button" onClick={primaryProject ? () => { dismissFirstRunGuide(); openPrimaryProject(); } : startFirstProjectFromGuide}>{primaryProject ? "Show My Next Step" : "Start My First Project"}</button>
@@ -736,19 +815,16 @@ export default function DashboardPage() {
           </div>
 
           <div className="dashboardActions">
-            <button className="demoProjectButton" type="button" onClick={launchDemo} disabled={demoLoading || creating}>
-              {demoLoading ? "Loading Demo…" : "Launch Demo"}
-            </button>
             <button className="signOutButton" type="button" onClick={signOut}>
               Sign Out
             </button>
             <button
               className="newProjectButton"
               type="button"
-              onClick={addProject}
+              onClick={focusProjectIdea}
               disabled={creating}
             >
-              {creating ? "Creating…" : "+ New Project"}
+              {creating ? "Starting…" : "+ New Project"}
             </button>
           </div>
         </header>
@@ -760,173 +836,56 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="guidedStartSection simplifiedStartSection" aria-label="Choose your next action">
-          <div className="guidedStartHeading">
-            <div>
-              <p>START HERE</p>
-              <h2>{primaryProject ? "Continue with one clear next step." : "Create your first project in a few minutes."}</h2>
-            </div>
-            <span>You do not need to understand permits or construction terms before starting.</span>
-          </div>
-          <div className="guidedActionGrid simplifiedActionGrid">
-            <button className="recommendedAction" type="button" onClick={openPrimaryProject}>
-              <b>1</b><span><strong>{primaryProject ? "Continue my project" : "Start my first project"}</strong><small>{primaryProject ? primaryProject.title : "Tell us what you want to improve."}</small></span><em>RECOMMENDED</em>
-            </button>
-            <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=permits`) : addProject()}>
-              <b>2</b><span><strong>Prepare my permit</strong><small>Answer simple questions and build the application.</small></span>
-            </button>
-            <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=vision`) : addProject()}>
-              <b>3</b><span><strong>Visualize the result</strong><small>Use a photo to preview the proposed improvement.</small></span>
-            </button>
-          </div>
-          <div className="secondaryStartLinks">
-            <button type="button" onClick={() => router.push("/contractors")}>Find a contractor</button>
-            <button type="button" onClick={() => router.push("/help")}>Get help</button>
-            <button type="button" onClick={() => setShowFirstRunGuide(true)}>Show me how it works</button>
-          </div>
-        </section>
-
-        <section className="categoryLaunchpad" id="category-launchpad">
-          <div className="categoryLaunchpadHeading">
-            <div>
-              <p>WHAT ARE YOU PLANNING?</p>
-              <h2>Start with a project you can picture.</h2>
-            </div>
-            <span>{workspaceProfile.launchCopy}</span>
-          </div>
-          <div className="signedInCategoryGrid">
-            {PROJECT_CATEGORIES.map((category) => (
-              <button
-                type="button"
-                key={category.key}
-                onClick={() => addProject(category)}
-                disabled={creating}
-              >
-                <img src={category.image} alt={`${category.label} with people planning or completing the work`} loading="lazy" decoding="async" />
-                <span>{category.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="missionControlGrid" aria-label="Project overview">
-          <article className="missionReadinessCard">
-            <div className="missionCardHeading">
-              <div>
-                <p>PROJECT PROGRESS</p>
-                <h2>{projects.length ? "Overall project status" : "Ready to begin"}</h2>
-              </div>
-              <span className="livePill"><i /> LIVE</span>
-            </div>
-
-            <div className="readinessBody">
-              <div
-                className="readinessRing"
-                style={{ "--mission-angle": missionAngle }}
-                aria-label={`${averageProgress}% project readiness`}
-              >
-                <div>
-                  <strong>{averageProgress}%</strong>
-                  <small>READY</small>
-                </div>
-              </div>
-
-              <div className="readinessStats">
-                <div>
-                  <span>Active projects</span>
-                  <strong>{projects.length}</strong>
-                </div>
-                <div>
-                  <span>Current stage</span>
-                  <strong>{getProjectStage(primaryProject)}</strong>
-                </div>
-                <div>
-                  <span>Current project</span>
-                  <strong>{primaryProject?.title || "Not started"}</strong>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article className="pilotBriefingCard">
-            <div className="pilotBriefingHeader">
-              <div className="pilotAvatar">P</div>
-              <div>
-                <p>PROJECT ASSISTANT</p>
-                <h2>Today&apos;s priority</h2>
-              </div>
-            </div>
-
-            <div className="priorityBlock">
-              <span>NEXT RECOMMENDED STEP</span>
-              <strong>{pilotBriefing.objective}</strong>
-            </div>
-
-            <p className="pilotMessage">{pilotBriefing.message}</p>
-
-            <div className="briefingFooter">
-              <div>
-                <span>ESTIMATED TIME</span>
-                <strong>{pilotBriefing.estimate}</strong>
-              </div>
-              <button type="button" onClick={openPrimaryProject} disabled={creating}>
-                {primaryProject ? "Continue Project" : "Start First Project"}
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </article>
-
-          <article className="recentActivityCard">
-            <div className="activityHeader">
-              <div>
-                <p>RECENT ACTIVITY</p>
-                <h2>Latest movement</h2>
-              </div>
-              <span>{projects.length}</span>
-            </div>
-
-            <div className="activityList">
-              {recentActivity.map((item, index) => (
-                <div className="activityItem" key={`${item.title}-${index}`}>
-                  <div className="activityMarker">{index === 0 ? "✓" : "•"}</div>
-                  <div>
-                    <strong>{item.title}</strong>
-                    <span>{item.detail}</span>
-                    <small>{item.date}</small>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
-
-        <section className="flightPlanBanner" id="flight-plan">
-          <div className="flightPlanCopy">
-            <p>STEP-BY-STEP PROJECT PLAN</p>
-            <h2>Every project follows a clear set of steps.</h2>
+        <section className="suStartCard" id="start-with-su" aria-label="Start or continue with Su">
+          <div className="suStartCopy">
+            <p>START WITH SU</p>
+            <h2>{primaryProject ? "You do not have to figure out the next screen." : "Tell Su what you want to do with your property."}</h2>
             <span>
-              The highlighted step changes as your project progresses. Open a project to complete the next recommended action.
+              {primaryProject
+                ? "Su can look at the saved project, tell you the single next step, and take you to the right Project Pilot tool."
+                : "One sentence is enough. Su will organize the project and ask only the next question it needs."}
             </span>
           </div>
 
-          <div className="flightPlanStages" aria-label="Project Plan stages">
-            {FLIGHT_STAGES.map((stage, index) => {
-              const completed = projects.length > 0 && averageProgress >= stage.threshold;
-              const nextStage =
-                projects.length > 0 &&
-                averageProgress < stage.threshold &&
-                (index === 0 || averageProgress >= FLIGHT_STAGES[index - 1].threshold);
+          {primaryProject && (
+            <div className="suContinueCard">
+              <small>CURRENT PROJECT</small>
+              <strong>{primaryProject.title}</strong>
+              <span>{primaryProject.next_step || "Ask Su what to do next"}</span>
+              <button type="button" onClick={() => router.push(`/project/${primaryProject.id}?tab=pilot`)}>
+                Let Su guide me →
+              </button>
+            </div>
+          )}
 
-              return (
-                <div
-                  className={`${completed ? "active" : ""} ${nextStage ? "current" : ""}`.trim()}
-                  key={stage.label}
-                >
-                  <span>{completed ? "✓" : index + 1}</span>
-                  <small>{stage.label}</small>
-                </div>
-              );
-            })}
+          <form className="suProjectComposer" onSubmit={(event) => startProjectWithSu(event)}>
+            <label htmlFor="project-idea-input">{primaryProject ? "Start another project" : "What do you want to build, repair, or improve?"}</label>
+            <div className="suProjectInputRow">
+              <textarea
+                id="project-idea-input"
+                value={projectIdea}
+                onChange={(event) => setProjectIdea(event.target.value)}
+                placeholder="Example: I want to replace my back deck and make it larger."
+                rows={3}
+              />
+              <button type="submit" disabled={creating || !projectIdea.trim()}>
+                {creating ? "Starting…" : "Start with Su"}
+              </button>
+            </div>
+            <div className="suIdeaChips" aria-label="Common project ideas">
+              {["Replace my deck", "Remodel my kitchen", "Renovate my bathroom", "Build a shed", "Install a fence", "Add a pool"].map((idea) => (
+                <button type="button" key={idea} onClick={() => setProjectIdea(idea)}>{idea}</button>
+              ))}
+            </div>
+            <small>No budget, permit knowledge, project name, or construction terminology is required to start.</small>
+          </form>
+
+          <div className="suQuickRoutes">
+            <span>Already know what you need?</span>
+            <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=permits`) : focusProjectIdea()}>Permits</button>
+            <button type="button" onClick={() => primaryProject ? router.push(`/project/${primaryProject.id}?tab=vision`) : focusProjectIdea()}>Visualize</button>
+            <button type="button" onClick={() => primaryProject ? router.push(`/contractors?project=${primaryProject.id}`) : focusProjectIdea()}>Contractors</button>
+            <button type="button" onClick={() => setShowFirstRunGuide(true)}>How it works</button>
           </div>
         </section>
 
@@ -936,8 +895,8 @@ export default function DashboardPage() {
               <p>{workspaceProfile.projectLabel}</p>
               <h2>{workspaceProfile.projectHeading}</h2>
             </div>
-            <button type="button" onClick={addProject} disabled={creating}>
-              {creating ? "Creating…" : "Add Project"}
+            <button type="button" onClick={focusProjectIdea} disabled={creating}>
+              {creating ? "Starting…" : "Start Another Project"}
             </button>
           </div>
 
@@ -948,8 +907,8 @@ export default function DashboardPage() {
               <p>
                 Start your first project and Project Assistant will guide you through each step from the initial idea to completion.
               </p>
-              <button type="button" onClick={addProject} disabled={creating}>
-                {creating ? "Creating Project…" : "Start My First Project"}
+              <button type="button" onClick={focusProjectIdea} disabled={creating}>
+                {creating ? "Starting…" : "Tell Su My Project Idea"}
               </button>
             </div>
           ) : (
@@ -1002,9 +961,9 @@ export default function DashboardPage() {
                       <button
                         type="button"
                         className="openProjectButton"
-                        onClick={() => router.push(`/project/${project.id}`)}
+                        onClick={() => router.push(`/project/${project.id}?tab=pilot`)}
                       >
-                        Open Project <span aria-hidden="true">→</span>
+                        Continue with Su <span aria-hidden="true">→</span>
                       </button>
                       <button
                         type="button"
@@ -1023,100 +982,12 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="workspaceGrid" id="documents">
-          {workspaceProfile.tools.map((tool, index) => (
-            <article className="visualWorkspaceCard" key={tool.title}>
-              <img src={tool.image} alt={`${tool.eyebrow} visual`} loading="lazy" decoding="async" />
-              <div>
-                <div className="workspaceCardTop">
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <b>AVAILABLE</b>
-                </div>
-                <p>{tool.eyebrow}</p>
-                <h3>{tool.title}</h3>
-                <span>{tool.description}</span>
-                <button type="button" onClick={openPrimaryProject} disabled={creating}>
-                  {primaryProject ? tool.action : "Create a Project First"}
-                </button>
-              </div>
-            </article>
-          ))}
-
-          <article id="professionals" className="visualWorkspaceCard">
-            <img src="/category-addition.jpg" alt="People planning a professional home improvement project" loading="lazy" decoding="async" />
-            <div>
-              <div className="workspaceCardTop">
-                <span>04</span>
-                <b className="developmentPill">IN DEVELOPMENT</b>
-              </div>
-              <p>BEST MATCH CONTRACTOR NETWORK</p>
-              <h3>Find contractors based on project fit.</h3>
-              <span>
-                Contractors will be ranked by specialty, location, qualifications, availability, and performance—not payment.
-              </span>
-              <button type="button" disabled>
-                Best Match Coming in 3.0B
-              </button>
-            </div>
-          </article>
+        <section className="dashboardHelpStrip">
+          <div><strong>Not sure what to do?</strong><span>Open any project and ask Su. You never need to choose the right tool on your own.</span></div>
+          <button type="button" onClick={openPrimaryProject}>{primaryProject ? "Ask Su" : "Start with Su"}</button>
         </section>
       </section>
 
-      {showProjectWizard && (
-        <div className="projectWizardBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setShowProjectWizard(false); }}>
-          <section className="projectWizard" role="dialog" aria-modal="true" aria-labelledby="project-wizard-title">
-            <header>
-              <div>
-                <small>NEW PROJECT · STEP {wizardStep} OF 3</small>
-                <h2 id="project-wizard-title">Let&apos;s set up your project.</h2>
-              </div>
-              <button type="button" onClick={() => setShowProjectWizard(false)} disabled={creating} aria-label="Close project setup">×</button>
-            </header>
-
-            <form onSubmit={submitProjectWizard}>
-              {wizardStep === 1 && (
-                <div className="wizardStep">
-                  <p>What are you planning?</p>
-                  <label><span>Project type</span><input value={wizardForm.projectType} onChange={(event) => updateWizardField("projectType", event.target.value)} placeholder="Deck, bathroom, fence, addition…" autoFocus /></label>
-                  <label><span>Project name</span><input value={wizardForm.title} onChange={(event) => updateWizardField("title", event.target.value)} placeholder="Backyard Deck Replacement" /></label>
-                  <label><span>Brief description (optional)</span><textarea value={wizardForm.description} onChange={(event) => updateWizardField("description", event.target.value)} placeholder="What would you like to build, repair, or improve?" /></label>
-                </div>
-              )}
-
-              {wizardStep === 2 && (
-                <div className="wizardStep">
-                  <p>Where and when is the project?</p>
-                  <label><span>Project address (optional for now)</span><input value={wizardForm.address} onChange={(event) => updateWizardField("address", event.target.value)} placeholder="Street address, city, state, ZIP" autoFocus /></label>
-                  <label><span>Target timeline</span><select value={wizardForm.targetTimeline} onChange={(event) => updateWizardField("targetTimeline", event.target.value)}><option value="">Not sure yet</option><option>As soon as possible</option><option>Within 3 months</option><option>Within 6 months</option><option>This year</option><option>Future planning</option></select></label>
-                  <label><span>Your role</span><select value={wizardForm.projectRole} onChange={(event) => updateWizardField("projectRole", event.target.value)}><option>Owner</option><option>Contractor</option><option>Property Manager</option><option>Project Manager</option><option>Developer / Investor</option></select></label>
-                </div>
-              )}
-
-              {wizardStep === 3 && (
-                <div className="wizardStep">
-                  <p>How do you expect to complete the work?</p>
-                  <label><span>Planning budget (optional)</span><div className="wizardMoneyInput"><b>$</b><input inputMode="decimal" value={wizardForm.budget} onChange={(event) => updateWizardField("budget", event.target.value.replace(/[^0-9.]/g, ""))} placeholder="15000" autoFocus /></div></label>
-                  <div className="wizardSummary">
-                    <small>YOUR PROJECT</small>
-                    <strong>{wizardForm.title || "Untitled Project"}</strong>
-                    <span>{wizardForm.projectType || "Project type not added"} · {wizardForm.address || "Location can be added later"}</span>
-                    <p>Project Assistant will create a step-by-step plan and show the first recommended action.</p>
-                  </div>
-                </div>
-              )}
-
-              <footer>
-                <button type="button" className="wizardSecondary" onClick={() => wizardStep === 1 ? setShowProjectWizard(false) : setWizardStep((current) => current - 1)} disabled={creating}>{wizardStep === 1 ? "Cancel" : "Back"}</button>
-                {wizardStep < 3 ? (
-                  <button type="button" onClick={() => setWizardStep((current) => current + 1)} disabled={(wizardStep === 1 && (!wizardForm.projectType.trim() || !wizardForm.title.trim()))}>Continue</button>
-                ) : (
-                  <button type="submit" disabled={creating}>{creating ? "Creating Project…" : "Create Project"}</button>
-                )}
-              </footer>
-            </form>
-          </section>
-        </div>
-      )}
     </main>
   );
 }
