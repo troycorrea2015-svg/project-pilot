@@ -51,7 +51,7 @@ export async function POST(request) {
   } catch (error) {
     const missing = String(error.message || "").includes("launch_support_requests");
     return NextResponse.json(
-      { error: missing ? "Launch support is not installed yet. Run Supabase migration 014." : error.message || "The support request could not be created." },
+      { error: missing ? "Support storage is not installed yet. Run the Project Pilot database setup or cumulative migration, then retry." : error.message || "The support request could not be created." },
       { status: missing ? 503 : 500 }
     );
   }

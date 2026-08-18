@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+<title id="title">Project Pilot logo</title>
+<desc id="desc">A folded blue ribbon forming a P, roofline, and forward path.</desc>
+<defs>
+  <linearGradient id="top" x1="42" y1="20" x2="214" y2="108" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#3DA5FF"/>
+    <stop offset=".48" stop-color="#1677FF"/>
+    <stop offset="1" stop-color="#2563FF"/>
+  </linearGradient>
+  <linearGradient id="left" x1="51" y1="62" x2="111" y2="229" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#1555D7"/>
+    <stop offset=".55" stop-color="#0A2E88"/>
+    <stop offset="1" stop-color="#1267F3"/>
+  </linearGradient>
+  <linearGradient id="right" x1="118" y1="103" x2="215" y2="203" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#061E5E"/>
+    <stop offset=".55" stop-color="#0E3EAC"/>
+    <stop offset="1" stop-color="#2563FF"/>
+  </linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+    <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#020B20" flood-opacity=".25"/>
+  </filter>
+</defs>
+<g filter="url(#shadow)">
+  <path fill="url(#left)" d="M40 91c0-16 8-31 21-40l22-15 35 43-19 14v123c0 15-12 27-27 27s-32-11-32-27V91z"/>
+  <path fill="url(#top)" d="M61 51 104 22c14-10 33-10 47 0l46 31c12 8 19 22 19 37v39l-49-28V93L128 66 88 94 61 51z"/>
+  <path fill="url(#right)" d="M216 88v83c0 13-7 25-18 32l-20 12c-11 7-25 6-35-2l-37-30 31-33 29 22V101l50-13z"/>
+  <path fill="#fff" d="m99 115 29-22 39 28v30l-30 22-31-24 18-16-25-18z" opacity=".98"/>
+</g>
+</svg>

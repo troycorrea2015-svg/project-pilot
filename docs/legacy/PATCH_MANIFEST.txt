@@ -1,0 +1,14 @@
+RUN_THIS_IN_SUPABASE_016.sql
+supabase/migrations/016_full_service_permit_operations_3_6.sql
+components/FullServicePermitStart.js
+components/FullServicePermitStart.module.css
+components/PermitConcierge.js
+app/api/permit-service/start/route.js
+app/project/[id]/page.js
+app/project/[id]/project.css
+app/admin/permit-concierge/[id]/page.js
+app/admin/permit-concierge/[id]/concierge.css
+PERMIT_FULL_SERVICE_OPERATIONS.md
+JURISDICTION_PLAYBOOK_TEMPLATE.md
+INSTALL_SPRINT_3_6.txt
+SPRINT_3_6_README.md

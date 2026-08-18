@@ -257,6 +257,8 @@ export default function DashboardPage() {
   const [projectIdea, setProjectIdea] = useState("");
   const [showProjectWizard, setShowProjectWizard] = useState(false);
   const [showFirstRunGuide, setShowFirstRunGuide] = useState(false);
+  const [referral, setReferral] = useState(null);
+  const [referralNotice, setReferralNotice] = useState("");
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardForm, setWizardForm] = useState({
     title: "",
@@ -287,6 +289,36 @@ export default function DashboardPage() {
       }
 
       setUser(currentUser);
+
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (token) {
+          const pendingReferral = localStorage.getItem("project_pilot_referral_code") || currentUser.user_metadata?.referral_code;
+          if (pendingReferral) {
+            const claimResponse = await fetch("/api/referrals/claim", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ code: pendingReferral }),
+            });
+            if (claimResponse.ok) {
+              localStorage.removeItem("project_pilot_referral_code");
+              await supabase.auth.updateUser({ data: { referral_code: null } }).catch(() => null);
+              setReferralNotice("Your $10 referral credit is ready for Permit Concierge.");
+            } else if (claimResponse.status === 400) {
+              localStorage.removeItem("project_pilot_referral_code");
+              await supabase.auth.updateUser({ data: { referral_code: null } }).catch(() => null);
+            } else {
+              setReferralNotice("Your referral is saved and will be applied when the loyalty service is available.");
+            }
+          }
+
+          const referralResponse = await fetch("/api/referrals/status", { headers: { Authorization: `Bearer ${token}` } });
+          if (referralResponse.ok) setReferral(await referralResponse.json());
+        }
+      } catch {
+        // Referral status should never prevent the dashboard from loading.
+      }
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -416,6 +448,26 @@ export default function DashboardPage() {
     setProjectIdea("");
     setCreating(false);
     router.push(`/project/${data.id}?tab=pilot&onboarding=1`);
+  }
+
+  async function shareReferral() {
+    if (!referral?.shareUrl) return;
+    const shareData = {
+      title: "Project Pilot",
+      text: "I use Project Pilot to plan home projects and simplify permits. Use my link and you’ll get $10 toward Permit Concierge if you want them to handle the permit process.",
+      url: referral.shareUrl,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setReferralNotice("Referral link shared.");
+      } else {
+        await navigator.clipboard.writeText(referral.shareUrl);
+        setReferralNotice("Referral link copied.");
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") setReferralNotice("Copy your referral link and share it with a friend.");
+    }
   }
 
   function focusProjectIdea() {
@@ -735,7 +787,7 @@ export default function DashboardPage() {
       <aside className="dashboardSidebar">
         <div>
           <a href="/" className="dashboardBrand dashboardBrandImage">
-            <img src="/project-pilot-lockup-light.svg" alt="Project Pilot" />
+            <img src="/project-pilot-approved-logo.png" alt="Project Pilot" />
           </a>
         </div>
 
@@ -981,6 +1033,23 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
+
+        {referral && (
+          <section className="referralCard" id="referrals">
+            <div className="referralCopy">
+              <p>REFER A FRIEND</p>
+              <h2>Give $10. Get $10.</h2>
+              <span>Your friend gets $10 toward Permit Concierge when they join with your link. After their first paid Concierge order, you earn $10 Project Pilot credit for a future Concierge order.</span>
+              {referralNotice && <small>{referralNotice}</small>}
+            </div>
+            <div className="referralActions">
+              <div><small>YOUR CREDIT</small><strong>${(Number(referral.balanceCents || 0) / 100).toFixed(0)}</strong></div>
+              <div><small>FRIENDS JOINED</small><strong>{referral.invited || 0}</strong></div>
+              <button type="button" onClick={shareReferral}>Share My Link</button>
+              <code>{referral.shareUrl}</code>
+            </div>
+          </section>
+        )}
 
         <section className="dashboardHelpStrip">
           <div><strong>Not sure what to do?</strong><span>Open any project and ask Su. You never need to choose the right tool on your own.</span></div>

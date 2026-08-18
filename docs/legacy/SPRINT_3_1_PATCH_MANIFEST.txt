@@ -1,0 +1,36 @@
+PROJECT PILOT — SPRINT 3.1 PERMIT AUTOPILOT CUMULATIVE UPDATE
+============================================================
+
+Upload every file and folder inside this package into the root of the existing
+Project Pilot GitHub repository. Matching files should be replaced.
+
+This is cumulative for the latest Project Vision and Su updates. It includes:
+- one Project Vision image per generation/refinement
+- accurate scene-preservation prompt and Add Your Vision text refinements
+- reliable image deletion
+- faster streamed Su responses using official model families
+- Permit Autopilot homeowner workflow
+- Permit Concierge admin queue
+
+Changed or added code files:
+.env.example
+app/admin/page.js
+app/api/permit-autopilot/correction/route.js
+app/api/pilot/route.js
+app/api/project-vision/delete/route.js
+app/api/project-vision/generate/route.js
+app/dashboard/page.js
+app/page.js
+app/project/[id]/page.js
+app/project/[id]/project.css
+components/GuidanceAssistant.js
+components/PermitAutopilot.js
+components/PermitAutopilot.module.css
+components/ProjectVision.js
+components/ProjectVision.module.css
+lib/assistant-stream.js
+lib/permit-autopilot.js
+supabase/migrations/012_permit_autopilot_3_1.sql
+
+Supabase SQL copy for easy access:
+RUN_THIS_IN_SUPABASE_012.sql

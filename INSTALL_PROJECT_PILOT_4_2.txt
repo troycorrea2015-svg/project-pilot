@@ -1,0 +1,61 @@
+PROJECT PILOT 4.2 — COMPLETE USER EXPERIENCE + REVENUE RELEASE
+
+THIS IS A FULL APPLICATION ZIP, NOT A PATCH.
+You do not need to know whether 3.6, 4.0, or 4.1 was installed previously.
+
+1) BACK UP FIRST
+   - Export / back up the current Supabase project.
+   - Keep the current Vercel environment variables available.
+
+2) DATABASE
+   EXISTING PROJECT PILOT DATABASE:
+     Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql once in the Supabase SQL editor.
+
+   BRAND-NEW EMPTY DATABASE:
+     Run RUN_THIS_IN_SUPABASE_FRESH_4_2.sql.
+
+   The 4.2 release does not require a new schema migration beyond 4.1; these cumulative installers
+   are intentionally included so an uncertain older installation can still reach the correct schema.
+
+3) REPLACE THE APPLICATION
+   - Use the ENTIRE project-pilot folder from this ZIP.
+   - Do not layer older Sprint ZIPs over it afterward.
+   - Commit/push the complete folder to the repository connected to Vercel.
+
+4) VERCEL ENVIRONMENT
+   - Use VERCEL_ENVIRONMENT_VALUES.txt and .env.example as the checklist.
+   - Keep secrets in Vercel; do not put live secrets in the repository.
+   - Keep live payment switches off until the Stripe test checklist passes.
+
+5) WHAT CHANGED IN 4.2
+   - Exact user-approved folded-blue Project Pilot logo is used as the brand source of truth.
+   - Warm/light modern homepage based on the approved Option 5 direction.
+   - Homepage project carousel automatically rotates through Kitchen, Bathroom, Deck, Addition,
+     Shed/Garage, and Fence, with manual arrows, dots, and thumbnails.
+   - Free self-service remains $0.
+   - Permit Concierge remains a $99 base one-time service.
+   - Give $10 / Get $10 referral-credit system remains active.
+   - Permit workflow no longer treats plan upload as a universal mandatory step.
+   - Project Pilot checks the project/jurisdiction first and only blocks progress on a document when
+     that document is confirmed as required.
+   - Optional/recommended plans can still be added at any time.
+   - Permit flow language now emphasizes Project Details -> Requirements -> Prepare & Review -> Submit & Track.
+
+6) REQUIRED TEST BEFORE LIVE CHARGES
+   - Create a new homeowner account.
+   - Create Kitchen, Bathroom, Deck, Addition, and one custom project.
+   - Confirm carousel and mobile homepage behavior.
+   - Confirm a permit project can continue when no mandatory plan upload has been confirmed.
+   - Confirm any verified required file still blocks authorization until supplied.
+   - Complete free permit workflow.
+   - Complete one Stripe TEST Concierge checkout.
+   - Confirm payment activates the correct permit case.
+   - Test the eligible intake-stage refund.
+   - Test one referral link and $10 credit award/application.
+   - Verify Admin revenue, referral, and Permit Concierge views.
+   - Confirm Vercel production build succeeds.
+
+7) IMPORTANT SERVICE BOUNDARY
+   Project Pilot simplifies and coordinates the administrative process, but it cannot replace a
+   government authority, legal applicant signature, identity verification, notarization, licensed
+   design professional, professional seal, or government fee when one is required.

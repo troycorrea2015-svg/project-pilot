@@ -22,8 +22,8 @@ function extractText(payload) {
 async function requestStructuredResponse(body) {
   const candidates = [...new Set([
     process.env.OPENAI_ASSISTANT_MODEL,
+    "gpt-5.4-mini",
     "gpt-5-mini",
-    "gpt-4o-mini",
   ].filter(Boolean))];
   let lastMessage = "Su could not analyze this correction notice.";
 

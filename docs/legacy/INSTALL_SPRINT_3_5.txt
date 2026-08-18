@@ -1,0 +1,142 @@
+PROJECT PILOT — SPRINT 3.5 SU GUIDED AUTOPILOT
+================================================
+
+PURPOSE
+-------
+This update makes the homeowner experience substantially simpler.
+The user no longer has to understand how to fill out a multi-step project setup form before Project Pilot can help.
+
+The new core flow is:
+1. Tell Su what you want to do in one sentence.
+2. Project Pilot creates the project immediately.
+3. Su asks only the next missing question.
+4. The homeowner approves a clear Save & Continue card when Su needs to save a project detail.
+5. When the next action belongs in another Project Pilot area, Su shows a Take me there button.
+6. If the homeowner explicitly says “take me to,” “open,” or “go to” a supported area, Su can navigate there automatically.
+
+INSTALLATION
+------------
+1. Extract this ZIP.
+2. Open the existing project-pilot repository on GitHub.
+3. Click Add file -> Upload files.
+4. Upload everything INSIDE this extracted folder to the repository root:
+   - app
+   - components
+   - lib
+   - public
+   - the included documentation files are optional to keep in the repository
+5. Allow matching files to be replaced.
+6. Commit with:
+
+   Sprint 3.5 make Su the guided project autopilot
+
+7. Wait for Vercel to deploy the commit.
+8. When Vercel shows Ready, hard-refresh Project Pilot:
+
+   Windows: Ctrl + Shift + R
+
+NO DATABASE OR BILLING CHANGE
+-----------------------------
+- Do NOT run Supabase SQL for Sprint 3.5.
+- Do NOT change the existing OpenAI API key.
+- No new Vercel environment variable is required.
+- MARKETPLACE_PAYMENTS_ENABLED is not changed.
+- This update does not enable paid contractor marketplace payments.
+- The Google Maps Embed setup from Sprint 3.4E remains separate. It is only needed for the existing local contractor map.
+
+WHAT CHANGES
+------------
+DASHBOARD
+- Removes the 3-step new-project wizard from the customer-facing flow.
+- Removes the automatic welcome popup.
+- Removes Launch Demo from the normal customer header.
+- Replaces the crowded start area with one large “Start with Su” box.
+- A homeowner can type something as simple as:
+
+  I want to replace my back deck and make it larger.
+
+- Project Pilot creates the project immediately and opens Su.
+- Common project chips remain available only as optional shortcuts.
+- Existing projects use “Continue with Su.”
+- Secondary dashboard clutter is reduced.
+
+PROJECT WORKSPACE
+- “Start Here” becomes “Next Step.”
+- “Ask for Help” becomes “Ask Su.”
+- Full Plan and Notes move under a smaller “More” menu.
+- The workspace guide no longer interrupts first use automatically.
+- The Next Step screen now centers on one recommended action and one primary button.
+- Permits, Visualize, Contractors, and Files remain available as simple tools.
+
+SU GUIDED SETUP
+- A new project opens directly in Su Guided Setup.
+- Su asks only one missing setup question at a time.
+- A project name, budget, and timeline are no longer required before useful guidance begins.
+- A clear project idea + project type + property address is enough to move into permit guidance.
+- During guided setup, clear answers can produce a Save & Continue confirmation card.
+- After the minimum setup is complete, Su sends the homeowner directly toward the Permit step.
+
+SU NAVIGATION
+Su can now return direct navigation actions for:
+- Next Step
+- Ask Su
+- Permits
+- Visualize
+- Contractors
+- Files
+- Full Plan
+- Notes
+- Dashboard
+
+Examples:
+- “What should I do next?” -> Su explains the priority and shows Take me there.
+- “Take me to permits.” -> Project Pilot can open Permits automatically.
+- “Where do I upload my plans?” -> Su shows Open Files / Take me there.
+- “I need a contractor.” -> Su can open the project’s local contractor finder.
+
+PERMITS
+- Removes the large duplicate permit-research and cost-estimator interface from the normal Permit screen.
+- Adds a small permit-route starter that reuses the saved project details.
+- If address/project type are already saved, the user normally only needs to confirm the route.
+- Permit Autopilot remains the main permit experience and still asks one question at a time.
+- Permit Application Builder remains available after a permit route is matched.
+
+IMPORTANT BOUNDARIES
+--------------------
+Su can navigate users around Project Pilot and help prepare project/permit information, but Project Pilot must still respect government identity, signature, professional-seal, payment, and portal requirements where those steps must be completed by the applicant or an authorized professional.
+
+TEST THIS FIRST
+---------------
+Use a normal homeowner account, not the admin account.
+
+1. Open the dashboard.
+2. Confirm there is no forced welcome popup.
+3. In Start with Su, enter:
+
+   I want to replace my back deck and make it larger.
+
+4. Click Start with Su.
+5. Confirm the new project opens directly in Ask Su with the blue SU GUIDED SETUP banner.
+6. Confirm Su asks for the project address rather than showing a large project form.
+7. Enter a real test address you control/use for testing.
+8. Confirm Su offers a Save & Continue action for the address.
+9. Click Save & Continue.
+10. Confirm Su says the project has enough basic information and shows an Open Permits / Take me there action.
+11. Click Take me there and confirm the Permit screen opens.
+12. Confirm the Permit screen starts with the simple permit-route card and Permit Autopilot instead of the old large duplicate interface.
+13. Return to Ask Su and type:
+
+   Take me to contractors.
+
+14. Confirm Project Pilot opens the contractor finder for this project.
+15. Return to Ask Su and type:
+
+   Where do I upload my plans?
+
+16. Confirm Su gives a Take me there action for Files.
+17. Test the same flow on mobile and half-screen desktop.
+
+ROLLBACK
+--------
+If the deployment fails, use Vercel -> Deployments -> open the previous Ready deployment -> Redeploy.
+Do not rerun any Supabase migrations as part of rollback.

@@ -1,0 +1,40 @@
+INSTALL — SPRINT 3.4E FREE INTEGRATED CONTRACTOR FINDER
+
+IMPORTANT:
+Use this instead of Sprint 3.4D if you have not installed 3.4D.
+This version removes the paid Google Places data search and uses Google Maps Embed instead.
+
+WHAT IT ADDS
+- Contractors tab tied to the user's saved project
+- automatic project-type contractor search
+- automatic project-location search
+- interactive Google Maps results directly inside Project Pilot
+- full Google Maps results link
+- Delaware Construction Contractor Registry link
+- Delaware Business License Search link
+- DELPROS professional license verification link
+- clear unaffiliated-business disclaimer
+
+COST
+Google Maps Embed requests are currently available at no charge with unlimited usage.
+Google still requires a Google Cloud project, API key, and billing account to use the Embed API.
+The API key should be restricted to the Project Pilot website and to Maps Embed API only.
+
+INSTALL
+1. Extract this ZIP.
+2. Upload the included `app` and `public` folders to the Project Pilot GitHub repository.
+3. Replace matching files.
+4. Commit with:
+
+Sprint 3.4E add free integrated contractor finder
+
+5. Complete the Google setup in FREE_GOOGLE_MAPS_SETUP.txt.
+6. Add the environment variable in Vercel.
+7. Redeploy if Vercel does not redeploy automatically after the environment variable is added.
+8. Hard refresh the site.
+
+NO SUPABASE SQL IS REQUIRED.
+NO MARKETPLACE PAYMENTS ARE ENABLED.
+
+IF SPRINT 3.4D WAS ALREADY INSTALLED
+The old `/app/api/local-contractors/route.js` can be deleted because Sprint 3.4E does not use it. Leaving it in place will not affect the new contractor page, but deleting it avoids unused code.

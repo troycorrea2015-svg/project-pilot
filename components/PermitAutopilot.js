@@ -17,10 +17,10 @@ import styles from "./PermitAutopilot.module.css";
 
 const STEPS = [
   ["route", "1", "Permit Route"],
-  ["interview", "2", "Application Interview"],
-  ["documents", "3", "Documents"],
-  ["review", "4", "Review & Authorize"],
-  ["track", "5", "Concierge & Track"],
+  ["interview", "2", "Project Details"],
+  ["documents", "3", "Requirements"],
+  ["review", "4", "Prepare & Review"],
+  ["track", "5", "Submit & Track"],
 ];
 
 function clean(value, maximum = 5000) {
@@ -301,7 +301,7 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
       return;
     }
     if (readiness.missingAnswers.length || readiness.missingDocuments.length) {
-      setError("Complete the required answers and link the required documents before authorization.");
+      setError("Complete the required answers and any confirmed required files before authorization.");
       return;
     }
 
@@ -555,7 +555,14 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
       permitCase: { ...permitCase, answers, document_links: documentLinks },
       blueprint,
     });
-    const updated = await updateCase({ document_links: documentLinks, readiness_score: computed.score }, documentLinks[currentDocument.key] ? "Document linked." : "Document saved as still needed.");
+    const updated = await updateCase(
+      { document_links: documentLinks, readiness_score: computed.score },
+      documentLinks[currentDocument.key]
+        ? "Document linked."
+        : currentDocument.required
+          ? "Required document remains on your checklist."
+          : "Skipped for now. Project Pilot will ask for it later only if it becomes required."
+    );
     if (!updated) return;
     if (documentIndex < blueprint.checklist.length - 1) setDocumentIndex((current) => current + 1);
     else setActiveStep("review");
@@ -624,7 +631,7 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
         <div>
           <p>SPRINT 3.1 · PERMIT AUTOPILOT</p>
           <h2>Su walks the homeowner through the permit process one step at a time.</h2>
-          <span>No permit jargon and no giant form all at once. Project Pilot asks one clear question, explains why it matters, saves the answer, gathers the required documents, and guides the official submission and review process.</span>
+          <span>No permit jargon and no giant form all at once. Project Pilot asks one clear question, explains why it matters, checks what your jurisdiction actually requires, and only asks for plans or files when they are needed.</span>
         </div>
         {permitCase ? (
           <div className={styles.scoreCard}>
@@ -675,7 +682,7 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
               <div className={styles.journeyList}>
                 {[
                   ["1", "Answer simple questions", "Su asks one question at a time and explains what the permit office is looking for."],
-                  ["2", "Gather the right documents", "Project Pilot shows each required file, what it means, and where the homeowner may get it."],
+                  ["2", "Confirm what your project actually needs", "Project Pilot checks the project and jurisdiction first. Plans, surveys, or drawings only become required when they apply to your permit."],
                   ["3", "Review the prepared package", "The homeowner checks the answers, missing items, application route, and permit-readiness score."],
                   ["4", "Choose guided filing or Permit Concierge", "Use the step-by-step portal guide, or ask a Project Pilot coordinator to review, prepare, and coordinate the administrative work."],
                   ["5", "Track approval and inspections", "Su translates reviewer comments and helps the homeowner prepare for required inspections."],
@@ -704,7 +711,7 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
                 <div className={styles.wizardActions}>
                   <button type="button" className={styles.secondaryButton} disabled={questionIndex === 0 || Boolean(saving)} onClick={() => setQuestionIndex((current) => Math.max(0, current - 1))}>Back</button>
                   <button type="button" className={styles.ghostButton} onClick={markQuestionUnknown} disabled={Boolean(saving)}>I don’t know yet</button>
-                  <button type="button" className={styles.primaryButton} onClick={saveQuestionAndContinue} disabled={Boolean(saving)}>{saving ? "Saving…" : questionIndex === visibleQuestions.length - 1 ? "Save and review documents" : "Save and continue"}</button>
+                  <button type="button" className={styles.primaryButton} onClick={saveQuestionAndContinue} disabled={Boolean(saving)}>{saving ? "Saving…" : questionIndex === visibleQuestions.length - 1 ? "Check my requirements" : "Save and continue"}</button>
                 </div>
               </div>
               <div className={styles.wizardFooter}>Answers save to this project and can be changed before authorization.</div>
@@ -718,15 +725,16 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
                 <span>{readiness.missingDocuments.length} required file{readiness.missingDocuments.length === 1 ? "" : "s"} still needed</span>
               </div>
               <div className={styles.progressTrack}><span style={{ width: `${Math.round(((documentIndex + 1) / Math.max(blueprint.checklist.length, 1)) * 100)}%` }} /></div>
+              {!blueprint.checklist.some((item) => item.required) && <div className={styles.requirementsGoodNews}><strong>Good news — no file upload is required from you right now.</strong><span>Project Pilot has not confirmed a mandatory plan, survey, drawing, or supporting file for this permit yet. You can keep moving. If your jurisdiction requires something later, we will tell you exactly what it is, why it is needed, and how to get it.</span></div>}
               <div className={styles.documentWizard}>
-                <div className={styles.documentStatus}>{documentLinks[currentDocument.key] ? "✓ Linked" : currentDocument.required ? "Required" : "Optional"}</div>
+                <div className={styles.documentStatus}>{documentLinks[currentDocument.key] ? "✓ Linked" : currentDocument.required ? "Required now" : "Not required right now"}</div>
                 <h3>{currentDocument.label}</h3>
-                <div className={styles.guidanceBox}><strong>What this means</strong><p>{currentDocumentGuidance.plain}</p><strong>How to get it</strong><p>{currentDocumentGuidance.how}</p></div>
+                <div className={styles.guidanceBox}><strong>What this means</strong><p>{currentDocumentGuidance.plain}</p>{currentDocument.verification && <><strong>Do I need this now?</strong><p>{currentDocument.verification}</p></>}<strong>How to get it</strong><p>{currentDocumentGuidance.how}</p></div>
                 <label className={styles.documentPicker}><span>Choose a file already saved in Project Pilot</span><select value={documentLinks[currentDocument.key] || ""} onChange={(event) => setDocumentLinks((current) => ({ ...current, [currentDocument.key]: event.target.value }))}><option value="">I do not have this yet</option>{documents.map((document) => <option key={document.id} value={document.id}>{document.file_name}</option>)}</select></label>
-                <button type="button" className={styles.secondaryButton} onClick={onOpenDocuments}>Upload or manage project files</button>
+                <button type="button" className={styles.secondaryButton} onClick={onOpenDocuments}>Add a file if I already have one</button>
                 <div className={styles.wizardActions}>
                   <button type="button" className={styles.secondaryButton} disabled={documentIndex === 0 || Boolean(saving)} onClick={() => setDocumentIndex((current) => Math.max(0, current - 1))}>Back</button>
-                  <button type="button" className={styles.primaryButton} onClick={saveDocumentAndContinue} disabled={Boolean(saving)}>{saving ? "Saving…" : documentIndex === blueprint.checklist.length - 1 ? "Save and review package" : documentLinks[currentDocument.key] ? "Link and continue" : "Save as missing and continue"}</button>
+                  <button type="button" className={styles.primaryButton} onClick={saveDocumentAndContinue} disabled={Boolean(saving)}>{saving ? "Saving…" : documentIndex === blueprint.checklist.length - 1 ? "Continue My Project" : documentLinks[currentDocument.key] ? "Link and continue" : currentDocument.required ? "Save as missing and continue" : "Skip for now"}</button>
                 </div>
               </div>
             </div>
@@ -737,7 +745,7 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
               <div className={styles.panelHeading}><div><p>REVIEW & AUTHORIZE</p><h3>Approve the prepared information before submission.</h3></div><span>{readiness.score}% ready</span></div>
               <div className={styles.readinessGrid}>
                 <article><strong>{readiness.missingAnswers.length ? "Needs answers" : "Complete"}</strong><span>Application interview</span><small>{readiness.missingAnswers.length ? readiness.missingAnswers.map((item) => item.label).slice(0, 3).join(" · ") : "All required answers are present."}</small></article>
-                <article><strong>{readiness.missingDocuments.length ? "Needs files" : "Complete"}</strong><span>Document package</span><small>{readiness.missingDocuments.length ? readiness.missingDocuments.map((item) => item.label).slice(0, 3).join(" · ") : "All required files are linked."}</small></article>
+                <article><strong>{readiness.missingDocuments.length ? "Needs required files" : "Requirements ready"}</strong><span>Project requirements</span><small>{readiness.missingDocuments.length ? readiness.missingDocuments.map((item) => item.label).slice(0, 3).join(" · ") : blueprint.documentRequirementsVerified ? "All verified required files are linked." : "No mandatory upload is confirmed right now. Project Pilot will flag any jurisdiction-required file before submission."}</small></article>
                 <article><strong>{blueprint.jurisdiction}</strong><span>Matched authority</span><small>{blueprint.applicationLabel}</small></article>
               </div>
               {(readiness.missingAnswers.length > 0 || readiness.missingDocuments.length > 0) && <div className={styles.fixMissingActions}>

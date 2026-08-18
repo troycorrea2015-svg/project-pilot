@@ -109,7 +109,7 @@ body {
   display: block;
   width: 180px;
   height: 24px;
-  background: url('/project-pilot-lockup-dark.svg') no-repeat center / contain;
+  background: #06172f url('/project-pilot-approved-logo.png') no-repeat center / 94% auto; border-radius: 8px;
 }
 .dashboardBrand::before,
 .adminBrand::before,
@@ -119,7 +119,7 @@ body {
   display: block;
   width: 180px;
   height: 24px;
-  background: url('/project-pilot-lockup-light.svg') no-repeat center / contain;
+  background: rgba(255,255,255,.035) url('/project-pilot-approved-logo.png') no-repeat center / 94% auto; border-radius: 8px;
 }
 
 /* Preserve mark replacement for old standalone bubbles */
@@ -131,7 +131,7 @@ body {
   color: transparent !important;
   text-shadow: none !important;
   background-color: transparent !important;
-  background-image: url('/project-pilot-mark.svg') !important;
+  background-image: url('/project-pilot-approved-mark.png') !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: contain !important;

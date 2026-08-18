@@ -1,0 +1,70 @@
+PROJECT PILOT — PROJECT VISION RELIABILITY + DELETE FIX
+=======================================================
+
+This update fixes both problems shown in the Project Vision screen:
+
+1. OpenAI error: "Invalid image file or mode for image 1."
+2. Original photos/concepts could not be removed reliably.
+
+WHAT CHANGED
+------------
+- Every new browser upload is converted to a clean PNG before Supabase stores it.
+- Project Vision verifies the real file signature instead of trusting a filename or database MIME value.
+- The primary OpenAI image-edit request now uses the current multipart image-array field.
+- If the Image API rejects a compatible file, Project Vision automatically retries through the Responses API image-generation tool using the same uploaded image as the reference.
+- Image deletion now runs through an authenticated server route using the existing Supabase service-role connection.
+- A visible confirmation window is used instead of the browser's unreliable confirm popup.
+- Users can delete:
+  * an original upload,
+  * an AI concept,
+  * an actual completed photo.
+- Deleting an original also deletes its attached concepts and generation history.
+
+INSTALL
+-------
+1. Extract this ZIP.
+2. Open the project-pilot repository in GitHub.
+3. Choose Add file -> Upload files.
+4. Upload everything INSIDE this extracted folder to the repository root.
+5. Allow the three existing files to be replaced and the new delete route to be added.
+6. Commit with:
+
+   Fix Project Vision images and deletion
+
+7. Wait for Vercel to show the deployment as Ready.
+8. Refresh Project Pilot with Ctrl + Shift + R.
+
+TEST IN THIS ORDER
+------------------
+1. Open the same project's Project Vision page.
+2. Select one of the old original photos.
+3. Click "Delete selected photo".
+4. Confirm "Delete permanently".
+5. Repeat for the second old upload if needed.
+6. Upload the original photo again. This new copy is stored as a normalized PNG.
+7. Enter the requested project change.
+8. Click Generate Proposed After.
+
+DO NOT DO THESE
+---------------
+- Do not rerun Supabase SQL.
+- Do not create another OpenAI key.
+- Do not add more API credits for this repair.
+- Do not change MARKETPLACE_PAYMENTS_ENABLED.
+
+EXISTING VERCEL SETTINGS
+------------------------
+Keep the settings you already have:
+- OPENAI_API_KEY
+- OPENAI_IMAGE_MODEL=gpt-image-1
+- OPENAI_IMAGE_QUALITY=high
+- OPENAI_IMAGE_INPUT_FIDELITY=high
+- PROJECT_VISION_ENABLED=true
+- PROJECT_VISION_DAILY_LIMIT=5
+
+OPTIONAL FALLBACK SETTING
+-------------------------
+No new variable is required. The fallback uses gpt-5.5 by default.
+Only if you later want to choose another compatible mainline model, add:
+
+OPENAI_PROJECT_VISION_MODEL=gpt-5.5

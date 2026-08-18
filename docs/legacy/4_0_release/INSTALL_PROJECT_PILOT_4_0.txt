@@ -1,0 +1,82 @@
+PROJECT PILOT 4.0 — COMPLETE INSTALL
+====================================
+
+THIS ZIP IS A FULL RELEASE, NOT A PATCH.
+You do not need to install Sprint 3.6 first.
+
+1) SUPABASE — ONE CUMULATIVE UPGRADE
+------------------------------------
+Open the Project Pilot Supabase SQL Editor.
+Run the entire file:
+
+RUN_THIS_IN_SUPABASE_4_0_UPGRADE.sql
+
+It includes 015 + 016 + 017 in the correct order, so it is the right choice if you cannot remember whether the last upgrade was installed.
+
+If this is a completely NEW Supabase database with none of Project Pilot installed, use RUN_THIS_IN_SUPABASE_FRESH_4_0.sql instead.
+
+2) GITHUB / VERCEL — REPLACE THE APP WITH THIS FULL RELEASE
+-----------------------------------------------------------
+Upload the CONTENTS of this Project Pilot 4.0 folder to the root of the GitHub repository that Vercel deploys.
+This is cumulative code. Do not layer old Sprint ZIPs over it afterward.
+
+3) VERCEL ENVIRONMENT VARIABLES
+-------------------------------
+Use VERCEL_ENVIRONMENT_VALUES.txt as the checklist.
+The paid Permit Concierge requires:
+- NEXT_PUBLIC_SITE_URL=https://www.projectpiloting.com
+- Supabase URL, publishable/anon key, and service-role secret
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- PERMIT_SERVICE_PAYMENTS_ENABLED=true
+- PERMIT_CONCIERGE_PRICE_CENTS=19900
+- NEXT_PUBLIC_PERMIT_CONCIERGE_PRICE_CENTS=19900
+
+Required before accepting paid Permit Concierge orders:
+- OPENAI_API_KEY
+- RESEND_API_KEY
+- MARKETPLACE_FROM_EMAIL (must be a sender/domain verified with your email provider)
+- PERMIT_CONCIERGE_EMAIL (a real inbox you will monitor)
+
+Optional but recommended:
+- NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
+
+4) STRIPE WEBHOOK
+-----------------
+Endpoint:
+https://www.projectpiloting.com/api/marketplace/webhook
+
+Subscribe to:
+- checkout.session.completed
+- checkout.session.expired
+
+The same webhook handles both Permit Concierge purchases and contractor introduction purchases.
+
+5) TEST BEFORE LIVE MONEY
+-------------------------
+Use Stripe TEST keys first.
+A) Create a homeowner account.
+B) Create a project.
+C) Open the permit area and start Full-Service Permit Concierge.
+D) Complete a Stripe TEST checkout.
+E) Confirm the project shows the Permit Concierge as active only after payment.
+F) In Admin, confirm the order appears in Financials and the Permit operations queue.
+G) Open the case and verify tasks, authorization, messages, payment status, corrections, inspections, and refund control.
+H) Test an intake-stage refund once.
+
+6) TURN ON REAL REVENUE
+-----------------------
+After the test passes:
+A) Replace STRIPE_SECRET_KEY with the live sk_live_ value.
+B) Create/update the LIVE Stripe webhook and replace STRIPE_WEBHOOK_SECRET with its live endpoint secret.
+C) Keep PERMIT_SERVICE_PAYMENTS_ENABLED=true.
+D) Deploy again.
+E) Open /admin/launch-readiness. It should show the critical revenue checks ready.
+
+MARKETPLACE_PAYMENTS_ENABLED can remain false until you are ready to charge contractors for qualified introductions. The $199 Permit Concierge service can earn revenue independently.
+
+7) ACTUALLY OPERATE PAID CASES
+------------------------------
+A purchase is not passive fulfillment. When a customer pays, Project Pilot creates a paid case and work queue. Someone operating Project Pilot must verify the jurisdiction and official filing route, prepare/coordinate the authorized work, communicate with the customer, and move the case through closeout.
+
+Do not claim Project Pilot can perform a step that the government reserves for the applicant, property owner, licensed contractor, architect, engineer, notary, or other authorized professional.

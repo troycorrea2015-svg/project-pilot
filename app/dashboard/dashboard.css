@@ -1699,3 +1699,22 @@
 }
 /* Keep project cards useful without turning them into another form-like dashboard. */
 .projectMetaGrid{display:none}
+
+/* Project Pilot 4.1 — loyalty and referral loop */
+.referralCard{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:18px;margin:20px 0;padding:22px;border:1px solid #cfe0f4;border-radius:18px;background:linear-gradient(135deg,#f8fbff,#eef5ff)}
+.referralCopy p{margin:0;color:#2f6df6;font-size:9px;font-weight:950;letter-spacing:.14em}.referralCopy h2{margin:7px 0 0;color:#102846;font-size:25px}.referralCopy span{display:block;margin-top:8px;max-width:680px;color:#607289;font-size:11px;line-height:1.6}.referralCopy small{display:block;margin-top:10px;color:#28734e;font-size:10px;font-weight:850}.referralActions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.referralActions>div{padding:12px;border:1px solid #d9e5f2;border-radius:11px;background:#fff}.referralActions small,.referralActions strong{display:block}.referralActions small{color:#7c8b9e;font-size:8px;font-weight:900;letter-spacing:.08em}.referralActions strong{margin-top:4px;color:#17304f;font-size:20px}.referralActions button{grid-column:1/-1;min-height:43px;border:0;border-radius:10px;background:#2f6df6;color:#fff;font-weight:900;cursor:pointer}.referralActions code{grid-column:1/-1;padding:9px 10px;border:1px dashed #c9d7e8;border-radius:9px;background:#fff;color:#5b6f88;font-size:9px;overflow-wrap:anywhere}@media(max-width:760px){.referralCard{grid-template-columns:1fr}}
+
+.dashboardBrandImage {
+  min-height: 48px;
+  padding: 7px 9px;
+  border-radius: 11px;
+  background: rgba(255,255,255,.035);
+}
+.dashboardBrandImage img {
+  display: block;
+  width: 100%;
+  max-width: 195px;
+  height: 34px;
+  object-fit: contain;
+  object-position: left center;
+}

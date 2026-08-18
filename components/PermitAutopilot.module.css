@@ -199,3 +199,15 @@
   display: grid;
   gap: 10px;
 }
+
+.requirementsGoodNews {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid #b9ddcf;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f1fbf7, #f8fcff);
+}
+.requirementsGoodNews strong { color: #145f4d; font-size: 13px; }
+.requirementsGoodNews span { color: #557266; font-size: 11px; line-height: 1.55; }

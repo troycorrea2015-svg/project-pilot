@@ -1,76 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import "./page.css";
 
-const metrics = [
-  ["Active Projects", "3", "1 new last month"],
-  ["Permits in Progress", "2", "View all →"],
-  ["Tasks Due Soon", "4", "View tasks →"],
-  ["Budget Tracking", "$24,350", "$1,650 below target"],
-];
-
-const projects = [
-  ["Kitchen Remodel", "In Progress", 68, "Submit permit application"],
-  ["Deck Addition", "Planning", 42, "Finalize budget"],
-  ["Bathroom Renovation", "Needs Review", 71, "Address permit comments"],
-];
-
-const contractors = ["Blue Ridge Contracting", "Hillside Builders", "Crafted Spaces"];
-
-const launchChecks = [
-  "Guided permit process in plain English",
-  "One-image faithful remodel generation",
-  "Permit Concierge for hands-on support",
-  "Projects, tasks, documents, and budgets in one place",
-];
-
-const peopleCards = [
+const PROJECT_SLIDES = [
   {
-    image: "/homepage-person-1.png",
-    eyebrow: "START WITH A PLAN",
-    title: "Turn a home project into a clear next step.",
-    copy: "A simple workspace helps first-time users understand what to do first and what comes next.",
-    cta: "Start a Project",
-    href: "#access",
+    key: "kitchen",
+    label: "Kitchen",
+    image: "/category-kitchen.jpg",
+    title: "Kitchen Remodel",
+    copy: "Plan the renovation, understand permit needs, organize documents, and keep the next step clear.",
   },
   {
-    image: "/homepage-person-2.png",
-    eyebrow: "EASY FROM HOME",
-    title: "Get organized from your couch, desk, or kitchen table.",
-    copy: "Project Pilot is designed to feel approachable for everyday homeowners, not just industry pros.",
-    cta: "Open My Workspace",
-    href: "#access",
+    key: "bathroom",
+    label: "Bathroom",
+    image: "/category-bathroom.jpg",
+    title: "Bathroom Remodel",
+    copy: "Make plumbing, electrical, ventilation, and structural requirements easier to understand.",
   },
   {
-    image: "/homepage-person-3.png",
-    eyebrow: "PLAN TOGETHER",
-    title: "Compare ideas and make decisions with confidence.",
-    copy: "Whether you are planning solo or with a partner, the process stays easier to follow and easier to share.",
-    cta: "See How It Works",
-    href: "#how",
+    key: "deck",
+    label: "Deck",
+    image: "/category-deck.jpg",
+    title: "Deck & Patio",
+    copy: "Work through setbacks, footing details, inspections, documents, and local permit requirements.",
   },
   {
-    image: "/homepage-person-4.png",
-    eyebrow: "RENOVATION FOCUS",
-    title: "Bring your remodel decisions into one place.",
-    copy: "Keep design ideas, project details, and permit steps connected so the plan stays understandable.",
-    cta: "Explore Project Vision",
-    href: "#resources",
+    key: "addition",
+    label: "Addition",
+    image: "/category-addition.jpg",
+    title: "Home Addition",
+    copy: "Coordinate zoning, structural requirements, trades, permits, and project milestones in one place.",
   },
   {
-    image: "/homepage-person-5.png",
-    eyebrow: "PLAIN-ENGLISH HELP",
-    title: "Prepare permits without getting lost in the wording.",
-    copy: "Project Pilot helps users move through permit questions in simpler language and with better guidance.",
-    cta: "Prepare a Permit",
-    href: "#pricing",
+    key: "shed",
+    label: "Shed / Garage",
+    image: "/category-shed.jpg",
+    title: "Shed or Garage",
+    copy: "Check size, setbacks, foundations, utilities, and whether your local authority requires a permit.",
+  },
+  {
+    key: "fence",
+    label: "Fence",
+    image: "/category-fence.jpg",
+    title: "Fence Project",
+    copy: "Understand height, placement, property-line, zoning, and pool-barrier rules before you build.",
   },
 ];
+
+const dashboardMetrics = [
+  ["Active Projects", "2", "View all projects"],
+  ["Permits in Progress", "1", "View permits"],
+  ["Messages", "3", "Unread"],
+  ["Tasks Due", "1", "View next step"],
+];
+
+const popularProjects = PROJECT_SLIDES.slice(0, 5);
 
 export default function HomePage() {
+  const permitConciergePrice = Number.parseInt(process.env.NEXT_PUBLIC_PERMIT_CONCIERGE_PRICE_CENTS || "9900", 10) / 100;
   const router = useRouter();
   const [mode, setMode] = useState("signup");
   const [name, setName] = useState("");
@@ -80,6 +70,15 @@ export default function HomePage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [sliderPaused, setSliderPaused] = useState(false);
+
+  const activeSlide = useMemo(() => PROJECT_SLIDES[slideIndex], [slideIndex]);
+
+  useEffect(() => {
+    const referralCode = new URLSearchParams(window.location.search).get("ref");
+    if (referralCode) localStorage.setItem("project_pilot_referral_code", referralCode.trim().toUpperCase());
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -88,22 +87,31 @@ export default function HomePage() {
       if (data.session) router.replace("/dashboard");
       else setSessionLoading(false);
     });
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [router]);
+
+  useEffect(() => {
+    if (sliderPaused) return undefined;
+    const timer = window.setInterval(() => {
+      setSlideIndex((current) => (current + 1) % PROJECT_SLIDES.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, [sliderPaused]);
+
+  function moveSlide(direction) {
+    setSlideIndex((current) => (current + direction + PROJECT_SLIDES.length) % PROJECT_SLIDES.length);
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
     setLoading(true);
     setStatus("");
-
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name, role } },
+          options: { data: { full_name: name, role, referral_code: localStorage.getItem("project_pilot_referral_code") || undefined } },
         });
         if (error) throw error;
         if (data.session) router.push("/dashboard");
@@ -142,241 +150,161 @@ export default function HomePage() {
   return (
     <main className="homePage">
       <header className="heroHeader">
-        <a className="homeBrand" href="#top" aria-label="Project Pilot home">
-          <img src="/homepage-logo-approved.png" alt="Project Pilot" />
+        <a className="approvedBrand" href="#top" aria-label="Project Pilot home">
+          <img src="/project-pilot-approved-logo.png" alt="Project Pilot" />
         </a>
         <nav>
           <a href="#how">How It Works</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#resources">Resources</a>
+          <a href="#projects">Projects</a>
           <a href="#pricing">Pricing</a>
+          <a href="#support">Support</a>
           <a href="#access">Log In</a>
         </nav>
-        <a className="navCta" href="#access">Get Started</a>
+        <a className="navCta" href="#access">Start My Project</a>
       </header>
 
       <section className="heroPanel" id="top">
         <div className="heroCopy">
-          <p className="eyebrow">YOUR HOME PROJECTS</p>
-          <h1>
-            Your project.
-            <span>Guided from start to finish.</span>
-          </h1>
-          <p className="heroLead">
-            AI-powered guidance for permits, planning, budgets, and the right pros — all in one homeowner workspace.
-          </p>
+          <p className="eyebrow"><span>●</span> PROJECTS MADE EASIER</p>
+          <h1>Fast, easy, stress-free <span>projects.</span></h1>
+          <p className="heroLead">Tell Project Pilot what you want to improve. We organize the project, simplify the permit process, and show you the next step without making you learn the jargon first.</p>
           <div className="heroActions">
-            <a className="primaryAction" href="#access">Get Started</a>
-            <a className="secondaryAction" href="#how">See How It Works</a>
+            <a className="primaryAction" href="#access">Start My Project</a>
+            <a className="secondaryAction" href="#how">See How It Works <span>→</span></a>
           </div>
           <div className="heroTrustRow">
-            <div>
-              <b>◇</b>
-              <span>
-                <strong>Permit Confidence</strong>
-                <small>Guided permit steps with clear explanations</small>
-              </span>
-            </div>
-            <div>
-              <b>♙</b>
-              <span>
-                <strong>Trusted Pros</strong>
-                <small>Connect with vetted contractors</small>
-              </span>
-            </div>
-            <div>
-              <b>▥</b>
-              <span>
-                <strong>Better Outcomes</strong>
-                <small>Plan with budgets, tasks, and real next steps</small>
-              </span>
-            </div>
+            <div><b>✓</b><span><strong>Free to start</strong><small>Plan your project and permit route for $0.</small></span></div>
+            <div><b>✓</b><span><strong>Only what you need</strong><small>Project Pilot asks for plans or files only when your project requires them.</small></span></div>
+            <div><b>✓</b><span><strong>Human help available</strong><small>Upgrade to Permit Concierge when you want us to handle the administrative work.</small></span></div>
           </div>
         </div>
-        <div className="heroVisualApproved">
-          <img src="/homepage-hero-recreated-highres.png" alt="Project Pilot modern home hero" />
-        </div>
-      </section>
 
-      <section className="dashboardPreview" id="solutions">
-        <aside className="previewSidebar">
-          <img src="/homepage-logo-approved.png" alt="Project Pilot" className="approvedSidebarLogo" />
-          <nav>
-            <span className="active">Dashboard</span>
-            <span>My Projects</span>
-            <span>Permits</span>
-            <span>Find Contractors</span>
-            <span>Messages</span>
-            <span>Documents</span>
-            <span>Payments</span>
-            <span>Settings</span>
-          </nav>
-          <div className="previewAssistant">
-            <strong>✦ Project Assistant</strong>
-            <small>Ask anything</small>
-          </div>
-        </aside>
-
-        <div className="previewMain">
-          <header>
-            <h2>Dashboard</h2>
-            <button type="button">+ New Project</button>
-          </header>
-          <div className="metricGrid">
-            {metrics.map(([label, value, note]) => (
-              <article key={label}>
-                <small>{label}</small>
-                <strong>{value}</strong>
-                <span>{note}</span>
-              </article>
-            ))}
-          </div>
-          <div className="previewColumns">
-            <section className="projectPanel">
-              <div className="panelTitle">
-                <h3>My Projects</h3>
-                <a href="#access">View all →</a>
-              </div>
-              {projects.map(([title, statusLabel, progress, next], index) => (
-                <article className="projectRow" key={title}>
-                  <div className={`projectThumb thumb${index + 1}`} />
-                  <div className="projectDetails">
-                    <strong>{title}</strong>
-                    <small>Austin, TX</small>
-                    <div>
-                      <mark>{statusLabel}</mark>
-                      <span className="bar"><i style={{ width: `${progress}%` }} /></span>
-                      <em>{progress}%</em>
-                    </div>
-                  </div>
-                  <div className="projectNext">
-                    <small>Next up</small>
-                    <strong>{next}</strong>
-                  </div>
-                </article>
+        <div
+          className="projectSlider"
+          aria-roledescription="carousel"
+          aria-label="Project types Project Pilot supports"
+          onMouseEnter={() => setSliderPaused(true)}
+          onMouseLeave={() => setSliderPaused(false)}
+        >
+          <div className="slideImageWrap" key={activeSlide.key}>
+            <img src={activeSlide.image} alt={`${activeSlide.title} example`} />
+            <div className="slideShade" />
+            <div className="slideCopy">
+              <span>PROJECT TYPE</span>
+              <h2>{activeSlide.title}</h2>
+              <p>{activeSlide.copy}</p>
+            </div>
+            <button className="slideArrow slideArrowLeft" type="button" onClick={() => moveSlide(-1)} aria-label="Previous project type">‹</button>
+            <button className="slideArrow slideArrowRight" type="button" onClick={() => moveSlide(1)} aria-label="Next project type">›</button>
+            <div className="slideDots" aria-label="Choose a project type">
+              {PROJECT_SLIDES.map((slide, index) => (
+                <button key={slide.key} className={index === slideIndex ? "active" : ""} type="button" onClick={() => setSlideIndex(index)} aria-label={`Show ${slide.title}`} />
               ))}
-            </section>
-            <aside className="contractorPanel">
-              <div className="panelTitle">
-                <h3>Find Contractors</h3>
-                <a href="/contractors">View all →</a>
-              </div>
-              {contractors.map((name, index) => (
-                <article key={name}>
-                  <div className={`contractorPhoto contractor${index + 1}`} />
-                  <span>
-                    <strong>{name}</strong>
-                    <small>Austin, TX · ★ 4.9</small>
-                  </span>
-                  <button type="button">View Profile</button>
-                </article>
-              ))}
-              <a className="browseButton" href="/contractors">Browse All Contractors</a>
-            </aside>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <section className="featureRibbon" id="how">
-        <article><strong>✧ AI Guidance</strong><span>Smarter answers every step of the way</span></article>
-        <article><strong>▣ Permit Confidence</strong><span>Clear steps, fewer headaches</span></article>
-        <article><strong>♧ Trusted Pros</strong><span>Verified contractors, stronger results</span></article>
-        <article><strong>▥ Budget Control</strong><span>Track costs and stay on budget</span></article>
-        <article><strong>⌂ Real Results</strong><span>Manage projects from idea to approval</span></article>
-      </section>
-
-      <section className="launchSection" id="resources">
-        <div className="sectionHeading">
-          <p className="eyebrow">WHY HOMEOWNERS USE PROJECT PILOT</p>
-          <h2>Everything you need to move from idea to approval — without losing track of the details.</h2>
-          <p>Plan visually, understand permits, organize documents, and keep the next step clear.</p>
-        </div>
-        <div className="launchGrid">
-          <div className="launchChecks">
-            {launchChecks.map((item) => (
-              <div key={item}><span>✓</span><p>{item}</p></div>
+          <div className="slideThumbs">
+            {PROJECT_SLIDES.slice(0, 4).map((slide, index) => (
+              <button key={slide.key} className={index === slideIndex ? "active" : ""} type="button" onClick={() => setSlideIndex(index)}>
+                <img src={slide.image} alt="" /><span>{slide.label}</span>
+              </button>
             ))}
-          </div>
-          <div className="launchCard">
-            <small>FOUNDING HOMEOWNER LAUNCH</small>
-            <strong>Built for real projects — decks, kitchens, bathrooms, additions, permits, and more.</strong>
-            <p>Start today and let Project Pilot guide the plan, visuals, permit path, and next action.</p>
-            <a href="#access">Create my account</a>
+            <button className={slideIndex >= 4 ? "active" : ""} type="button" onClick={() => setSlideIndex(4)}>
+              <img src={PROJECT_SLIDES[4].image} alt="" /><span>More</span>
+            </button>
           </div>
         </div>
       </section>
 
-      <section className="peopleSection">
-        <div className="sectionHeading">
-          <p className="eyebrow">FOR EVERY KIND OF HOMEOWNER</p>
-          <h2>Make the homepage feel more relatable with more people represented.</h2>
-          <p>
-            The house image stays at the top, while these homepage photo cards make the next actions feel more personal,
-            more welcoming, and easier to understand.
-          </p>
+      <section className="promiseStrip">
+        <article><span>◇</span><div><strong>Trusted guidance</strong><small>Plain-language answers and clear next steps.</small></div></article>
+        <article><span>▣</span><div><strong>Permit process simplified</strong><small>We determine what your project actually needs.</small></div></article>
+        <article><span>◷</span><div><strong>Save time & stress</strong><small>Keep tasks, files, costs, and updates together.</small></div></article>
+        <article><span>♧</span><div><strong>Help when you need it</strong><small>Free self-service or $99 Concierge.</small></div></article>
+      </section>
+
+      <section className="valueSection" id="how">
+        <div className="sectionHeading centerHeading">
+          <p className="eyebrow">ONE PLACE FOR THE WHOLE PROJECT</p>
+          <h2>Everything you need, without making the experience complicated.</h2>
+          <p>Project Pilot handles the organization so homeowners can focus on the project instead of the paperwork.</p>
         </div>
-        <div className="peopleGrid fiveCards">
-          {peopleCards.map((card) => (
-            <article className="personCard" key={card.title}>
-              <img src={card.image} alt={card.title} />
-              <div className="personCardBody">
-                <small>{card.eyebrow}</small>
-                <strong>{card.title}</strong>
-                <p>{card.copy}</p>
-                <a href={card.href}>{card.cta}</a>
-              </div>
-            </article>
+        <div className="valueGrid">
+          <article><span className="featureIcon">⌂</span><h3>Smart Project Plan</h3><p>Answer a few questions and get an organized project path with scope, budget, tasks, and next steps.</p></article>
+          <article><span className="featureIcon">✓</span><h3>Permit Done Right</h3><p>We identify the likely permit route, prepare the information, and only ask you for documents your specific project needs.</p></article>
+          <article><span className="featureIcon">◔</span><h3>Track Progress</h3><p>See what is finished, what is waiting, and exactly what needs your attention next.</p></article>
+          <article><span className="featureIcon">♙</span><h3>Trusted Pros</h3><p>Find contractors and professionals when your project needs expertise outside Project Pilot.</p></article>
+        </div>
+      </section>
+
+      <section className="processSection">
+        <div className="sectionHeading"><p className="eyebrow">HOW IT WORKS</p><h2>Tell us what you’re building. Project Pilot figures out the rest.</h2></div>
+        <div className="processSteps">
+          <article><span>1</span><strong>Tell us about the project</strong><p>Choose a project type, location, and a few details.</p></article>
+          <article><span>2</span><strong>We check the requirements</strong><p>Project Pilot determines the permit route and what information or documents are actually needed.</p></article>
+          <article><span>3</span><strong>Continue with only the next action</strong><p>If a plan, survey, signature, or other item is required, we explain why and help you get it.</p></article>
+          <article><span>4</span><strong>Submit & track approval</strong><p>Use the free guided path or let Permit Concierge handle the administrative coordination.</p></article>
+        </div>
+      </section>
+
+      <section className="popularSection" id="projects">
+        <div className="sectionHeading centerHeading"><p className="eyebrow">POPULAR PROJECT TYPES</p><h2>Start with the project you actually want to complete.</h2></div>
+        <div className="popularGrid">
+          {popularProjects.map((slide) => (
+            <a href="#access" className="popularCard" key={slide.key}><img src={slide.image} alt="" /><strong>{slide.title}</strong><span>Start this project →</span></a>
           ))}
+          <a href="#access" className="popularCard popularMore"><span className="plusCircle">+</span><strong>Custom Project</strong><span>Tell us what you’re building →</span></a>
+        </div>
+      </section>
+
+      <section className="dashboardPreview" aria-label="Project Pilot dashboard preview">
+        <aside className="previewSidebar">
+          <div className="previewLogo"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></div>
+          <nav><span className="active">Dashboard</span><span>My Project</span><span>Progress</span><span>Messages</span><span>Files</span><span>Contractors</span><span>Help</span></nav>
+          <div className="previewAssistant"><strong>NOVA</strong><small>Ask anything about your project</small></div>
+        </aside>
+        <div className="previewMain">
+          <header><div><small>WELCOME BACK</small><h2>Your project is moving forward.</h2></div><button type="button">+ New Project</button></header>
+          <div className="metricGrid">{dashboardMetrics.map(([label, value, note]) => <article key={label}><small>{label}</small><strong>{value}</strong><span>{note}</span></article>)}</div>
+          <div className="previewFocusGrid">
+            <article className="nextStepCard"><span>YOUR NEXT STEP</span><h3>Review permit requirements</h3><p>We checked your project. Continue to see exactly what your jurisdiction needs from you.</p><button type="button">Continue My Project →</button></article>
+            <article className="progressCard"><span>PROJECT PROGRESS</span><strong>42%</strong><div className="progressLine"><i /></div><small>Requirements ready</small></article>
+          </div>
+          <div className="projectPreviewRow"><img src="/category-deck.jpg" alt="" /><div><small>ACTIVE PROJECT</small><strong>Deck Addition</strong><span>Planning → Requirements → Review → Approved</span></div><a href="#access">Open Project →</a></div>
         </div>
       </section>
 
       <section className="pricingSection" id="pricing">
-        <div>
-          <p className="eyebrow">LAUNCH PRICING</p>
-          <h2>Launch now and refine with real homeowners.</h2>
-          <p>Permit preparation, Project Vision, and Su stay connected in one workspace while daily limits help protect costs.</p>
-        </div>
-        <div className="pricingCard">
-          <span>FOUNDING ACCESS</span>
-          <strong>$0</strong>
-          <small>Invite homeowners, validate the workflow, and gather launch feedback.</small>
-          <a href="#access">Open Project Pilot</a>
+        <div className="sectionHeading"><p className="eyebrow">SIMPLE PRICING</p><h2>Use Project Pilot free. Pay only when you want us to take over the permit coordination.</h2><p>Government permit fees and any required licensed-professional services are separate because they are controlled by the jurisdiction or professional—not Project Pilot.</p></div>
+        <div className="pricingCards">
+          <article className="pricingCard"><span>DO IT WITH PROJECT PILOT</span><strong>$0</strong><h3>Free Self-Service</h3><p>Permit route, project questions, requirement checklist, application preparation, documents, NOVA guidance, planning tools, and contractor search.</p><a href="#access">Start Free</a></article>
+          <article className="pricingCard featuredPricing"><span>HAVE US HANDLE IT</span><strong>${permitConciergePrice.toFixed(0)}</strong><h3>Permit Concierge</h3><p>Project Pilot coordinates the administrative permit work. You step back in only for applicant-controlled signatures, identity checks, professional documents, approvals, or government payments.</p><a href="#access">Start My Project</a></article>
         </div>
       </section>
 
+      <section className="referralSection" id="support">
+        <div><p className="eyebrow">LOYALTY THAT REWARDS SHARING</p><h2>Give $10. Get $10.</h2><p>Invite a friend to Project Pilot. They receive $10 Project Pilot credit toward their first eligible Concierge order, and you earn $10 credit after their paid order is completed.</p></div>
+        <div className="referralBadge"><span>♥</span><strong>Happy project?</strong><p>Share Project Pilot with the next homeowner who needs it.</p></div>
+      </section>
+
       <section className="accessSection" id="access">
-        <div className="sectionHeading">
-          <p className="eyebrow">GET STARTED</p>
-          <h2>Open your Project Pilot workspace.</h2>
-          <p>Create a homeowner account or sign back in to continue your projects.</p>
-        </div>
+        <div className="sectionHeading"><p className="eyebrow">START YOUR PROJECT</p><h2>Create your free Project Pilot workspace.</h2><p>No homeowner subscription is required. Start with your project and decide later if you want Permit Concierge.</p></div>
         <div className="accessCard">
-          <div className="authTabs">
-            <button type="button" className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create Account</button>
-            <button type="button" className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Log In</button>
-          </div>
+          <div className="authTabs"><button className={mode === "signup" ? "active" : ""} type="button" onClick={() => { setMode("signup"); setStatus(""); }}>Create Account</button><button className={mode === "signin" ? "active" : ""} type="button" onClick={() => { setMode("signin"); setStatus(""); }}>Sign In</button></div>
           <form onSubmit={handleSubmit}>
-            {mode === "signup" && (
-              <>
-                <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label>
-                <label>Account type<select value={role} onChange={(event) => setRole(event.target.value)}><option>Homeowner</option><option>Contractor</option><option>Property Manager</option><option>Developer</option></select></label>
-              </>
-            )}
-            <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
-            <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength="6" placeholder="At least 6 characters" required /></label>
-            {mode === "signin" && <button className="forgotButton" type="button" onClick={resetPassword}>Forgot password?</button>}
-            <button className="authSubmit" type="submit" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Create My Account" : "Open My Projects"}</button>
+            {mode === "signup" && <><label><span>Name</span><input required value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" /></label><label><span>I’m using Project Pilot as a…</span><select value={role} onChange={(event) => setRole(event.target.value)}><option>Homeowner</option><option>Contractor</option><option>Property Manager</option><option>Project Manager</option><option>Developer / Investor</option></select></label></>}
+            <label><span>Email</span><input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label>
+            <label><span>Password</span><input required minLength="6" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} /></label>
+            {mode === "signin" && <button type="button" className="forgotButton" onClick={resetPassword}>Forgot password?</button>}
+            <button type="submit" className="authSubmit" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Start My Project" : "Sign In"}</button>
+            {status && <div className="authStatus" role="status">{status}</div>}
           </form>
-          {status && <p className="authStatus">{status}</p>}
         </div>
       </section>
 
       <footer className="homeFooter">
-        <img src="/homepage-logo-approved.png" alt="Project Pilot" />
-        <p>Plan every improvement around your home without losing track of the details.</p>
-        <small>
-          Project Pilot provides planning support, permit guidance, visual concepts, and homeowner tools. Government approvals and professional determinations still require the appropriate authority or professional.
-        </small>
+        <div className="footerBrand"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></div>
+        <p>Projects made easier—from the first idea through permit approval.</p>
+        <small>Project Pilot provides planning, organization, permit guidance, and administrative coordination. Government approvals, legal signatures, professional seals, and licensed-professional determinations remain with the appropriate applicant, authority, or professional.</small>
       </footer>
     </main>
   );

@@ -63,7 +63,7 @@ export default function SupportPage() {
   return (
     <main className="supportPage">
       <header className="supportHeader">
-        <a href="/" className="supportBrand"><img src="/project-pilot-mark.svg" alt="" /><span><strong>Project Pilot</strong><small>Launch Support</small></span></a>
+        <a href="/" className="supportBrand"><img src="/project-pilot-approved-mark.png" alt="" /><span><strong>Project Pilot</strong><small>Launch Support</small></span></a>
         <a href={user ? "/dashboard" : "/"}>{user ? "Dashboard" : "Home"}</a>
       </header>
       <section className="supportHero">

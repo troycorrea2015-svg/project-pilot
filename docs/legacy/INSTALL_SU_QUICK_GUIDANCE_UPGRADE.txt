@@ -1,0 +1,34 @@
+PROJECT PILOT — INSTALL SU QUICK GUIDANCE UPGRADE
+===================================================
+
+1. Extract this ZIP.
+2. Open the project-pilot repository on GitHub.
+3. Select Add file -> Upload files.
+4. Upload everything INSIDE the extracted folder to the repository root.
+5. Allow matching files to be replaced.
+6. Commit with:
+
+   Upgrade Su for fast guided responses
+
+7. Wait for Vercel to deploy.
+8. In Vercel -> Project Pilot -> Settings -> Environment Variables, set these for Production:
+
+   OPENAI_ASSISTANT_MODEL=gpt-5.6-luna
+   OPENAI_ASSISTANT_FAST_MODEL=gpt-5.4-nano
+   OPENAI_ASSISTANT_FALLBACK_MODEL=gpt-5.4-mini
+
+9. Redeploy after saving the environment variables.
+10. Hard-refresh Project Pilot with Ctrl + Shift + R.
+
+WHAT THIS UPDATE CHANGES
+------------------------
+- Streams Su's text so users see the answer as it is generated.
+- Uses gpt-5.4-nano for greetings, navigation, and simple questions.
+- Uses gpt-5.6-luna for project guidance, budgets, estimates, permits, next steps, and project actions.
+- Falls back to gpt-5.4-mini if a preferred model is unavailable.
+- Keeps confirmation cards before Su changes saved project data.
+- Gives direct answers first and reduces filler.
+- Turns confusing tasks into one to three concrete next steps.
+
+No new API key is required.
+No Supabase migration is required.

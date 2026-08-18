@@ -1,0 +1,25 @@
+INSTALL — SPRINT 3.2F LARGER HEADER LOGO
+
+This small patch changes only the logo at the very top of the homepage.
+
+Changes:
+- increases the desktop header logo from 122px to 172px wide
+- increases the mobile header logo to 154px wide
+- slightly increases the header height and side spacing so the larger logo remains centered
+- does not change the hero image, dashboard preview, footer logo, Supabase, or Vercel settings
+
+Steps:
+1. Download and extract this ZIP.
+2. Open the `project-pilot` GitHub repository.
+3. Click Add file → Upload files.
+4. Upload the `app` folder from this patch.
+5. Replace `app/page.css`.
+6. Commit with:
+
+Sprint 3.2F enlarge top header logo
+
+7. Wait for Vercel to show Ready.
+8. Hard refresh the website with Ctrl + Shift + R.
+
+No Supabase SQL required.
+No Vercel environment changes required.

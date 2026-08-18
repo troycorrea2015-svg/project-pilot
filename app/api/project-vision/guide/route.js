@@ -166,8 +166,8 @@ export async function POST(request) {
       ...messages.map((message) => `${message.role === "user" ? "Homeowner" : "Su"}: ${message.text}`),
     ].filter(Boolean).join("\n");
 
-    const preferredModel = process.env.OPENAI_ASSISTANT_MODEL || "gpt-5-mini";
-    const fallbackModel = process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-4o-mini";
+    const preferredModel = process.env.OPENAI_ASSISTANT_MODEL || "gpt-5.6-luna";
+    const fallbackModel = process.env.OPENAI_ASSISTANT_FALLBACK_MODEL || "gpt-5.4-mini";
 
     let result;
     try {

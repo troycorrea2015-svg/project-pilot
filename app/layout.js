@@ -22,7 +22,7 @@ export const metadata = {
     type: "website",
   },
   twitter: { card: "summary", title: "Project Pilot", description: "Your project. Guided from start to finish." },
-  icons: { icon: "/project-pilot-mark.svg", shortcut: "/project-pilot-mark.svg", apple: "/project-pilot-mark.svg" },
+  icons: { icon: "/project-pilot-approved-mark.png", shortcut: "/project-pilot-approved-mark.png", apple: "/project-pilot-approved-mark.png" },
 };
 
 export const viewport = { themeColor: "#07172f", colorScheme: "light" };

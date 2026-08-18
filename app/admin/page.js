@@ -60,6 +60,9 @@ export default function AdminPage() {
   const [credits, setCredits] = useState([]);
   const [permitCases, setPermitCases] = useState([]);
   const [conciergeRequests, setConciergeRequests] = useState([]);
+  const [permitOrders, setPermitOrders] = useState([]);
+  const [referralAttributions, setReferralAttributions] = useState([]);
+  const [permitCreditLedger, setPermitCreditLedger] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -101,17 +104,22 @@ export default function AdminPage() {
         supabase.rpc("admin_contractor_directory"),
         supabase.from("marketplace_lead_credits").select("id, reason, details, status, admin_notes, created_at, contractor_id, lead_match_id").order("created_at", { ascending: false }).limit(100),
         supabase.from("permit_cases").select("id, project_id, user_id, jurisdiction, status, readiness_score, application_reference, concierge_requested_at, submitted_at, activity, updated_at").order("updated_at", { ascending: false }).limit(100),
-        supabase.from("permit_concierge_requests").select("id, permit_case_id, project_id, user_id, status, requested_services, preferred_contact, contact_email, contact_phone, assigned_to, requested_at, updated_at").order("updated_at", { ascending: false }).limit(100),
+        supabase.from("permit_concierge_requests").select("id, permit_case_id, project_id, user_id, status, requested_services, preferred_contact, contact_email, contact_phone, assigned_to, payment_status, service_fee_cents, paid_at, requested_at, updated_at").order("updated_at", { ascending: false }).limit(100),
+        supabase.from("permit_service_orders").select("id, request_id, project_id, user_id, amount_cents, currency, status, paid_at, created_at").order("created_at", { ascending: false }).limit(200),
+        supabase.from("referral_attributions").select("id, referrer_user_id, referred_user_id, referral_code, status, referred_credit_cents, referrer_reward_cents, created_at, rewarded_at").order("created_at", { ascending: false }).limit(300),
+        supabase.from("permit_service_credit_ledger").select("id, user_id, amount_cents, reason, created_at").order("created_at", { ascending: false }).limit(1000),
         healthRequest,
       ]);
 
       if (!mounted) return;
-      const [summaryResult, marketplaceResult, feedbackResult, contractorResult, creditResult, permitCaseResult, conciergeRequestResult, healthResult] = results;
-      const firstError = [summaryResult.error, marketplaceResult.error, feedbackResult.error, contractorResult.error, creditResult.error, permitCaseResult.error, conciergeRequestResult.error, healthResult.error].find(Boolean);
+      const [summaryResult, marketplaceResult, feedbackResult, contractorResult, creditResult, permitCaseResult, conciergeRequestResult, permitOrderResult, referralResult, permitCreditResult, healthResult] = results;
+      const firstError = [summaryResult.error, marketplaceResult.error, feedbackResult.error, contractorResult.error, creditResult.error, permitCaseResult.error, conciergeRequestResult.error, permitOrderResult.error, referralResult.error, permitCreditResult.error, healthResult.error].find(Boolean);
       if (firstError) {
         if (firstError.message?.includes("admin_marketplace_summary")) setError("Run migration 010 in Supabase to activate marketplace reporting.");
-        else if (firstError.message?.includes("permit_concierge_requests")) setError("Run migration 013 in Supabase to activate the Permit Concierge operating queue.");
-        else if (firstError.message?.includes("permit_cases")) setError("Run migration 012 in Supabase to activate Permit Autopilot.");
+        else if (firstError.message?.includes("permit_service_orders")) setError("Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql to activate paid Permit Concierge revenue reporting.");
+        else if (firstError.message?.includes("referral_attributions") || firstError.message?.includes("permit_service_credit_ledger")) setError("Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql to activate referral and loyalty reporting.");
+        else if (firstError.message?.includes("permit_concierge_requests")) setError("Run the Project Pilot 4.2 cumulative Supabase upgrade to activate Permit Concierge.");
+        else if (firstError.message?.includes("permit_cases")) setError("Run migration 012 or the cumulative Project Pilot Supabase setup to activate Permit Autopilot.");
         else setError(firstError.message);
       }
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResult.data || {}) });
@@ -122,6 +130,9 @@ export default function AdminPage() {
       setCredits(creditResult.data || []);
       setPermitCases(permitCaseResult.data || []);
       setConciergeRequests(conciergeRequestResult.data || []);
+      setPermitOrders(permitOrderResult.data || []);
+      setReferralAttributions(referralResult.data || []);
+      setPermitCreditLedger(permitCreditResult.data || []);
       setLoading(false);
     }
 
@@ -130,6 +141,17 @@ export default function AdminPage() {
   }, [router]);
 
   const maxAccountCount = useMemo(() => Math.max(1, ...(summary.account_breakdown || []).map((item) => Number(item.count || 0))), [summary.account_breakdown]);
+  const permitRevenueCents = useMemo(() => permitOrders.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount_cents || 0), 0), [permitOrders]);
+  const pendingPermitValueCents = useMemo(() => permitOrders.filter((item) => item.status === "pending").reduce((sum, item) => sum + Number(item.amount_cents || 0), 0), [permitOrders]);
+  const paidPermitOrders = useMemo(() => permitOrders.filter((item) => item.status === "paid").length, [permitOrders]);
+  const totalRevenueCents = Number(marketplace.actual_revenue_cents || 0) + permitRevenueCents;
+  const referralSignups = referralAttributions.length;
+  const rewardedReferrals = useMemo(() => referralAttributions.filter((item) => item.status === "rewarded").length, [referralAttributions]);
+  const outstandingPermitCreditCents = useMemo(() => {
+    const balances = new Map();
+    for (const item of permitCreditLedger) balances.set(item.user_id, Number(balances.get(item.user_id) || 0) + Number(item.amount_cents || 0));
+    return Array.from(balances.values()).reduce((sum, balance) => sum + Math.max(0, balance), 0);
+  }, [permitCreditLedger]);
 
   async function updateFeedback(id, status) {
     const { error: updateError } = await supabase.from("beta_feedback").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
@@ -209,7 +231,7 @@ export default function AdminPage() {
       <aside className="adminRail">
         <a href="/dashboard" className="adminBrand"><span>P</span><strong>Project Pilot</strong></a>
         <div><small>ADMIN CONTROL CENTER</small><strong>{profile.full_name || user?.email}</strong></div>
-        <nav><a className="active" href="/admin">Overview</a><a href="/admin/launch-readiness">Launch Readiness</a><a href="/admin/support">Support Queue</a><a href="#accounts">Accounts</a><a href="#marketplace">Marketplace</a><a href="#contractors">Contractors</a><a href="#financials">Financials</a><a href="#permits">Permit Concierge</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a></nav>
+        <nav><a className="active" href="/admin">Overview</a><a href="/admin/launch-readiness">Launch Readiness</a><a href="/admin/support">Support Queue</a><a href="#accounts">Accounts</a><a href="#marketplace">Marketplace</a><a href="#contractors">Contractors</a><a href="#financials">Financials</a><a href="#referrals">Referrals</a><a href="#permits">Permit Concierge</a><a href="#feedback">Feedback</a><a href="/dashboard">User Dashboard</a></nav>
         <div className="adminBetaState production"><span /><div><strong>Revenue launch</strong><small>Payments controlled by Vercel setting</small></div></div>
       </aside>
 
@@ -219,7 +241,7 @@ export default function AdminPage() {
         {error && <div className="adminError" role="alert">{error}</div>}
         {notice && <div className="adminNotice" role="status">{notice}</div>}
 
-        <section className="adminBetaBanner productionBanner"><div><strong>Production marketplace controls are installed.</strong><span>Live contractor charges occur only when MARKETPLACE_PAYMENTS_ENABLED is set to true and Stripe is configured.</span></div><b>{money(marketplace.actual_revenue_cents)} collected</b></section>
+        <section className="adminBetaBanner productionBanner"><div><strong>Project Pilot 4.2 free-first revenue controls are installed.</strong><span>Revenue can come from paid Permit Concierge coordination and contractor introduction fees. Stripe live mode and the matching Vercel switches must be enabled before charging.</span></div><b>{money(totalRevenueCents)} collected</b></section>
 
         <section className="launchReadinessPanel">
           <div><p>REVENUE LAUNCH STATUS</p><h2>{launchHealth.paymentsEnabled && launchHealth.mode === "Live" ? "Live payments are enabled" : "Complete the remaining launch connections"}</h2><span>Configuration checks show whether the automated introduction-fee system can collect money.</span></div>
@@ -241,7 +263,7 @@ export default function AdminPage() {
           <article><span>Total projects</span><strong>{number(summary.total_projects)}</strong><small>{number(summary.active_projects)} currently active</small></article>
           <article><span>Verified contractors</span><strong>{number(marketplace.verified_contractors)}</strong><small>{number(marketplace.pending_contractors)} awaiting review</small></article>
           <article><span>Lead requests</span><strong>{number(marketplace.lead_requests)}</strong><small>{number(marketplace.accepted_leads)} accepted</small></article>
-          <article><span>Actual revenue</span><strong>{money(marketplace.actual_revenue_cents)}</strong><small>{number(marketplace.paid_leads)} paid introductions</small></article>
+          <article><span>Total collected</span><strong>{money(totalRevenueCents)}</strong><small>{number(marketplace.paid_leads)} paid introductions · {number(paidPermitOrders)} permit services</small></article>
         </section>
 
         <section className="adminTwoColumn" id="accounts">
@@ -259,16 +281,18 @@ export default function AdminPage() {
           <div className="feedbackTableWrap"><table><thead><tr><th>Business</th><th>Specialties</th><th>Service area</th><th>License</th><th>Insurance</th><th>Status</th></tr></thead><tbody>{contractors.map((item) => <tr key={item.user_id}><td><b>{item.business_name || "Unnamed business"}</b><small className="tableSubline">{item.contact_name} · {item.phone}</small></td><td>{(item.specialties || []).join(", ") || "—"}</td><td>{(item.service_counties || []).join(", ") || "—"}</td><td>{item.license_state} {item.license_number || "Not submitted"}</td><td><select value={item.insurance_status} onChange={(event) => updateContractorInsurance(item.user_id, event.target.value)}><option>Not submitted</option><option>Submitted</option><option>Verified</option><option>Expired</option></select></td><td><select value={item.verification_status} onChange={(event) => verifyContractor(item.user_id, event.target.value)}><option>Pending</option><option>Verified</option><option>Rejected</option><option>Suspended</option></select></td></tr>)}{!contractors.length && <tr><td colSpan="6"><div className="adminEmpty">No contractor profiles yet.</div></td></tr>}</tbody></table></div>
         </section>
 
-        <section className="adminFinancials" id="financials"><div className="adminPanelHeading"><div><p>FINANCIALS</p><h2>Actual money is separated from opportunity value.</h2></div><span>All values in U.S. dollars</span></div><div className="financialGrid"><article><small>ACTUAL REVENUE</small><strong>{money(marketplace.actual_revenue_cents)}</strong><p>Completed paid introductions.</p></article><article><small>OPEN FEE VALUE</small><strong>{money(marketplace.pending_fee_value_cents)}</strong><p>Unpaid offers currently available.</p></article><article><small>PAID INTRODUCTIONS</small><strong>{number(marketplace.paid_leads)}</strong><p>Stripe-confirmed lead payments.</p></article><article><small>OPEN CREDIT REVIEWS</small><strong>{number(marketplace.credit_requests)}</strong><p>Lead-quality disputes needing attention.</p></article></div></section>
+        <section className="adminFinancials" id="financials"><div className="adminPanelHeading"><div><p>FINANCIALS</p><h2>Track money collected across both Project Pilot revenue engines.</h2></div><span>All values in U.S. dollars</span></div><div className="financialGrid"><article><small>TOTAL COLLECTED</small><strong>{money(totalRevenueCents)}</strong><p>Stripe-confirmed Project Pilot revenue.</p></article><article><small>PERMIT CONCIERGE</small><strong>{money(permitRevenueCents)}</strong><p>{number(paidPermitOrders)} paid full-service permit orders.</p></article><article><small>CONTRACTOR INTRODUCTIONS</small><strong>{money(marketplace.actual_revenue_cents)}</strong><p>{number(marketplace.paid_leads)} paid introductions.</p></article><article><small>OPEN REVENUE VALUE</small><strong>{money(Number(marketplace.pending_fee_value_cents || 0) + pendingPermitValueCents)}</strong><p>Pending contractor offers plus permit checkouts.</p></article></div></section>
+
+        <section className="adminFinancials" id="referrals"><div className="adminPanelHeading"><div><p>LOYALTY + REFERRALS</p><h2>Measure whether happy users are bringing in the next customers.</h2></div><span>Give $10 · Get $10</span></div><div className="financialGrid"><article><small>REFERRED ACCOUNTS</small><strong>{number(referralSignups)}</strong><p>Accounts attributed to a Project Pilot referral link.</p></article><article><small>REWARDED REFERRALS</small><strong>{number(rewardedReferrals)}</strong><p>Referrals that produced a paid Concierge order.</p></article><article><small>OUTSTANDING PP CREDIT</small><strong>{money(Math.max(0, outstandingPermitCreditCents))}</strong><p>Current Project Pilot service-credit liability across users.</p></article><article><small>REFERRAL CONVERSION</small><strong>{referralSignups ? `${Math.round(rewardedReferrals / referralSignups * 100)}%` : "0%"}</strong><p>Share-attributed accounts that reached a qualifying paid order.</p></article></div></section>
 
         <section className="adminPanel" id="credits"><div className="adminPanelHeading"><div><p>LEAD REVIEWS</p><h2>Protect contractor trust and lead quality.</h2></div><span>{number(credits.length)} recent requests</span></div><div className="feedbackTableWrap"><table><thead><tr><th>Reason</th><th>Details</th><th>Status</th><th>Date</th></tr></thead><tbody>{credits.map((item) => <tr key={item.id}><td><b>{item.reason}</b></td><td>{item.details || "—"}</td><td><select value={item.status} onChange={(event) => updateCredit(item.id, event.target.value)}><option>Requested</option><option>Reviewing</option><option>Approved</option><option>Denied</option><option>Issued</option></select></td><td>{formatDate(item.created_at)}</td></tr>)}{!credits.length && <tr><td colSpan="4"><div className="adminEmpty">No lead review requests.</div></td></tr>}</tbody></table></div></section>
 
 
         <section className="adminPanel" id="permits">
           <div className="adminPanelHeading"><div><p>PERMIT CONCIERGE</p><h2>Operate homeowner permit requests from intake through approval.</h2></div><span>{number(conciergeRequests.length)} service requests</span></div>
-          <div className="feedbackTableWrap"><table><thead><tr><th>Homeowner contact</th><th>Services</th><th>Assigned</th><th>Status</th><th>Requested</th><th>Open</th></tr></thead><tbody>
-            {conciergeRequests.map((item) => <tr key={item.id}><td><b>{item.contact_email || "No email"}</b><small className="tableSubline">{item.contact_phone || item.preferred_contact}</small></td><td>{(item.requested_services || []).map((value) => String(value).replaceAll("_", " ")).join(", ") || "Review"}</td><td>{item.assigned_to || "Unassigned"}</td><td>{String(item.status || "requested").replaceAll("_", " ")}</td><td>{formatDate(item.requested_at)}</td><td><a href={`/admin/permit-concierge/${item.id}`}>Open workbench →</a></td></tr>)}
-            {!conciergeRequests.length && <tr><td colSpan="6"><div className="adminEmpty">No Permit Concierge requests yet. Run migration 013 if homeowners have requested service.</div></td></tr>}
+          <div className="feedbackTableWrap"><table><thead><tr><th>Homeowner contact</th><th>Payment</th><th>Fee</th><th>Assigned</th><th>Status</th><th>Requested</th><th>Open</th></tr></thead><tbody>
+            {conciergeRequests.map((item) => <tr key={item.id}><td><b>{item.contact_email || "No email"}</b><small className="tableSubline">{item.contact_phone || item.preferred_contact}</small></td><td><b>{String(item.payment_status || "waived").replaceAll("_", " ")}</b><small className="tableSubline">{item.paid_at ? `Paid ${formatDate(item.paid_at)}` : ""}</small></td><td>{money(item.service_fee_cents)}</td><td>{item.assigned_to || "Unassigned"}</td><td>{String(item.status || "requested").replaceAll("_", " ")}</td><td>{formatDate(item.requested_at)}</td><td><a href={`/admin/permit-concierge/${item.id}`}>Open workbench →</a></td></tr>)}
+            {!conciergeRequests.length && <tr><td colSpan="7"><div className="adminEmpty">No Permit Concierge requests yet.</div></td></tr>}
           </tbody></table></div>
         </section>
 

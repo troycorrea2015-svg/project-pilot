@@ -1,0 +1,24 @@
+INSTALL — SPRINT 3.2A EXACT BRAND MATCH UI OVERHAUL
+
+1. Extract this ZIP.
+2. Open the `project-pilot` GitHub repository.
+3. Select Add file → Upload files.
+4. Upload everything inside the extracted folder.
+5. Replace matching files.
+6. Commit with:
+
+Sprint 3.2A Exact Brand Match UI Overhaul
+
+7. Wait for Vercel to finish deploying.
+8. Hard refresh the live site with Ctrl + Shift + R.
+
+WHAT THIS UPDATE DOES
+- Replaces the old visual direction with the approved dark-navy / royal-blue brand system.
+- Updates the homepage layout to match the accepted launch reference more closely.
+- Replaces the visible Project Pilot lockup with the approved logo treatment.
+- Removes leftover teal styling from key global brand tokens.
+
+WHAT THIS UPDATE DOES NOT REQUIRE
+- No Supabase SQL
+- No new API key
+- No new Vercel variables

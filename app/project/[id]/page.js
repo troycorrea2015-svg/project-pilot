@@ -7,6 +7,7 @@ import { readAssistantStream } from "../../../lib/assistant-stream";
 import ProjectVision from "../../../components/ProjectVision";
 import PermitAutopilot from "../../../components/PermitAutopilot";
 import PermitApplicationBuilder from "../../../components/PermitApplicationBuilder";
+import FullServicePermitStart from "../../../components/FullServicePermitStart";
 import "./project.css";
 
 const STAGES = [
@@ -951,7 +952,7 @@ export default function ProjectWorkspacePage() {
         <button className="backButton" onClick={() => router.push("/dashboard")}>← Dashboard</button>
 
         <a href="/dashboard" className="pilotMark pilotMarkImage" aria-label="Project Pilot dashboard">
-          <img src="/project-pilot-lockup-light.svg" alt="Project Pilot" />
+          <img src="/project-pilot-approved-logo.png" alt="Project Pilot" />
         </a>
 
         <div className="projectSummary">
@@ -1329,20 +1330,35 @@ export default function ProjectWorkspacePage() {
               )}
             </section>
 
-            <PermitAutopilot
+            <FullServicePermitStart
               project={project}
               user={user}
-              permitResult={permitResult}
-              onOpenDocuments={() => setActiveTab("documents")}
+              onOpenAssistant={() => setActiveTab("pilot")}
+              onOpenDetails={() => document.getElementById("permit-details")?.scrollIntoView({ behavior: "smooth", block: "start" })}
             />
 
-            {permitResult && (
-              <PermitApplicationBuilder
-                project={project}
-                user={user}
-                permitResult={permitResult}
-              />
-            )}
+            <details className="permitDetailsDisclosure" id="permit-details">
+              <summary>
+                <span>Permit details</span>
+                <small>Open the guided interview, application packet, and technical permit tools only when you need them.</small>
+              </summary>
+              <div className="permitDetailsDisclosureBody">
+                <PermitAutopilot
+                  project={project}
+                  user={user}
+                  permitResult={permitResult}
+                  onOpenDocuments={() => setActiveTab("documents")}
+                />
+
+                {permitResult && (
+                  <PermitApplicationBuilder
+                    project={project}
+                    user={user}
+                    permitResult={permitResult}
+                  />
+                )}
+              </div>
+            </details>
           </div>
         )}
 

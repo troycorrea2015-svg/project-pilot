@@ -9,15 +9,24 @@ import "./concierge.css";
 const STATUSES = [
   ["requested", "Request received"],
   ["intake_review", "Intake review"],
-  ["preparing", "Preparing package"],
+  ["preparing", "Preparing application"],
   ["waiting_on_homeowner", "Waiting on homeowner"],
   ["ready_for_submission", "Ready for submission"],
-  ["filing", "Filing in progress"],
+  ["filing", "Filing / portal coordination"],
   ["submitted", "Submitted"],
   ["corrections", "Corrections"],
   ["approved", "Approved"],
+  ["inspections", "Inspections"],
+  ["closeout", "Closeout"],
   ["closed", "Closed"],
   ["cancelled", "Cancelled"],
+];
+
+const FILING_MODES = [
+  ["unknown", "Needs verification"],
+  ["coordinator_allowed", "Coordinator may file where authorized"],
+  ["applicant_required", "Applicant must complete filing"],
+  ["mixed", "Mixed / some applicant-controlled steps"],
 ];
 
 function formatDate(value) {
@@ -37,19 +46,35 @@ export default function PermitConciergeAdminCase() {
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [authorizations, setAuthorizations] = useState([]);
+  const [corrections, setCorrections] = useState([]);
+  const [inspections, setInspections] = useState([]);
+  const [playbook, setPlaybook] = useState(null);
+  const [permitOrder, setPermitOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
   const [status, setStatus] = useState("requested");
   const [assignedTo, setAssignedTo] = useState("");
   const [summary, setSummary] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
+  const [agencyName, setAgencyName] = useState("");
+  const [agencyUrl, setAgencyUrl] = useState("");
+  const [filingMode, setFilingMode] = useState("unknown");
+  const [customerActionReason, setCustomerActionReason] = useState("");
   const [newTaskOwner, setNewTaskOwner] = useState("concierge");
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskText, setNewTaskText] = useState("");
   const [newTaskDue, setNewTaskDue] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [correctionNotice, setCorrectionNotice] = useState("");
+  const [correctionSummary, setCorrectionSummary] = useState("");
+  const [correctionDue, setCorrectionDue] = useState("");
+  const [inspectionType, setInspectionType] = useState("");
+  const [inspectionDate, setInspectionDate] = useState("");
 
   useEffect(() => {
     loadCase();
@@ -59,6 +84,26 @@ export default function PermitConciergeAdminCase() {
     () => tasks.filter((task) => task.assigned_to === "homeowner" && !["completed", "cancelled"].includes(task.status)),
     [tasks]
   );
+  const openConciergeTasks = useMemo(
+    () => tasks.filter((task) => task.assigned_to === "concierge" && !["completed", "cancelled"].includes(task.status)),
+    [tasks]
+  );
+
+  async function addEvent(title, detail, eventType = "update", visible = true) {
+    if (!request?.id) return;
+    await supabase.from("permit_concierge_events").insert({
+      request_id: request.id,
+      permit_case_id: request.permit_case_id,
+      project_id: request.project_id,
+      user_id: request.user_id,
+      event_type: eventType,
+      title,
+      detail,
+      source: "permit_concierge",
+      visible_to_homeowner: visible,
+      created_by: user?.id || null,
+    });
+  }
 
   async function loadCase() {
     if (!requestId) return;
@@ -103,12 +148,21 @@ export default function PermitConciergeAdminCase() {
     setAssignedTo(requestData.assigned_to || profileData.full_name || currentUser.email || "");
     setSummary(requestData.concierge_summary || "");
     setInternalNotes(requestData.internal_notes || "");
+    setAgencyName(requestData.agency_name || "");
+    setAgencyUrl(requestData.agency_url || "");
+    setFilingMode(requestData.filing_mode || "unknown");
+    setCustomerActionReason(requestData.customer_action_reason || "");
 
-    const [caseResult, projectResult, taskResult, messageResult] = await Promise.all([
+    const [caseResult, projectResult, taskResult, messageResult, eventResult, authResult, correctionResult, inspectionResult, orderResult] = await Promise.all([
       supabase.from("permit_cases").select("*").eq("id", requestData.permit_case_id).single(),
       supabase.from("projects").select("*").eq("id", requestData.project_id).single(),
       supabase.from("permit_concierge_tasks").select("*").eq("request_id", requestData.id).order("sort_order").order("created_at"),
       supabase.from("permit_concierge_messages").select("*").eq("request_id", requestData.id).order("created_at"),
+      supabase.from("permit_concierge_events").select("*").eq("request_id", requestData.id).order("created_at", { ascending: false }),
+      supabase.from("permit_service_authorizations").select("*").eq("request_id", requestData.id).order("accepted_at", { ascending: false }),
+      supabase.from("permit_concierge_corrections").select("*").eq("request_id", requestData.id).order("round_number", { ascending: false }),
+      supabase.from("permit_concierge_inspections").select("*").eq("request_id", requestData.id).order("created_at"),
+      supabase.from("permit_service_orders").select("*").eq("request_id", requestData.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
     if (caseResult.error) setError(caseResult.error.message);
@@ -119,7 +173,53 @@ export default function PermitConciergeAdminCase() {
     else setTasks(taskResult.data || []);
     if (messageResult.error) setError(messageResult.error.message);
     else setMessages(messageResult.data || []);
+    if (!eventResult.error) setEvents(eventResult.data || []);
+    if (!authResult.error) setAuthorizations(authResult.data || []);
+    if (!correctionResult.error) setCorrections(correctionResult.data || []);
+    if (!inspectionResult.error) setInspections(inspectionResult.data || []);
+    if (!orderResult.error) setPermitOrder(orderResult.data || null);
+
+    if (caseResult.data) {
+      const jurisdictionKey = String(caseResult.data.jurisdiction || "").toLowerCase().trim();
+      const projectType = String(caseResult.data.project_type || "general").toLowerCase().trim() || "general";
+      if (jurisdictionKey) {
+        const { data: exactPlaybook } = await supabase
+          .from("permit_jurisdiction_playbooks")
+          .select("*")
+          .eq("jurisdiction_key", jurisdictionKey)
+          .eq("project_type", projectType)
+          .eq("status", "verified")
+          .maybeSingle();
+        setPlaybook(exactPlaybook || null);
+      }
+    }
     setLoading(false);
+  }
+
+  async function refundPermitService() {
+    if (!permitOrder?.id || permitOrder.status !== "paid") return;
+    const confirmed = window.confirm("Refund the full Permit Concierge coordination fee and cancel this paid service case? Only use this before substantive permit coordination has moved beyond intake.");
+    if (!confirmed) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const response = await fetch("/api/admin/permit-service/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ orderId: permitOrder.id }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Refund could not be issued.");
+      setNotice(`Refund issued${payload.stripeRefundId ? ` · ${payload.stripeRefundId}` : ""}.`);
+      await loadCase();
+    } catch (refundError) {
+      setError(refundError.message || "Refund could not be issued.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveRequest() {
@@ -127,32 +227,69 @@ export default function PermitConciergeAdminCase() {
     setSaving(true);
     setError("");
     const now = new Date().toISOString();
+    const previousStatus = request.status;
+
     const { data, error: updateError } = await supabase
       .from("permit_concierge_requests")
       .update({
         status,
+        current_phase: status,
         assigned_to: assignedTo.trim(),
         concierge_summary: summary.trim(),
         internal_notes: internalNotes.trim(),
+        agency_name: agencyName.trim(),
+        agency_url: agencyUrl.trim(),
+        filing_mode: filingMode,
+        customer_action_reason: status === "waiting_on_homeowner" ? customerActionReason.trim() : "",
+        service_completed_at: status === "closed" ? now : request.service_completed_at,
         updated_at: now,
       })
       .eq("id", request.id)
       .select("*")
       .single();
 
-    if (updateError) setError(updateError.message);
-    else {
-      setRequest(data);
-      setNotice("Permit Concierge case saved.");
-      if (status === "waiting_on_homeowner") {
-        await supabase.from("permit_cases").update({ status: "concierge_requested", next_action: openHomeownerTasks[0]?.title || "Homeowner action required", updated_at: now }).eq("id", request.permit_case_id);
-      } else if (status === "submitted") {
-        await supabase.from("permit_cases").update({ status: "submitted", submitted_at: permitCase?.submitted_at || now, updated_at: now }).eq("id", request.permit_case_id);
-      } else if (status === "approved") {
-        await supabase.from("permit_cases").update({ status: "approved", approved_at: permitCase?.approved_at || now, updated_at: now }).eq("id", request.permit_case_id);
-      }
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
+      return;
+    }
+
+    setRequest(data);
+    setNotice("Full-service permit case saved.");
+
+    const casePatch = { updated_at: now };
+    if (status === "waiting_on_homeowner") {
+      casePatch.status = "concierge_requested";
+      casePatch.next_action = openHomeownerTasks[0]?.title || customerActionReason || "Homeowner action required";
+    } else if (status === "submitted") {
+      casePatch.status = "submitted";
+      casePatch.submitted_at = permitCase?.submitted_at || now;
+      casePatch.next_action = "Project Pilot is monitoring the permit for agency updates.";
+    } else if (status === "corrections") {
+      casePatch.status = "correction_required";
+      casePatch.next_action = "Project Pilot is preparing the correction response.";
+    } else if (status === "approved") {
+      casePatch.status = "approved";
+      casePatch.approved_at = permitCase?.approved_at || now;
+      casePatch.next_action = "Project Pilot is checking inspection and closeout requirements.";
+    } else if (status === "inspections") {
+      casePatch.status = "inspection";
+      casePatch.next_action = "Project Pilot is coordinating required inspections.";
+    } else if (status === "closed") {
+      casePatch.status = "closed";
+      casePatch.closed_at = permitCase?.closed_at || now;
+      casePatch.next_action = "Permit process complete.";
+    } else {
+      casePatch.status = "concierge_requested";
+      casePatch.next_action = "Project Pilot is handling the permit workflow.";
+    }
+    await supabase.from("permit_cases").update(casePatch).eq("id", request.permit_case_id);
+
+    if (previousStatus !== status) {
+      await addEvent(`Permit status: ${STATUSES.find(([key]) => key === status)?.[1] || status}`, summary.trim() || "The permit case moved to the next operating stage.", "status_change", true);
     }
     setSaving(false);
+    await loadCase();
   }
 
   async function addTask() {
@@ -177,8 +314,9 @@ export default function PermitConciergeAdminCase() {
       .select("*")
       .single();
 
-    if (taskError) setError(taskError.message);
-    else {
+    if (taskError) {
+      setError(taskError.message);
+    } else {
       setTasks((current) => [...current, data]);
       setNewTaskTitle("");
       setNewTaskText("");
@@ -187,7 +325,9 @@ export default function PermitConciergeAdminCase() {
       if (newTaskOwner === "homeowner") {
         const now = new Date().toISOString();
         setStatus("waiting_on_homeowner");
-        await supabase.from("permit_concierge_requests").update({ status: "waiting_on_homeowner", updated_at: now }).eq("id", request.id);
+        setCustomerActionReason(newTaskText.trim() || title);
+        await supabase.from("permit_concierge_requests").update({ status: "waiting_on_homeowner", customer_action_reason: newTaskText.trim() || title, updated_at: now }).eq("id", request.id);
+        await addEvent("Homeowner action required", newTaskText.trim() || title, "homeowner_action", true);
       }
     }
     setSaving(false);
@@ -203,7 +343,7 @@ export default function PermitConciergeAdminCase() {
       .select("*")
       .single();
     if (taskError) setError(taskError.message);
-    else setTasks((current) => current.map((item) => item.id === task.id ? data : item));
+    else setTasks((current) => current.map((item) => (item.id === task.id ? data : item)));
   }
 
   async function sendMessage() {
@@ -232,18 +372,81 @@ export default function PermitConciergeAdminCase() {
       setMessages((current) => [...current, data]);
       setMessageText("");
       await supabase.from("permit_concierge_requests").update({ last_concierge_message_at: now, updated_at: now }).eq("id", request.id);
+      await addEvent("Update from Permit Concierge", body, "message", true);
       setNotice("Message sent to the homeowner.");
     }
     setSaving(false);
   }
 
-  if (loading) return <main className="adminLoading">Opening Permit Concierge case…</main>;
+  async function addCorrection() {
+    if (!correctionNotice.trim() || !request?.id) return;
+    setSaving(true);
+    const roundNumber = Math.max(0, ...corrections.map((item) => Number(item.round_number || 0))) + 1;
+    const { error: correctionError } = await supabase.from("permit_concierge_corrections").insert({
+      request_id: request.id,
+      permit_case_id: request.permit_case_id,
+      project_id: request.project_id,
+      user_id: request.user_id,
+      round_number: roundNumber,
+      notice_text: correctionNotice.trim(),
+      plain_language_summary: correctionSummary.trim(),
+      status: "reviewing",
+      due_at: correctionDue ? new Date(`${correctionDue}T17:00:00`).toISOString() : null,
+      visible_to_homeowner: true,
+    });
+    if (correctionError) {
+      setError(correctionError.message);
+    } else {
+      await supabase.from("permit_concierge_requests").update({ status: "corrections", current_phase: "corrections", updated_at: new Date().toISOString() }).eq("id", request.id);
+      await addEvent(`Correction round ${roundNumber} received`, correctionSummary.trim() || "Project Pilot is reviewing the agency comments and preparing the response.", "correction", true);
+      setCorrectionNotice("");
+      setCorrectionSummary("");
+      setCorrectionDue("");
+      setNotice("Correction round added.");
+      await loadCase();
+    }
+    setSaving(false);
+  }
+
+  async function addInspection() {
+    if (!inspectionType.trim() || !request?.id) return;
+    setSaving(true);
+    const { error: inspectionError } = await supabase.from("permit_concierge_inspections").insert({
+      request_id: request.id,
+      permit_case_id: request.permit_case_id,
+      project_id: request.project_id,
+      user_id: request.user_id,
+      inspection_type: inspectionType.trim(),
+      agency_name: agencyName.trim(),
+      status: inspectionDate ? "scheduled" : "ready_to_schedule",
+      scheduled_at: inspectionDate ? new Date(inspectionDate).toISOString() : null,
+      visible_to_homeowner: true,
+    });
+    if (inspectionError) {
+      setError(inspectionError.message);
+    } else {
+      await supabase.from("permit_concierge_requests").update({ status: "inspections", current_phase: "inspections", updated_at: new Date().toISOString() }).eq("id", request.id);
+      await addEvent(`Inspection: ${inspectionType.trim()}`, inspectionDate ? `Scheduled for ${formatDate(inspectionDate)}.` : "Ready to schedule.", "inspection", true);
+      setInspectionType("");
+      setInspectionDate("");
+      setNotice("Inspection added.");
+      await loadCase();
+    }
+    setSaving(false);
+  }
+
+  if (loading) return <main className="adminLoading">Opening full-service permit case…</main>;
   if (!profile?.is_admin) return <main className="adminDenied"><div><h1>Admin access required.</h1><button onClick={() => router.push("/dashboard")}>Return to Dashboard</button></div></main>;
 
   return (
     <main className="conciergeAdminPage">
       <header className="conciergeAdminHeader">
-        <div><a href="/admin#permits">← Permit Concierge queue</a><p>PERMIT CONCIERGE WORKBENCH</p><h1>{project?.title || "Permit case"}</h1><span>{project?.address || project?.location_label || "No address saved"} · {permitCase?.jurisdiction || "Jurisdiction review needed"}</span></div>
+        <div>
+          <a href="/admin#permits">← Permit operations queue</a>
+          <p>FULL-SERVICE PERMIT WORKBENCH</p>
+          <h1>{request?.case_number || project?.title || "Permit case"}</h1>
+          <span>{project?.title || "Untitled project"} · {project?.address || project?.location_label || "No address saved"}</span>
+        </div>
         <button type="button" onClick={saveRequest} disabled={saving}>{saving ? "Saving…" : "Save case"}</button>
       </header>
 
@@ -253,62 +456,109 @@ export default function PermitConciergeAdminCase() {
       <section className="conciergeAdminStats">
         <article><small>READINESS</small><strong>{Number(permitCase?.readiness_score || 0)}%</strong></article>
         <article><small>STATUS</small><strong>{STATUSES.find(([key]) => key === status)?.[1] || status}</strong></article>
-        <article><small>HOMEOWNER TASKS</small><strong>{openHomeownerTasks.length}</strong></article>
-        <article><small>REQUESTED</small><strong>{formatDate(request?.requested_at)}</strong></article>
+        <article><small>CUSTOMER ACTIONS</small><strong>{openHomeownerTasks.length}</strong></article>
+        <article><small>PROJECT PILOT TASKS</small><strong>{openConciergeTasks.length}</strong></article>
+        <article><small>PAYMENT</small><strong>{request?.payment_status === "paid" ? `$${(Number(request?.service_fee_cents || 0) / 100).toFixed(0)} Paid` : (request?.payment_status || "—")}</strong></article>
+      </section>
+
+      <section className={`permitOpsBanner ${openHomeownerTasks.length ? "needsCustomer" : "handling"}`}>
+        <strong>{openHomeownerTasks.length ? "Customer action is blocking the case" : "Project Pilot owns the next action"}</strong>
+        <span>{openHomeownerTasks.length ? customerActionReason || openHomeownerTasks[0]?.plain_language || openHomeownerTasks[0]?.title : summary || "Keep the case moving until a government-controlled applicant step is required."}</span>
       </section>
 
       <div className="conciergeAdminGrid">
         <section className="conciergeAdminPanel">
-          <div><p>CASE CONTROL</p><h2>Assign, summarize, and move the permit forward.</h2></div>
+          <div><p>CASE CONTROL</p><h2>Operate the permit from intake through closeout.</h2></div>
           <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}>{STATUSES.map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label><span>Assigned coordinator</span><input value={assignedTo} onChange={(event) => setAssignedTo(event.target.value)} /></label>
-          <label><span>Homeowner-visible summary</span><textarea rows="5" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Explain what Project Pilot is doing and what happens next." /></label>
+          <label><span>Homeowner-visible update</span><textarea rows="4" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Tell the customer what Project Pilot is handling right now." /></label>
+          {status === "waiting_on_homeowner" && <label><span>Why the customer must act</span><textarea rows="3" value={customerActionReason} onChange={(event) => setCustomerActionReason(event.target.value)} placeholder="Example: County portal requires the applicant to log in and sign the certification." /></label>}
           <label><span>Internal notes</span><textarea rows="5" value={internalNotes} onChange={(event) => setInternalNotes(event.target.value)} placeholder="Private operating notes. Not shown to the homeowner." /></label>
-          <div className="conciergeContact"><strong>Preferred contact</strong><span>{request?.preferred_contact} · {request?.contact_email}{request?.contact_phone ? ` · ${request.contact_phone}` : ""}</span><small>{request?.best_contact_time || "No preferred time"}</small></div>
-          {request?.homeowner_notes && <div className="conciergeHomeownerNotes"><strong>Homeowner request</strong><p>{request.homeowner_notes}</p></div>}
         </section>
 
         <section className="conciergeAdminPanel">
-          <div><p>APPLICATION SNAPSHOT</p><h2>Review the saved permit information.</h2></div>
+          <div><p>OFFICIAL FILING ROUTE</p><h2>Verify before you promise who can submit.</h2></div>
+          <label><span>Agency / permit authority</span><input value={agencyName} onChange={(event) => setAgencyName(event.target.value)} placeholder="County, town, state office…" /></label>
+          <label><span>Official portal / application URL</span><input value={agencyUrl} onChange={(event) => setAgencyUrl(event.target.value)} placeholder="https://…" /></label>
+          <label><span>Filing mode</span><select value={filingMode} onChange={(event) => setFilingMode(event.target.value)}>{FILING_MODES.map(([key,label]) => <option value={key} key={key}>{label}</option>)}</select></label>
+          <div className={`playbookStatus ${playbook ? "verified" : "missing"}`}>
+            <strong>{playbook ? "✓ Verified jurisdiction playbook found" : "! No verified playbook found"}</strong>
+            <span>{playbook ? `${playbook.jurisdiction_label} · ${playbook.project_type}` : "Verify the jurisdiction, official sources, filing authority, required applicant actions, and document list before submitting or promising full filing."}</span>
+          </div>
+          {agencyUrl && <a href={agencyUrl} target="_blank" rel="noreferrer">Open official permit portal ↗</a>}
+        </section>
+
+        <section className="conciergeAdminPanel">
+          <div><p>PAYMENT + AUTHORIZATION</p><h2>Service purchase and customer authorization.</h2></div>
+          <dl className="conciergeSnapshot">
+            <div><dt>Payment</dt><dd>{request?.payment_status || "—"}</dd></div>
+            <div><dt>Base price</dt><dd>{permitOrder?.metadata?.base_price_cents ? `$${(Number(permitOrder.metadata.base_price_cents) / 100).toFixed(2)}` : (request?.service_fee_cents ? `$${(Number(request.service_fee_cents) / 100).toFixed(2)}` : "$0.00")}</dd></div>
+            <div><dt>Project Pilot credit</dt><dd>{Number(permitOrder?.metadata?.credit_applied_cents || 0) > 0 ? `-$${(Number(permitOrder.metadata.credit_applied_cents) / 100).toFixed(2)}` : "$0.00"}</dd></div>
+            <div><dt>Amount charged</dt><dd>{request?.service_fee_cents ? `$${(Number(request.service_fee_cents) / 100).toFixed(2)}` : "$0.00"}</dd></div>
+            <div><dt>Paid at</dt><dd>{formatDate(request?.paid_at)}</dd></div>
+            <div><dt>Stripe order</dt><dd>{permitOrder?.status || "—"}</dd></div>
+          </dl>
+          {permitOrder?.status === "paid" && ["requested", "intake_review"].includes(request?.status) && <button type="button" onClick={refundPermitService} disabled={saving}>Refund before substantive work</button>}
+          <div><p>AUTHORIZATION</p><h2>What the customer authorized.</h2></div>
+          {authorizations.length ? authorizations.map((auth) => <article className="authorizationRecord" key={auth.id}><strong>{auth.signer_name}</strong><span>{auth.signer_email}</span><small>Accepted {formatDate(auth.accepted_at)} · version {auth.authorization_version}</small><details><summary>Authorized scopes</summary><pre>{JSON.stringify(auth.scopes || {}, null, 2)}</pre></details></article>) : <div className="adminEmpty">No current authorization record. Do not perform full-service filing work until authorization is recorded.</div>}
+        </section>
+
+        <section className="conciergeAdminPanel">
+          <div><p>APPLICATION SNAPSHOT</p><h2>Saved permit information.</h2></div>
           <dl className="conciergeSnapshot">
             <div><dt>Project type</dt><dd>{permitCase?.project_type || project?.project_type || "—"}</dd></div>
-            <div><dt>Jurisdiction</dt><dd>{permitCase?.jurisdiction || "—"}</dd></div>
+            <div><dt>Jurisdiction</dt><dd>{permitCase?.jurisdiction || "Needs verification"}</dd></div>
             <div><dt>Application route</dt><dd>{permitCase?.application_label || "—"}</dd></div>
-            <div><dt>Reference</dt><dd>{permitCase?.application_reference || "Not submitted"}</dd></div>
+            <div><dt>Government reference</dt><dd>{permitCase?.application_reference || "Not submitted"}</dd></div>
             <div><dt>Government fee</dt><dd>{permitCase?.government_fee_amount == null ? "Not recorded" : `$${Number(permitCase.government_fee_amount).toFixed(2)}`}</dd></div>
-            <div><dt>Next action</dt><dd>{permitCase?.next_action || "Not recorded"}</dd></div>
+            <div><dt>Next action</dt><dd>{permitCase?.next_action || "Project Pilot operating review"}</dd></div>
           </dl>
-          <details><summary>Application answers</summary><pre>{JSON.stringify(permitCase?.answers || {}, null, 2)}</pre></details>
-          <details><summary>Linked document map</summary><pre>{JSON.stringify(permitCase?.document_links || {}, null, 2)}</pre></details>
         </section>
       </div>
 
-      <section className="conciergeAdminPanel">
-        <div><p>SHARED TASKS</p><h2>Separate what Project Pilot handles from what the homeowner must do.</h2></div>
-        <div className="conciergeTaskTable">
-          {tasks.map((task) => (
-            <article key={task.id}>
-              <div><span className={task.assigned_to === "homeowner" ? "homeownerOwner" : "conciergeOwner"}>{task.assigned_to}</span><strong>{task.title}</strong><p>{task.plain_language}</p></div>
-              <select value={task.status} onChange={(event) => updateTask(task, { status: event.target.value })}><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="blocked">Blocked</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
-            </article>
-          ))}
-        </div>
-        <div className="conciergeNewTask">
-          <select value={newTaskOwner} onChange={(event) => setNewTaskOwner(event.target.value)}><option value="concierge">Project Pilot task</option><option value="homeowner">Homeowner task</option></select>
+      <section className="conciergeAdminPanel permitOpsFull">
+        <div><p>WORK QUEUE</p><h2>Project Pilot tasks vs. customer-controlled actions.</h2></div>
+        <div className="conciergeTaskCreate">
+          <select value={newTaskOwner} onChange={(event) => setNewTaskOwner(event.target.value)}><option value="concierge">Project Pilot</option><option value="homeowner">Homeowner</option></select>
           <input value={newTaskTitle} onChange={(event) => setNewTaskTitle(event.target.value)} placeholder="Task title" />
-          <input type="date" value={newTaskDue} onChange={(event) => setNewTaskDue(event.target.value)} />
-          <textarea rows="2" value={newTaskText} onChange={(event) => setNewTaskText(event.target.value)} placeholder="Explain the task in plain English." />
+          <input value={newTaskDue} onChange={(event) => setNewTaskDue(event.target.value)} type="date" />
+          <textarea rows="2" value={newTaskText} onChange={(event) => setNewTaskText(event.target.value)} placeholder="Explain the task in plain language." />
           <button type="button" onClick={addTask} disabled={saving || !newTaskTitle.trim()}>Add task</button>
+        </div>
+        <div className="conciergeAdminTaskList">
+          {tasks.map((task) => <article key={task.id}><div><small>{task.assigned_to === "homeowner" ? "CUSTOMER" : "PROJECT PILOT"}</small><strong>{task.title}</strong><p>{task.plain_language}</p>{task.due_at && <span>Due {formatDate(task.due_at)}</span>}</div><select value={task.status} onChange={(event) => updateTask(task,{ status:event.target.value })}><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="blocked">Blocked</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></article>)}
         </div>
       </section>
 
-      <section className="conciergeAdminPanel">
-        <div><p>HOMEOWNER COMMUNICATION</p><h2>Keep every permit update attached to the case.</h2></div>
-        <div className="conciergeAdminMessages">
-          {messages.map((message) => <article className={message.sender_role === "homeowner" ? "fromHomeowner" : "fromConcierge"} key={message.id}><strong>{message.sender_role === "homeowner" ? "Homeowner" : message.sender_role === "concierge" ? "Permit Concierge" : "Project Pilot"}</strong><p>{message.body}</p><small>{formatDate(message.created_at)}</small></article>)}
-        </div>
-        <textarea rows="4" value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder="Send a plain-English update or request to the homeowner." />
-        <button type="button" onClick={sendMessage} disabled={saving || !messageText.trim()}>Send homeowner message</button>
+      <div className="conciergeAdminGrid">
+        <section className="conciergeAdminPanel">
+          <div><p>CORRECTIONS</p><h2>Turn reviewer comments into a managed response.</h2></div>
+          <label><span>Government correction notice</span><textarea rows="4" value={correctionNotice} onChange={(event) => setCorrectionNotice(event.target.value)} placeholder="Paste or summarize the reviewer comments." /></label>
+          <label><span>Plain-English customer summary</span><textarea rows="3" value={correctionSummary} onChange={(event) => setCorrectionSummary(event.target.value)} placeholder="What Project Pilot is doing about it." /></label>
+          <label><span>Response due date</span><input type="date" value={correctionDue} onChange={(event) => setCorrectionDue(event.target.value)} /></label>
+          <button type="button" onClick={addCorrection} disabled={saving || !correctionNotice.trim()}>Add correction round</button>
+          <div className="permitOpsRecords">{corrections.map((item) => <article key={item.id}><strong>Round {item.round_number} · {item.status.replaceAll("_"," ")}</strong><p>{item.plain_language_summary || item.notice_text}</p><small>{formatDate(item.received_at)}</small></article>)}</div>
+        </section>
+
+        <section className="conciergeAdminPanel">
+          <div><p>INSPECTIONS + CLOSEOUT</p><h2>Track the permit after approval too.</h2></div>
+          <label><span>Inspection type</span><input value={inspectionType} onChange={(event) => setInspectionType(event.target.value)} placeholder="Footing, framing, final…" /></label>
+          <label><span>Scheduled date/time</span><input type="datetime-local" value={inspectionDate} onChange={(event) => setInspectionDate(event.target.value)} /></label>
+          <button type="button" onClick={addInspection} disabled={saving || !inspectionType.trim()}>Add inspection</button>
+          <div className="permitOpsRecords">{inspections.map((item) => <article key={item.id}><strong>{item.inspection_type} · {item.status.replaceAll("_"," ")}</strong><p>{item.result_notes || item.homeowner_preparation || "No result notes yet."}</p><small>{item.scheduled_at ? formatDate(item.scheduled_at) : "Not scheduled"}</small></article>)}</div>
+        </section>
+      </div>
+
+      <section className="conciergeAdminPanel permitOpsFull">
+        <div><p>CUSTOMER COMMUNICATION</p><h2>Keep every permit update attached to the case.</h2></div>
+        <div className="conciergeAdminMessages">{messages.map((message) => <article className={message.sender_role === "homeowner" ? "fromHomeowner" : "fromConcierge"} key={message.id}><strong>{message.sender_role === "homeowner" ? "Homeowner" : message.sender_role === "concierge" ? "Permit Concierge" : "Project Pilot"}</strong><p>{message.body}</p><small>{formatDate(message.created_at)}</small></article>)}</div>
+        <textarea rows="3" value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder="Send a clear status update or request only what the homeowner must personally do." />
+        <button type="button" onClick={sendMessage} disabled={saving || !messageText.trim()}>Send update</button>
+      </section>
+
+      <section className="conciergeAdminPanel permitOpsFull">
+        <div><p>AUDIT TIMELINE</p><h2>What happened and when.</h2></div>
+        <div className="permitOpsTimeline">{events.map((event) => <article key={event.id}><small>{formatDate(event.created_at)}</small><div><strong>{event.title}</strong><p>{event.detail}</p><span>{event.visible_to_homeowner ? "Visible to homeowner" : "Internal"}</span></div></article>)}{!events.length && <div className="adminEmpty">No permit operations timeline events yet.</div>}</div>
       </section>
     </main>
   );

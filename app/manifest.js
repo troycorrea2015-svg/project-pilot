@@ -7,6 +7,6 @@ export default function manifest() {
     display: "standalone",
     background_color: "#f4f7ff",
     theme_color: "#07172f",
-    icons: [{ src: "/project-pilot-mark.svg", sizes: "any", type: "image/svg+xml" }],
+    icons: [{ src: "/project-pilot-approved-mark.png", sizes: "205x205", type: "image/png" }],
   };
 }

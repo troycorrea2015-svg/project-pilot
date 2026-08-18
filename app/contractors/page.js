@@ -142,7 +142,7 @@ export default function ContractorsPage() {
     return (
       <main className="contractorPage">
         <header className="contractorTopbar">
-          <a href="/" className="contractorBrand"><img src="/project-pilot-lockup-light.svg" alt="Project Pilot" /></a>
+          <a href="/" className="contractorBrand"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></a>
         </header>
         <section className="signInPanel">
           <p>LOCAL CONTRACTORS</p>
@@ -157,7 +157,7 @@ export default function ContractorsPage() {
   return (
     <main className="contractorPage">
       <header className="contractorTopbar">
-        <a href="/dashboard" className="contractorBrand"><img src="/project-pilot-lockup-light.svg" alt="Project Pilot" /></a>
+        <a href="/dashboard" className="contractorBrand"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></a>
         <nav><a href="/dashboard">Dashboard</a><a href="/support">Help</a></nav>
       </header>
 

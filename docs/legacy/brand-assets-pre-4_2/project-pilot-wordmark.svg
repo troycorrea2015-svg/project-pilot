@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 210" role="img" aria-labelledby="title desc">
+<title id="title">Project Pilot</title>
+<desc id="desc">Project Pilot logo with the tagline AI Guidance. Real Results.</desc>
+<defs>
+  <linearGradient id="t" x1="20" y1="12" x2="170" y2="92"><stop stop-color="#3DA5FF"/><stop offset=".55" stop-color="#1677FF"/><stop offset="1" stop-color="#2563FF"/></linearGradient>
+  <linearGradient id="l" x1="30" y1="50" x2="88" y2="178"><stop stop-color="#1555D7"/><stop offset=".55" stop-color="#0A2E88"/><stop offset="1" stop-color="#1267F3"/></linearGradient>
+  <linearGradient id="r" x1="85" y1="82" x2="165" y2="165"><stop stop-color="#061E5E"/><stop offset=".55" stop-color="#0E3EAC"/><stop offset="1" stop-color="#2563FF"/></linearGradient>
+</defs>
+<g transform="translate(10 5)">
+  <path fill="url(#l)" d="M18 68c0-11 5-21 14-27l17-11 27 33-15 11v96c0 11-9 20-20 20s-23-8-23-20V68z"/>
+  <path fill="url(#t)" d="M32 41 65 19c11-8 25-8 36 0l35 24c9 6 14 17 14 28v30l-38-22v-6L83 53 52 75 32 41z"/>
+  <path fill="url(#r)" d="M150 69v64c0 10-5 19-14 25l-15 9c-8 5-19 5-27-1l-28-23 24-26 22 17V79l38-10z"/>
+  <path fill="#fff" d="m61 87 22-17 30 22v23l-23 17-24-18 14-13-19-14z"/>
+</g>
+<text x="205" y="103" fill="#0A0F1C" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="800" letter-spacing="7">PROJECT</text>
+<text x="586" y="103" fill="#2563FF" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="800" letter-spacing="7">PILOT</text>
+<text x="208" y="151" fill="#64748B" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="8">AI GUIDANCE. REAL RESULTS.</text>
+</svg>

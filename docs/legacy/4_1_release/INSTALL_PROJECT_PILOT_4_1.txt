@@ -1,0 +1,85 @@
+PROJECT PILOT 4.1 — COMPLETE INSTALL
+====================================
+
+THIS ZIP IS A FULL RELEASE, NOT A PATCH.
+You do not need to install Sprint 3.6 or Project Pilot 4.0 first.
+
+1) SUPABASE — RUN ONE CUMULATIVE UPGRADE
+----------------------------------------
+For your EXISTING Project Pilot Supabase database, run the entire file:
+
+RUN_THIS_IN_SUPABASE_4_1_UPGRADE.sql
+
+It includes 015 + 016 + 017 + 018 in the correct order.
+
+If this is a completely NEW Supabase database with none of Project Pilot installed, use:
+
+RUN_THIS_IN_SUPABASE_FRESH_4_1.sql
+
+2) GITHUB / VERCEL — REPLACE THE APP WITH THIS FULL RELEASE
+-----------------------------------------------------------
+Upload the CONTENTS of the project-pilot folder to the root of the GitHub repository that Vercel deploys.
+Do not layer older Sprint or 4.0 ZIPs over it afterward.
+
+3) VERCEL ENVIRONMENT VARIABLES
+-------------------------------
+Use VERCEL_ENVIRONMENT_VALUES.txt as the checklist.
+
+Permit Concierge defaults:
+- PERMIT_SERVICE_PAYMENTS_ENABLED=true only after Stripe test checkout passes
+- PERMIT_CONCIERGE_PRICE_CENTS=9900
+- NEXT_PUBLIC_PERMIT_CONCIERGE_PRICE_CENTS=9900
+- PERMIT_CONCIERGE_MAX_CREDIT_CENTS=4000
+
+The free self-service permit path does not require payment.
+
+Required before accepting paid Permit Concierge orders:
+- NEXT_PUBLIC_SITE_URL
+- Supabase URL, publishable/anon key, and service-role secret
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- OPENAI_API_KEY
+- RESEND_API_KEY
+- MARKETPLACE_FROM_EMAIL
+- PERMIT_CONCIERGE_EMAIL
+
+4) STRIPE WEBHOOK
+-----------------
+Endpoint:
+https://www.projectpiloting.com/api/marketplace/webhook
+
+Subscribe to:
+- checkout.session.completed
+- checkout.session.expired
+
+5) TEST THE COMPLETE CUSTOMER EXPERIENCE
+----------------------------------------
+A) Create a brand-new homeowner account with no referral.
+B) Create a project and confirm the permit route can be researched for free.
+C) Open advanced permit tools and confirm the application builder/checklist remain available without checkout.
+D) Choose Permit Concierge and confirm the displayed base price is $99.
+E) Complete a Stripe TEST checkout and confirm the case activates only after payment confirmation.
+F) Confirm Admin Financials and the Permit Concierge workbench show the paid order.
+G) Test an intake-stage refund.
+H) Create/share a referral link from the dashboard.
+I) Create a second new account using that referral link and confirm it receives $10 credit.
+J) Confirm the second account's Concierge checkout applies the credit automatically.
+K) After the second account pays, confirm the first account receives $10 credit.
+L) Refund the qualifying test order and confirm the customer's applied credit is restored and the referrer's reward is reversed.
+
+6) TURN ON REAL REVENUE
+-----------------------
+After all tests pass:
+A) Replace Stripe TEST values with live values.
+B) Create the LIVE Stripe webhook and install its live whsec_ secret.
+C) Set PERMIT_SERVICE_PAYMENTS_ENABLED=true.
+D) Deploy again.
+E) Open /admin/launch-readiness and resolve every critical item.
+
+MARKETPLACE_PAYMENTS_ENABLED can remain false until contractor introduction checkout is separately tested.
+
+7) OPERATE THE SERVICE
+----------------------
+A paid Concierge order creates software workflow and revenue records, but a Project Pilot operator must still verify the jurisdiction, prepare/coordinate the authorized administrative work, communicate with the customer, and move the case through closeout.
+
+Do not claim Project Pilot can perform applicant-only or licensed-professional actions that the governing authority reserves for someone else.

@@ -1,0 +1,15 @@
+{
+  "version": "3.0C",
+  "name": "Project Pilot Brand Identity Patch",
+  "files": [
+    "app/brand.css",
+    "public/project-pilot-mark.svg",
+    "public/project-pilot-wordmark.svg",
+    "public/favicon.svg",
+    "scripts/install-project-pilot-brand.js",
+    "scripts/verify-project-pilot-brand.js",
+    "README_BRANDING_PATCH.txt"
+  ],
+  "database_changes": false,
+  "payment_changes": false
+}
