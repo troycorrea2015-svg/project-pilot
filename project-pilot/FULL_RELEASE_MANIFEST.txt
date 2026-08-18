@@ -1,0 +1,121 @@
+PROJECT PILOT 4.2 — FULL RELEASE MANIFEST
+=========================================
+Release: 4.2.0 Modern Easy Complete Service
+Release date: August 18, 2026
+Package type: FULL cumulative application release — NOT A PATCH
+
+INSTALL PATH
+------------
+Existing Project Pilot Supabase database:
+  RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql
+
+Brand-new empty Supabase database:
+  RUN_THIS_IN_SUPABASE_FRESH_4_2.sql
+
+Then deploy this entire source tree to the GitHub repository connected to Vercel and configure the Vercel environment values.
+
+APPROVED 4.2 CUSTOMER EXPERIENCE
+--------------------------------
+- Warm/light modern interface based on the user-approved Option 5 direction.
+- Exact approved 3D/folded-ribbon blue Project Pilot P + PROJECT PILOT wordmark is the active brand source of truth.
+- Homepage hero slideshow: Kitchen, Bathroom, Deck, Addition, Shed/Garage, Fence.
+- Auto-rotation plus manual arrows, indicators, and project-type thumbnails.
+- Modern photography, generous spacing, clean cards, blue/navy accents, and welcoming copy.
+- Mobile-responsive homepage and application workspace.
+- $0 free self-service is a real path, not a teaser.
+- $99 Permit Concierge is the convenience upgrade for customers who want Project Pilot to handle the administrative workflow.
+- Give $10, Get $10 referral loop with Project Pilot service credits.
+
+ADAPTIVE PERMIT EXPERIENCE
+--------------------------
+- No universal Upload Plans step.
+- Project Pilot first identifies the permit route and requirements.
+- Plans, surveys, drawings, IDs, municipal approvals, and supporting files are requested only when confirmed/appropriate for the project and jurisdiction.
+- If no mandatory upload has been confirmed, the customer is explicitly told they can continue.
+- If a file is required, Project Pilot explains what it is, why it is needed, and lets the customer upload it when available.
+- Verified required files/answers can still block authorization so the workflow does not bypass real jurisdiction requirements.
+- Customer-facing journey: Permit Route → Project Details → Requirements → Prepare & Review → Submit & Track.
+
+CUMULATIVE APPLICATION CONTENT
+------------------------------
+- Homepage, authentication, account roles, dashboard, projects, tasks, budget, documents, notes, and project progress.
+- NOVA/Su project guidance and Project Vision image workflow.
+- Permit planning, Permit Autopilot, Permit Application Builder, Permit Concierge operations, corrections, inspections, and closeout.
+- Contractor finder / Best Match marketplace and contractor qualified-introduction revenue path.
+- Stripe checkout confirmation + signed webhook fulfillment.
+- Permit service order ledger and payment status.
+- Referral codes, referral attribution, Project Pilot credit ledger, automatic checkout credit, and refund reversal logic.
+- Admin financial reporting for Permit Concierge and contractor introductions.
+- Admin intake-stage Permit Concierge refund workflow.
+- Customer and operating-inbox email notifications through Resend configuration.
+- Launch-readiness endpoint/control requiring payment and operating configuration before reporting ready.
+- Legacy pre-payment Concierge intake endpoint retired to prevent a free human-service bypass.
+
+DATABASE MIGRATIONS INCLUDED
+----------------------------
+005_pilot_chat.sql
+006_build_2_workspace.sql
+007_sprint_2_2_2_3.sql
+008_sprints_2_4_2_5_beta_release.sql
+009_sprint_3_0a_guided_beta.sql
+010_admin_access_repair.sql
+010_revenue_launch_marketplace.sql
+011_project_vision_3_0c.sql
+012_permit_autopilot_3_1.sql
+013_permit_concierge_3_1c.sql
+014_launch_candidate_3_2.sql
+015_permit_application_builder_3_3.sql
+016_full_service_permit_operations_3_6.sql
+017_revenue_completion_4_0.sql
+018_loyalty_referrals_4_1.sql
+
+CRITICAL SERVICE / REVENUE ROUTES
+---------------------------------
+app/api/permit-service/start/route.js
+app/api/permit-service/complete/route.js
+app/api/marketplace/webhook/route.js
+app/api/admin/permit-service/refund/route.js
+app/api/referrals/claim/route.js
+app/api/referrals/status/route.js
+app/api/admin/launch-readiness/route.js
+lib/permit-service-server.js
+lib/referrals-server.js
+lib/marketplace-server.js
+
+CRITICAL 4.2 UX FILES
+---------------------
+app/page.js
+app/page.css
+components/PermitAutopilot.js
+components/PermitAutopilot.module.css
+lib/permit-autopilot.js
+public/project-pilot-approved-logo.png
+public/project-pilot-approved-mark.png
+public/category-kitchen.jpg
+public/category-bathroom.jpg
+public/category-deck.jpg
+public/category-addition.jpg
+public/category-shed.jpg
+public/category-fence.jpg
+
+RELEASE GUIDES
+--------------
+README.md
+INSTALL_PROJECT_PILOT_4_2.txt
+RELEASE_4_2_NOTES.md
+VERCEL_ENVIRONMENT_VALUES.txt
+REVENUE_LAUNCH_CHECKLIST.md
+OPERATIONS_PROJECT_PILOT_4_2.md
+JURISDICTION_PLAYBOOK_TEMPLATE.md
+RELEASE_VALIDATION.txt
+FULL_RELEASE_MANIFEST.txt
+SHA256SUMS.txt
+
+NOT INCLUDED BY DESIGN
+----------------------
+- Live API keys or secrets.
+- Customer card data (handled by Stripe Checkout).
+- Government permit fees or licensed-professional charges.
+- A guarantee that a government agency permits Project Pilot to perform applicant-only or licensed-professional actions.
+
+Permit Concierge is an operated service: payment starts an auditable workflow, but a Project Pilot operator must work the case using verified official jurisdiction information.

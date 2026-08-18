@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Project Pilot">
+  <defs>
+    <linearGradient id="front" x1="10" y1="5" x2="46" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5F96FF"/>
+      <stop offset="0.52" stop-color="#2F6DF6"/>
+      <stop offset="1" stop-color="#1546B8"/>
+    </linearGradient>
+    <linearGradient id="side" x1="7" y1="13" x2="22" y2="55" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#164DBF"/>
+      <stop offset="1" stop-color="#082968"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="29" y1="11" x2="48" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#AFC8FF"/>
+      <stop offset="1" stop-color="#3978FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="165%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#071A35" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M12 15 20 9v44l-8-5V15Z" fill="url(#side)"/>
+    <path d="M20 9h16.5C47.4 9 54 15 54 24.8S47.6 40.4 36.7 40.4H29V53h-9V9Zm9 9.2v13.1h7.1c5.5 0 8.7-2.3 8.7-6.6 0-4.2-3.2-6.5-8.7-6.5H29Z" fill="url(#front)"/>
+    <path d="m29 18.2 7.2-5.1c8 0 13.4 3.8 15.8 9.3l-7.2 5.2c.1-.9.1-1.9 0-2.9 0-4.2-3.2-6.5-8.7-6.5H29Z" fill="url(#fold)" opacity=".96"/>
+    <path d="M29 31.3h7.1c3.9 0 6.7-1.2 7.9-3.5l7.4-5.2c-.9 9.3-7.2 14.8-17.6 14.8H29v-6.1Z" fill="#123A96" opacity=".92"/>
+  </g>
+</svg>

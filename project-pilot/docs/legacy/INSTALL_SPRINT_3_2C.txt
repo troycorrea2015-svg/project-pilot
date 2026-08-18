@@ -1,0 +1,21 @@
+INSTALL — SPRINT 3.2C HOMEPAGE + DASHBOARD CORRECTION
+
+This repair fixes the two issues visible in the screenshots:
+1. removes the old signed-in dashboard hero completely
+2. removes the blurry homepage screenshot crops and replaces them with real responsive UI plus a scalable vector house image
+
+Upload steps:
+1. Extract this ZIP.
+2. Open the `project-pilot` GitHub repository.
+3. Click Add file → Upload files.
+4. Upload everything inside the extracted folder.
+5. Replace matching files.
+6. Commit with:
+
+Sprint 3.2C Fix homepage and remove legacy dashboard hero
+
+7. Wait for Vercel to finish deploying.
+8. Hard refresh with Ctrl + Shift + R.
+
+No Supabase SQL is required.
+No Vercel environment-variable changes are required.

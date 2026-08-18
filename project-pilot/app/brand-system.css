@@ -1,0 +1,159 @@
+/* Sprint 3.2A — Exact Brand Match UI Overhaul
+   Source of truth: dark navy header, royal blue accent, white surfaces, cool gray background. */
+html:root {
+  --pp-navy-980: #061327 !important;
+  --pp-navy-950: #07172f !important;
+  --pp-navy-920: #0b1f3a !important;
+  --pp-navy-900: #10284a !important;
+  --pp-navy-800: #163c73 !important;
+  --pp-blue-700: #1d58ea !important;
+  --pp-blue-600: #2f6df6 !important;
+  --pp-blue-500: #4d8aff !important;
+  --pp-blue-200: #cfe0ff !important;
+  --pp-blue-100: #eaf2ff !important;
+  --pp-blue-50: #f4f8ff !important;
+  --pp-page: #eef3fa !important;
+  --pp-surface: #ffffff !important;
+  --pp-line: #dbe5f1 !important;
+  --pp-ink: #0f2445 !important;
+  --pp-muted: #61748c !important;
+  --ink: var(--pp-ink) !important;
+  --navy: var(--pp-navy-950) !important;
+  --blue: var(--pp-blue-600) !important;
+  --green: var(--pp-blue-600) !important;
+  --soft: var(--pp-blue-50) !important;
+  --home-teal: var(--pp-blue-600) !important;
+  --home-teal-dark: var(--pp-blue-700) !important;
+  --home-soft: var(--pp-blue-50) !important;
+  --home-line: var(--pp-line) !important;
+}
+body {
+  color: var(--pp-ink) !important;
+  background: var(--pp-page) !important;
+}
+::selection { background: #d6e4ff; color: #07172f; }
+
+/* Replace legacy teal and keep the launch brand coherent. */
+:is(.primaryAction,.navCta,.authSubmit,.workspaceLaunch button,.signedInVisualHero button,.dashboardPage button.primary,.projectWorkspace button.primary,.marketplacePage .primaryLink,.contractorPage .primaryLink,[class*="PermitAutopilot"] button[class*="primary"],[class*="PermitConcierge"] button[class*="primary"],[class*="ProjectVision"] button[class*="generate"],button[class*="guideButton"]) {
+  background: linear-gradient(135deg, #3c7dff, #1d58ea) !important;
+  border-color: #2f6df6 !important;
+  color: #fff !important;
+  box-shadow: 0 14px 28px rgba(29,88,234,.18) !important;
+}
+
+:is(.secondaryAction,.ghostAction,.homeNav nav a,.supportLink) {
+  color: #0f2445 !important;
+}
+
+:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail,[class*="sideRail"],[class*="sidebar"]) {
+  background: linear-gradient(180deg, #07172f 0%, #0b2140 50%, #0c2a56 100%) !important;
+}
+
+:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail) a.active,
+:is(.dashboardSidebar,.projectRail,.adminRail,.contractorRail) button.active,
+.projectRail nav button.active {
+  background: rgba(85, 136, 255, .18) !important;
+  color: #fff !important;
+  box-shadow: inset 3px 0 0 #78a8ff !important;
+}
+
+.homeNav,
+.dashboardTopbar,
+.workspaceHeader,
+.marketplaceTopbar,
+.contractorHeader,
+.adminHeader,
+.releaseDocument > header {
+  border-color: var(--pp-line) !important;
+}
+
+/* Shared cards and chips */
+:is(.card,.metricCard,.overviewCard,.supportCard,.accessCard,.pricingCard,.mockupFrame,.previewBoard,.statCard,[class*="card"],[class*="panel"],[class*="surface"]) {
+  border-color: var(--pp-line) !important;
+}
+
+:is(input,select,textarea,button,a):focus-visible {
+  outline: 3px solid rgba(47,109,246,.18) !important;
+  outline-offset: 2px;
+}
+
+.eyebrow,
+.sectionHeading > p,
+[class*="sectionTitle"] p,
+[class*="cardHeading"] p,
+[class*="visionChatHeading"] p,
+[class*="guideHeading"] p,
+[class*="permit"] p[class*="eyebrow"],
+[class*="concierge"] p[class*="eyebrow"] {
+  color: #2f6df6 !important;
+}
+
+/* Site-wide logo cleanup */
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0 !important;
+  min-height: 30px;
+}
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) > span,
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) strong,
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) small,
+:is(.homeBrand,.dashboardBrand,.adminBrand,.contractorBrand,.marketplaceBrand,.pilotBrandLockup) > div {
+  opacity: 0 !important;
+}
+.homeBrand::before,
+.releaseDocument > header a::before,
+.pilotBrandLockup::before {
+  content: "";
+  display: block;
+  width: 180px;
+  height: 24px;
+  background: #06172f url('/project-pilot-approved-logo.png') no-repeat center / 94% auto; border-radius: 8px;
+}
+.dashboardBrand::before,
+.adminBrand::before,
+.contractorBrand::before,
+.marketplaceBrand::before {
+  content: "";
+  display: block;
+  width: 180px;
+  height: 24px;
+  background: rgba(255,255,255,.035) url('/project-pilot-approved-logo.png') no-repeat center / 94% auto; border-radius: 8px;
+}
+
+/* Preserve mark replacement for old standalone bubbles */
+.pilotMark > span,
+.releaseMark,
+.adminDenied > div > span,
+[class*="guidance"] [class*="Mark"],
+[class*="assistant"] [class*="mark"] {
+  color: transparent !important;
+  text-shadow: none !important;
+  background-color: transparent !important;
+  background-image: url('/project-pilot-approved-mark.png') !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Project Vision remains faithful but visibly remodeled. */
+[class*="ProjectVision_"][class*="compareCard"],
+[class*="ProjectVision_"][class*="versionCard"] {
+  box-shadow: 0 16px 32px rgba(15,36,69,.06) !important;
+}
+
+@media (max-width: 720px) {
+  .homeBrand::before,
+  .releaseDocument > header a::before,
+  .pilotBrandLockup::before,
+  .dashboardBrand::before,
+  .adminBrand::before,
+  .contractorBrand::before,
+  .marketplaceBrand::before {
+    width: 156px;
+    height: 22px;
+  }
+}

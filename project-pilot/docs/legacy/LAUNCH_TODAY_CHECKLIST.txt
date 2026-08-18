@@ -1,0 +1,36 @@
+PROJECT PILOT — LAUNCH TODAY CHECKLIST
+======================================
+
+CODE AND DATABASE
+[ ] GitHub commit Sprint 3.2 Launch Candidate deployed successfully
+[ ] Supabase migration 014 succeeded
+[ ] /api/health returns status ok
+[ ] /admin/launch-readiness shows critical checks ready
+
+ACCOUNT FLOW
+[ ] New homeowner account receives confirmation email
+[ ] Confirmation returns to projectpiloting.com
+[ ] Sign in, sign out, password reset tested
+[ ] Supabase CAPTCHA enabled before broad advertising
+[ ] Custom SMTP configured before a large email campaign
+
+CORE PRODUCT
+[ ] New project can be created, saved, reopened
+[ ] Su answers with saved project facts and completes an approved safe update
+[ ] Project Vision uploads, generates one concept, refines, favorites, and deletes
+[ ] Permit Autopilot completes its guided interview
+[ ] Permit Concierge request appears in admin workbench
+[ ] Support request appears in /admin/support
+
+OPERATIONS
+[ ] Vercel production logs open in a second tab during launch
+[ ] OpenAI spend alert and hard budget set
+[ ] Project Vision daily limit confirmed
+[ ] Assistant daily limit confirmed
+[ ] A rollback deployment is identified in Vercel
+[ ] Terms and Privacy reviewed for the actual services offered
+
+LAUNCH SCOPE
+[ ] Start with a controlled founding group before paid advertising
+[ ] Do not promise automatic government approval or legal/engineering review
+[ ] Marketplace payments remain off until live Stripe checkout, webhook, refund, and receipt tests pass

@@ -1,0 +1,51 @@
+PROJECT PILOT 4.2 — VERCEL ENVIRONMENT VALUES
+==============================================
+Add these in Vercel > Project Pilot > Settings > Environment Variables.
+Apply to Production (and Preview where you test). Do not put real secrets in GitHub.
+
+NEXT_PUBLIC_SITE_URL=https://www.projectpiloting.com
+NEXT_PUBLIC_SUPPORT_EMAIL=support@projectpiloting.com
+
+NEXT_PUBLIC_SUPABASE_URL=<your Supabase project URL>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your Supabase publishable/anon key>
+SUPABASE_SERVICE_ROLE_KEY=<your Supabase service role secret>
+
+OPENAI_API_KEY=<your OpenAI API key>
+OPENAI_ASSISTANT_MODEL=gpt-5.6-luna
+OPENAI_ASSISTANT_FAST_MODEL=gpt-5.4-nano
+OPENAI_ASSISTANT_FALLBACK_MODEL=gpt-5.4-mini
+PROJECT_ASSISTANT_DAILY_LIMIT=50
+PROJECT_VISION_ENABLED=true
+PROJECT_VISION_DAILY_LIMIT=5
+OPENAI_IMAGE_MODEL=gpt-image-2
+OPENAI_IMAGE_QUALITY=medium
+OPENAI_IMAGE_INPUT_FIDELITY=high
+
+NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY=<optional Google Maps Embed API key>
+
+STRIPE_SECRET_KEY=<sk_test_ while testing; sk_live_ for real revenue>
+STRIPE_WEBHOOK_SECRET=<whsec_ from the matching Stripe webhook endpoint>
+PERMIT_SERVICE_PAYMENTS_ENABLED=true
+PERMIT_CONCIERGE_PRICE_CENTS=9900
+NEXT_PUBLIC_PERMIT_CONCIERGE_PRICE_CENTS=9900
+PERMIT_CONCIERGE_MAX_CREDIT_CENTS=4000
+
+# Optional second revenue path. Leave false until contractor marketplace checkout is tested.
+MARKETPLACE_PAYMENTS_ENABLED=false
+
+RESEND_API_KEY=<required for paid-service operating emails>
+MARKETPLACE_FROM_EMAIL=<Project Pilot sender verified with Resend, e.g. Project Pilot <support@projectpiloting.com>>
+PERMIT_CONCIERGE_EMAIL=<inbox that will actually operate paid permit cases>
+
+STRIPE WEBHOOK ENDPOINT
+https://www.projectpiloting.com/api/marketplace/webhook
+
+Required events:
+- checkout.session.completed
+- checkout.session.expired
+
+IMPORTANT
+1. Use Stripe TEST keys first and run a full $99-base-price test checkout.
+2. Confirm the paid case appears in Admin > Financials and Permit Concierge.
+3. Then replace the test secret with sk_live_ and create a LIVE webhook endpoint/secret.
+4. The Admin Launch Readiness page intentionally will not show revenue-ready until a live Stripe secret is present.

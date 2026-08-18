@@ -1,0 +1,79 @@
+INSTALL — PROJECT PILOT SPRINT 3.6 FULL-SERVICE PERMIT OPERATIONS
+
+WHAT THIS SPRINT DOES
+---------------------
+This changes the permit experience from "the user figures out the permit tools" to a full-service operating model:
+
+- one button: Have Project Pilot Handle My Permit
+- creates/uses the permit case automatically
+- creates a full-service Permit Concierge case
+- records explicit customer authorization
+- assigns the entire administrative workflow to Project Pilot by default
+- only creates homeowner actions when a government/professional-controlled step requires them
+- homeowner sees "Project Pilot is handling this" vs. "Your action is needed"
+- admin workbench operates filing route, tasks, corrections, inspections, messages, and closeout
+- adds jurisdiction playbooks so staff verify what Project Pilot is actually allowed to do before making a filing promise
+- keeps the existing Permit Autopilot/Application Builder available under Permit Details
+
+REQUIRED INSTALL ORDER
+----------------------
+This sprint assumes these migrations were already installed:
+- 012 Permit Autopilot
+- 013 Permit Concierge
+- 014 Launch Candidate
+- 015 Permit Application Builder
+
+1. Open Supabase -> SQL Editor -> New Query.
+2. Open RUN_THIS_IN_SUPABASE_016.sql from this folder.
+3. Copy the entire SQL file into Supabase.
+4. Click Run.
+5. Confirm Supabase reports success.
+
+Then:
+6. Extract this ZIP.
+7. Open the Project Pilot GitHub repository.
+8. Upload the included app, components, and supabase folders to the repository root.
+9. Replace matching files.
+10. Commit with:
+
+Sprint 3.6 add full-service permit operations
+
+11. Wait for Vercel to deploy.
+12. Hard refresh the site.
+
+OPTIONAL EMAIL ALERT
+--------------------
+If you want new full-service permit cases emailed to the permit inbox, add this Vercel Production environment variable:
+
+PERMIT_CONCIERGE_EMAIL = permits@projectpiloting.com
+
+Then redeploy.
+
+NO NEW PAYMENT SYSTEM
+---------------------
+Sprint 3.6 does not activate marketplace payments or charge customers automatically.
+
+HOW TO TEST
+-----------
+1. Sign in as a normal homeowner.
+2. Create/open a project.
+3. Open Permits.
+4. Click "Have Project Pilot Handle My Permit".
+5. Enter homeowner/applicant name and accept the authorization.
+6. Confirm the page changes to "PROJECT PILOT IS HANDLING THIS".
+7. Sign in as an admin.
+8. Open Admin -> Permit Concierge queue -> the new case.
+9. Assign yourself as coordinator.
+10. Verify agency + filing mode.
+11. Add a homeowner task and confirm the homeowner sees "YOUR ACTION IS NEEDED".
+12. Mark it complete from the homeowner account.
+13. Move the case through Preparing -> Filing -> Submitted.
+14. Add a correction round.
+15. Add an inspection.
+16. Move to Closeout -> Closed.
+
+IMPORTANT OPERATING REQUIREMENT
+-------------------------------
+The software now supports full-service permit handling, but Project Pilot must still verify what each jurisdiction permits an agent/coordinator to do. Do not market "we personally submit every permit without you". The accurate promise is that Project Pilot handles the entire permit workflow and only brings the customer in for government/professional-controlled actions that cannot be delegated.
+
+Read PERMIT_FULL_SERVICE_OPERATIONS.md before accepting live full-service cases.

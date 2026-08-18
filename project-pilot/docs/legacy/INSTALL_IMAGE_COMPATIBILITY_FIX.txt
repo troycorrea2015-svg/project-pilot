@@ -1,0 +1,26 @@
+PROJECT PILOT — PROJECT VISION IMAGE COMPATIBILITY FIX
+======================================================
+
+What this fixes
+---------------
+OpenAI returned: "Invalid image file or mode for image 1."
+
+The uploaded file had a supported extension, but its internal color mode or encoding was not compatible with the image editor. This patch converts every new JPG, PNG, or WebP upload in the browser to a standard RGB JPG before it reaches Supabase or OpenAI.
+
+It also prevents failed generations from using up the daily generation allowance and replaces the provider's raw error with a clear instruction.
+
+Install
+-------
+1. Extract this ZIP.
+2. In the GitHub project-pilot repository, choose Add file -> Upload files.
+3. Upload everything INSIDE this extracted folder to the repository root.
+4. Replace the two matching files when prompted.
+5. Commit with: Fix Project Vision image compatibility
+6. Wait for Vercel to deploy the commit.
+7. In Project Vision, remove the original photo that produced the error.
+8. Upload the same photo again. The new upload will be automatically converted.
+9. Generate the proposed-after image again.
+
+No Supabase SQL changes are needed.
+No Vercel environment-variable changes are needed.
+No new OpenAI API key is needed.

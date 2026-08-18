@@ -1,0 +1,32 @@
+INSTALL — SPRINT 3.4 FIRST-RUN SIMPLICITY UPDATE
+
+Purpose
+This update makes Project Pilot easier to understand on the first visit by reducing choice overload, replacing technical labels with plain-language labels, and guiding users through one recommended path.
+
+Install order
+1. Install Sprint 3.3 Permit Application Builder first, including Supabase migration 015.
+2. Extract this Sprint 3.4 ZIP.
+3. Open the `project-pilot` GitHub repository.
+4. Click Add file → Upload files.
+5. Upload the `app` and `components` folders from this extracted package.
+6. Allow GitHub to replace matching files.
+7. Commit with:
+
+Sprint 3.4 simplify first-run experience and navigation
+
+8. Wait for Vercel to finish deploying.
+9. Hard refresh the site with Ctrl + Shift + R.
+
+No new Supabase SQL is required for Sprint 3.4.
+No new Vercel environment variables are required.
+Marketplace payments remain unchanged.
+
+Testing checklist
+- Sign in with a new or test account.
+- Confirm the welcome guide appears once.
+- Close it and confirm it does not reappear automatically.
+- Use “How to use Project Pilot” to reopen it.
+- Confirm a new account sees only the essential dashboard sections.
+- Create a project and confirm the project workspace guide appears.
+- Confirm the sidebar labels read Start Here, Step-by-Step Plan, Permits, Visualize, Ask for Help, Contractors, Files, and Notes.
+- Open Permits and confirm the application process reads as three plain-language steps.

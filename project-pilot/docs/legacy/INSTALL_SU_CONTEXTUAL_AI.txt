@@ -1,0 +1,43 @@
+PROJECT PILOT — SU CONTEXTUAL AI FIX
+====================================
+
+WHY RESPONSES WERE GENERIC
+--------------------------
+The existing Project Assistant was not calling OpenAI. Its answers came from fixed keyword rules and canned text. Project Vision used OPENAI_API_KEY, but the text assistant did not.
+
+WHAT THIS PATCH DOES
+--------------------
+- Replaces /api/pilot with a real server-side OpenAI Responses API route.
+- Uses the authenticated user's saved project record.
+- Includes project type, description, location, status, budget, timeline, notes, saved permit research, completed steps, saved document names, and recent conversation.
+- Saves the user's question and Su's answer in the existing conversations table.
+- Upgrades the floating Need Help assistant to use the same contextual AI when signed in.
+- Keeps the API key server-side.
+- Adds a 50-question-per-user daily limit by default.
+- Does not change marketplace payment settings.
+
+INSTALL
+-------
+1. Extract this ZIP.
+2. In the GitHub project-pilot repository, choose Add file > Upload files.
+3. Drag everything INSIDE this extracted folder into the repository root.
+4. Allow matching files to be replaced.
+5. Commit with: Fix Su contextual AI responses
+6. Wait for Vercel to deploy the new commit.
+7. In Vercel, OPENAI_API_KEY is already present. No new API key is needed.
+
+OPTIONAL VERCEL VARIABLES
+-------------------------
+OPENAI_ASSISTANT_MODEL=gpt-5-mini
+PROJECT_ASSISTANT_DAILY_LIMIT=50
+
+The patch has safe defaults, so these two variables are optional.
+
+TEST
+----
+Open the existing roof project and ask:
+"Based on my saved roof project, what should I do next and what information am I missing?"
+
+A correct answer should mention details from that specific project, such as the roof replacement, Ellendale/Sussex County location, saved progress, documents, budget, or next step. It should not return a general list of things it can explain.
+
+NO SQL IS REQUIRED FOR THIS FIX.

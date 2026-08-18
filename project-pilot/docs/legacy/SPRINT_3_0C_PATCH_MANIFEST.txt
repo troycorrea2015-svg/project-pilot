@@ -1,0 +1,50 @@
+PROJECT PILOT — SPRINT 3.0C CODE UPDATE MANIFEST
+================================================
+
+Repository overlay based on Sprint 3.0B Revenue Launch.
+Copy the contents into the root of the existing project-pilot repository.
+Keep repository files not included in this overlay.
+
+NEW 3.0C FILES
+---------------
+app/api/project-vision/generate/route.js
+components/ProjectVision.js
+components/ProjectVision.module.css
+supabase/migrations/011_project_vision_3_0c.sql
+INSTALL_3_0C_NOW.txt
+SPRINT_3_0C_PROJECT_VISION_README.md
+SPRINT_3_0C_PATCH_MANIFEST.txt
+
+MODIFIED FOR 3.0C
+-----------------
+.env.example
+app/page.js
+app/page.css
+app/dashboard/page.js
+app/project/[id]/page.js
+
+INCLUDED 3.0B BASE PATCH FILES
+------------------------------
+The remaining files in this package are the existing Sprint 3.0B Revenue Launch
+overlay. They are included so this ZIP contains every changed/added 3.0B and 3.0C
+file needed when applied over the full repository.
+
+DATABASE STATUS
+---------------
+The current Project Pilot Supabase repair succeeded. Do not rerun the repair now.
+Migration 011 remains in source control for schema history and future environments.
+
+VALIDATION COMPLETED
+--------------------
+- Parsed all JavaScript/JSX files in the package: no syntax errors.
+- Checked Project Vision server route with Node syntax validation.
+- Checked ProjectVision CSS-module references: no missing classes.
+- Checked CSS brace balance across the package.
+- Confirmed MARKETPLACE_PAYMENTS_ENABLED remains false in .env.example.
+
+LIMITATION OF THIS PACKAGE
+--------------------------
+This is a repository overlay because direct authenticated GitHub write access is
+not connected in this chat. It preserves full-repository files that 3.0C does not
+need to change. Uploading the contents to the repository root creates the 3.0C code
+state without deleting untouched source files.
