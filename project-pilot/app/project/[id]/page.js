@@ -1335,6 +1335,7 @@ export default function ProjectWorkspacePage() {
               user={user}
               onOpenAssistant={() => setActiveTab("pilot")}
               onOpenDetails={() => document.getElementById("permit-details")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              onProjectUpdated={(updatedProject) => setProject(updatedProject)}
             />
 
             <details className="permitDetailsDisclosure" id="permit-details">
@@ -1348,6 +1349,7 @@ export default function ProjectWorkspacePage() {
                   user={user}
                   permitResult={permitResult}
                   onOpenDocuments={() => setActiveTab("documents")}
+                  onProjectUpdated={(updatedProject) => setProject(updatedProject)}
                 />
 
                 {permitResult && (

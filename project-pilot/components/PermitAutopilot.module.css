@@ -211,3 +211,8 @@
 }
 .requirementsGoodNews strong { color: #145f4d; font-size: 13px; }
 .requirementsGoodNews span { color: #557266; font-size: 11px; line-height: 1.55; }
+
+/* Project Pilot 4.4 — permit journey progress */
+.journeyProgress{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(240px,2fr) auto;gap:14px;align-items:center;margin:12px 0 18px;padding:13px 15px;border:1px solid #dbe5f1;border-radius:12px;background:#fff}
+.journeyProgress>div:first-child strong,.journeyProgress>div:first-child span{display:block}.journeyProgress>div:first-child strong{color:#20304a;font-size:11px}.journeyProgress>div:first-child span{margin-top:3px;color:#6c7b8f;font-size:9px}.journeyTrack{height:9px;overflow:hidden;border-radius:999px;background:#e8eef6}.journeyTrack>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2f6df6,#2dbb91);transition:width .35s ease}.journeyProgress>b{color:#245ecb;font-size:17px}
+@media(max-width:720px){.journeyProgress{grid-template-columns:1fr auto}.journeyTrack{grid-column:1/-1;grid-row:2}}

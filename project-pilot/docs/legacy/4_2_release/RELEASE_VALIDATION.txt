@@ -1,0 +1,54 @@
+PROJECT PILOT 4.2 — RELEASE VALIDATION
+======================================
+Release target: modern/easy homeowner experience + $0 self-service + $99 Permit Concierge + Give $10, Get $10 loyalty.
+Validation date: August 18, 2026
+
+COMPLETED STATIC RELEASE GATES
+------------------------------
+PASS — Full application release tree present; this package is not a patch-only archive.
+PASS — 61 JavaScript/JSX source files parsed successfully with the TypeScript parser: 0 parse errors.
+PASS — Relative import scan: 0 missing relative imports.
+PASS — Credential scan: 0 bundled Stripe live/test secrets, OpenAI keys, Resend keys, or Supabase service-role JWTs detected.
+PASS — Exact approved folded-blue Project Pilot logo assets are included and used by the active homepage/brand system.
+PASS — Previous substitute public logo SVGs were removed from the active public asset directory and archived under docs/legacy.
+PASS — Warm/light modern 4.2 homepage is included; the release does not force a dark-mode public site.
+PASS — Homepage project slideshow includes Kitchen, Bathroom, Deck, Addition, Shed/Garage, and Fence examples.
+PASS — Slideshow supports automatic rotation plus manual arrows/dots/thumbnails.
+PASS — $0 free permit path remains available without opening Stripe Checkout.
+PASS — Permit Concierge base price defaults to 9900 cents ($99).
+PASS — Give $10, Get $10 referral claim/status APIs and credit ledger remain included.
+PASS — Legacy pre-payment human-service intake route remains retired.
+PASS — Permit workflow no longer treats a plan upload as a universal requirement.
+PASS — When no required file has been confirmed, the user can continue without uploading a plan/document.
+PASS — When a requirement is verified for that jurisdiction/project, required answers/files can still block authorization until satisfied.
+PASS — Customer-facing permit steps use Project Details → Requirements → Prepare & Review → Submit & Track rather than a universal Upload Plans step.
+PASS — Cumulative 4.2 existing-database installer includes migrations 015, 016, 017, and 018 in order.
+PASS — 4.2 fresh-database installer and all individual migrations are included.
+
+SERVICE / REVENUE TARGETS
+-------------------------
+- $0 self-service project and permit experience.
+- $99 one-time base Permit Concierge coordination price, configurable through Vercel environment variables.
+- Default Give $10, Get $10 referral program.
+- Default maximum Project Pilot credit on one Concierge order: $40; minimum collected Concierge charge remains configurable.
+- Paid service activates only after Stripe payment confirmation.
+- Government fees and licensed-professional/third-party charges remain separate.
+- Applicant-only actions such as signatures, identity checks, government payments, notarization, or licensed-professional work remain with the proper person/entity.
+
+EXECUTABLE BUILD LIMITATION
+---------------------------
+The workspace could not complete npm dependency installation because package retrieval timed out, so `next build` could not be executed here. Source-level parsing/import/security gates above passed, but a successful Vercel Preview/Production build remains the final executable gate.
+
+FINAL PRE-LIVE TEST GATE
+------------------------
+Before enabling live Stripe charges:
+1. Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql on the existing Project Pilot database.
+2. Deploy the entire 4.2 source tree to Vercel and require a successful Next.js build.
+3. Confirm the approved logo and homepage carousel render correctly on desktop and mobile.
+4. Confirm the free permit path completes without checkout.
+5. Test a project that does NOT need a confirmed plan upload and verify it can continue.
+6. Test a project/jurisdiction with a verified required supporting file and verify the requirement is clearly explained and enforced.
+7. Complete a Stripe TEST Permit Concierge checkout at the $99 base price.
+8. Verify referral credit and intake-stage refund behavior.
+9. Confirm Admin revenue/referral/Permit Concierge data match Stripe and Supabase.
+10. Only then switch to Stripe live keys and enable live permit-service payments.

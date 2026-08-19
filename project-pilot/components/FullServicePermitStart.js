@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import styles from "./FullServicePermitStart.module.css";
+import {
+  effectivePermitServiceStatus,
+  permitProgressPercent,
+  permitProgressStageIndex,
+  PERMIT_PROGRESS_STAGES,
+} from "../lib/permit-progress";
 
 const STATUS_COPY = {
   requested: ["Project Pilot has your permit", "We are starting jurisdiction and application review."],
@@ -42,6 +48,7 @@ export default function FullServicePermitStart({
   compact = false,
   onOpenAssistant,
   onOpenDetails,
+  onProjectUpdated,
 }) {
   const [permitCase, setPermitCase] = useState(existingPermitCase);
   const [request, setRequest] = useState(null);
@@ -68,6 +75,42 @@ export default function FullServicePermitStart({
     loadCase();
   }, [project?.id, user?.id, existingPermitCase?.id]);
 
+  useEffect(() => {
+    if (!request?.id || !project?.id || !["paid", "waived"].includes(String(request.payment_status || "").toLowerCase())) return undefined;
+    let cancelled = false;
+
+    async function syncProgress() {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) return;
+        const response = await fetch("/api/permit-service/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ projectId: project.id }),
+        });
+        if (!response.ok || cancelled) return;
+        const payload = await response.json().catch(() => ({}));
+        if (payload.request) setRequest(payload.request);
+        if (payload.permitCase) setPermitCase(payload.permitCase);
+        if (payload.project && typeof onProjectUpdated === "function") onProjectUpdated(payload.project);
+        if (Array.isArray(payload.tasks)) setTasks(payload.tasks);
+      } catch {
+        // Progress syncing is best-effort. The existing case remains usable if it fails.
+      }
+    }
+
+    syncProgress();
+    const timer = window.setInterval(async () => {
+      if (cancelled) return;
+      await loadCase(true);
+    }, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [request?.id, request?.payment_status, project?.id]);
+
   const homeownerTasks = useMemo(
     () => tasks.filter((task) => task.assigned_to === "homeowner" && !["completed", "cancelled"].includes(task.status)),
     [tasks]
@@ -78,13 +121,13 @@ export default function FullServicePermitStart({
   );
   const completedTasks = useMemo(() => tasks.filter((task) => task.status === "completed"), [tasks]);
 
-  async function loadCase() {
+  async function loadCase(silent = false) {
     if (!project?.id || !user?.id) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError("");
 
     try {
@@ -228,8 +271,30 @@ export default function FullServicePermitStart({
       setError(updateError.message);
       return;
     }
+
     setTasks((current) => current.map((item) => (item.id === task.id ? data : item)));
-    setNotice("Done. Project Pilot can see that you completed the required action.");
+    setNotice("Done. Project Pilot is resuming the permit workflow now.");
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token) {
+        const response = await fetch("/api/permit-service/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ projectId: project.id }),
+        });
+        if (response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          if (payload.request) setRequest(payload.request);
+          if (payload.permitCase) setPermitCase(payload.permitCase);
+          if (payload.project && typeof onProjectUpdated === "function") onProjectUpdated(payload.project);
+          if (Array.isArray(payload.tasks)) setTasks(payload.tasks);
+        }
+      }
+    } catch {
+      await loadCase(true);
+    }
   }
 
   async function sendMessage() {
@@ -363,8 +428,11 @@ export default function FullServicePermitStart({
     );
   }
 
-  const status = STATUS_COPY[request.status] || STATUS_COPY.requested;
-  const needsCustomer = homeownerTasks.length > 0 || request.status === "waiting_on_homeowner";
+  const effectiveStatus = effectivePermitServiceStatus(request.status, tasks);
+  const status = STATUS_COPY[effectiveStatus] || STATUS_COPY.requested;
+  const needsCustomer = homeownerTasks.length > 0 || effectiveStatus === "waiting_on_homeowner";
+  const progressPercent = permitProgressPercent(effectiveStatus, tasks);
+  const progressStageIndex = permitProgressStageIndex(effectiveStatus, tasks);
 
   return (
     <section className={`${styles.activeCard} ${needsCustomer ? styles.customerNeeded : styles.projectPilotHandling} ${compact ? styles.compact : ""}`}>
@@ -381,9 +449,25 @@ export default function FullServicePermitStart({
       {notice && <div className={styles.notice}>{notice}</div>}
       {request.concierge_summary && <div className={styles.summary}><strong>Latest update</strong><p>{request.concierge_summary}</p></div>}
 
+      <section className={styles.permitProgress} aria-label="Permit process progress">
+        <div className={styles.progressHeader}>
+          <div><p>PERMIT PROCESS PROGRESS</p><h3>{progressPercent}% complete</h3></div>
+          <span>{completedTasks.length} of {tasks.length || 0} tracked permit tasks complete</span>
+        </div>
+        <div className={styles.progressBar}><span style={{ width: `${progressPercent}%` }} /></div>
+        <div className={styles.progressMilestones}>
+          {PERMIT_PROGRESS_STAGES.map((stage, index) => (
+            <div className={index < progressStageIndex ? styles.milestoneDone : index === progressStageIndex ? styles.milestoneActive : ""} key={stage.key}>
+              <b>{index < progressStageIndex ? "✓" : index + 1}</b>
+              <small>{stage.label}</small>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className={styles.caseStats}>
         <article><small>CASE</small><strong>{request.case_number || "Permit case"}</strong></article>
-        <article><small>STATUS</small><strong>{String(request.status || "requested").replaceAll("_", " ")}</strong></article>
+        <article><small>STATUS</small><strong>{String(effectiveStatus || "requested").replaceAll("_", " ")}</strong></article>
         <article><small>JURISDICTION</small><strong>{request.agency_name || permitCase?.jurisdiction || project?.jurisdiction || "Being verified"}</strong></article>
         <article><small>COORDINATOR</small><strong>{request.assigned_to || "Assignment pending"}</strong></article>
       </div>

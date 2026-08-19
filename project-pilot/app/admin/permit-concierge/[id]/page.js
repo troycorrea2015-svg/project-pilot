@@ -5,6 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import "../../admin.css";
 import "./concierge.css";
+import {
+  effectivePermitServiceStatus,
+  permitProgressPercent,
+  nextActionForPermitStatus,
+  permitCaseStatusForServiceStatus,
+  projectProgressForPermitStatus,
+  projectStatusForPermitStatus,
+  serviceSummaryForStatus,
+} from "../../../../lib/permit-progress";
 
 const STATUSES = [
   ["requested", "Request received"],
@@ -103,6 +112,24 @@ export default function PermitConciergeAdminCase() {
       visible_to_homeowner: visible,
       created_by: user?.id || null,
     });
+  }
+
+  async function syncProjectPermitState(nextStatus, nextActionOverride = "") {
+    if (!project?.id) return;
+    const nextAction = nextActionOverride || nextActionForPermitStatus(nextStatus);
+    const progress = Math.max(Number(project.progress || 0), projectProgressForPermitStatus(nextStatus));
+    const { data } = await supabase
+      .from("projects")
+      .update({
+        progress,
+        status: projectStatusForPermitStatus(nextStatus),
+        next_step: nextAction,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", project.id)
+      .select("*")
+      .single();
+    if (data) setProject(data);
   }
 
   async function loadCase() {
@@ -284,6 +311,7 @@ export default function PermitConciergeAdminCase() {
       casePatch.next_action = "Project Pilot is handling the permit workflow.";
     }
     await supabase.from("permit_cases").update(casePatch).eq("id", request.permit_case_id);
+    await syncProjectPermitState(status, casePatch.next_action);
 
     if (previousStatus !== status) {
       await addEvent(`Permit status: ${STATUSES.find(([key]) => key === status)?.[1] || status}`, summary.trim() || "The permit case moved to the next operating stage.", "status_change", true);
@@ -334,16 +362,72 @@ export default function PermitConciergeAdminCase() {
   }
 
   async function updateTask(task, patch) {
-    const next = { ...patch, updated_at: new Date().toISOString() };
-    if (patch.status === "completed") next.completed_at = new Date().toISOString();
+    const now = new Date().toISOString();
+    const next = { ...patch, updated_at: now };
+    if (patch.status === "completed") next.completed_at = now;
     const { data, error: taskError } = await supabase
       .from("permit_concierge_tasks")
       .update(next)
       .eq("id", task.id)
       .select("*")
       .single();
-    if (taskError) setError(taskError.message);
-    else setTasks((current) => current.map((item) => (item.id === task.id ? data : item)));
+    if (taskError) {
+      setError(taskError.message);
+      return;
+    }
+
+    let updatedTasks = tasks.map((item) => (item.id === task.id ? data : item));
+
+    if (patch.status === "completed" && task.assigned_to === "concierge") {
+      const nextPending = updatedTasks
+        .filter((item) => item.assigned_to === "concierge" && item.status === "pending")
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))[0];
+      const hasInProgress = updatedTasks.some((item) => item.assigned_to === "concierge" && item.status === "in_progress");
+      if (nextPending && !hasInProgress) {
+        const { data: startedTask } = await supabase
+          .from("permit_concierge_tasks")
+          .update({ status: "in_progress", updated_at: now })
+          .eq("id", nextPending.id)
+          .select("*")
+          .single();
+        if (startedTask) updatedTasks = updatedTasks.map((item) => item.id === startedTask.id ? startedTask : item);
+      }
+    }
+
+    setTasks(updatedTasks);
+    const nextStatus = effectivePermitServiceStatus(request?.status, updatedTasks);
+    const nextSummary = serviceSummaryForStatus(nextStatus);
+    const nextAction = nextActionForPermitStatus(nextStatus);
+
+    const { data: nextRequest } = await supabase
+      .from("permit_concierge_requests")
+      .update({
+        status: nextStatus,
+        current_phase: nextStatus,
+        concierge_summary: nextSummary,
+        customer_action_reason: nextStatus === "waiting_on_homeowner" ? request?.customer_action_reason || "" : "",
+        updated_at: now,
+      })
+      .eq("id", request.id)
+      .select("*")
+      .single();
+    if (nextRequest) {
+      setRequest(nextRequest);
+      setStatus(nextRequest.status);
+      setSummary(nextRequest.concierge_summary || "");
+    }
+
+    const caseStatus = permitCaseStatusForServiceStatus(nextStatus);
+    await supabase.from("permit_cases").update({ status: caseStatus, next_action: nextAction, updated_at: now }).eq("id", request.permit_case_id);
+    await syncProjectPermitState(nextStatus, nextAction);
+    await addEvent(
+      patch.status === "completed" ? `Completed: ${task.title}` : `Task updated: ${task.title}`,
+      nextSummary,
+      "task_progress",
+      true
+    );
+    setNotice(patch.status === "completed" ? "Task completed and permit progress advanced." : "Task updated.");
+    await loadCase();
   }
 
   async function sendMessage() {
@@ -408,6 +492,57 @@ export default function PermitConciergeAdminCase() {
     setSaving(false);
   }
 
+  async function updateCorrectionStatus(item, nextStatus) {
+    if (!item?.id) return;
+    setSaving(true);
+    setError("");
+    const now = new Date().toISOString();
+    const patch = { status: nextStatus, updated_at: now };
+    if (nextStatus === "resubmitted") patch.resubmitted_at = now;
+    if (nextStatus === "resolved") patch.resolved_at = now;
+    const { error: updateError } = await supabase.from("permit_concierge_corrections").update(patch).eq("id", item.id);
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
+      return;
+    }
+    await addEvent(`Correction round ${item.round_number}: ${nextStatus.replaceAll("_", " ")}`, item.plain_language_summary || item.notice_text || "Correction workflow updated.", "correction_progress", true);
+    if (["resubmitted", "resolved"].includes(nextStatus)) {
+      const remaining = corrections.filter((entry) => entry.id !== item.id && !["resubmitted", "resolved"].includes(entry.status));
+      if (!remaining.length) {
+        await supabase.from("permit_concierge_requests").update({ status: "submitted", current_phase: "submitted", concierge_summary: serviceSummaryForStatus("submitted"), updated_at: now }).eq("id", request.id);
+        await supabase.from("permit_cases").update({ status: "submitted", next_action: nextActionForPermitStatus("submitted"), updated_at: now }).eq("id", request.permit_case_id);
+        await syncProjectPermitState("submitted", nextActionForPermitStatus("submitted"));
+      }
+    }
+    setNotice("Correction status updated and permit progress synchronized.");
+    setSaving(false);
+    await loadCase();
+  }
+
+  async function updateInspectionStatus(item, nextStatus) {
+    if (!item?.id) return;
+    setSaving(true);
+    setError("");
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase.from("permit_concierge_inspections").update({ status: nextStatus, updated_at: now }).eq("id", item.id);
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
+      return;
+    }
+    await addEvent(`Inspection ${item.inspection_type}: ${nextStatus.replaceAll("_", " ")}`, item.result_notes || "Inspection status updated.", "inspection_progress", true);
+    const nextInspections = inspections.map((entry) => entry.id === item.id ? { ...entry, status: nextStatus } : entry);
+    const allFinished = nextInspections.length > 0 && nextInspections.every((entry) => ["passed", "not_required", "cancelled"].includes(entry.status));
+    const nextCaseStatus = allFinished ? "closeout" : "inspections";
+    await supabase.from("permit_concierge_requests").update({ status: nextCaseStatus, current_phase: nextCaseStatus, concierge_summary: serviceSummaryForStatus(nextCaseStatus), updated_at: now }).eq("id", request.id);
+    await supabase.from("permit_cases").update({ status: "inspection", next_action: nextActionForPermitStatus(nextCaseStatus), updated_at: now }).eq("id", request.permit_case_id);
+    await syncProjectPermitState(nextCaseStatus, nextActionForPermitStatus(nextCaseStatus));
+    setNotice(allFinished ? "All inspections are finished. The permit is ready for final closeout." : "Inspection status updated.");
+    setSaving(false);
+    await loadCase();
+  }
+
   async function addInspection() {
     if (!inspectionType.trim() || !request?.id) return;
     setSaving(true);
@@ -438,6 +573,9 @@ export default function PermitConciergeAdminCase() {
   if (loading) return <main className="adminLoading">Opening full-service permit case…</main>;
   if (!profile?.is_admin) return <main className="adminDenied"><div><h1>Admin access required.</h1><button onClick={() => router.push("/dashboard")}>Return to Dashboard</button></div></main>;
 
+  const adminEffectiveStatus = effectivePermitServiceStatus(status, tasks);
+  const adminPermitProgress = permitProgressPercent(adminEffectiveStatus, tasks);
+
   return (
     <main className="conciergeAdminPage">
       <header className="conciergeAdminHeader">
@@ -454,8 +592,8 @@ export default function PermitConciergeAdminCase() {
       {notice && <div className="adminNotice">{notice}</div>}
 
       <section className="conciergeAdminStats">
-        <article><small>READINESS</small><strong>{Number(permitCase?.readiness_score || 0)}%</strong></article>
-        <article><small>STATUS</small><strong>{STATUSES.find(([key]) => key === status)?.[1] || status}</strong></article>
+        <article><small>PERMIT PROGRESS</small><strong>{adminPermitProgress}%</strong></article>
+        <article><small>STATUS</small><strong>{STATUSES.find(([key]) => key === adminEffectiveStatus)?.[1] || adminEffectiveStatus}</strong></article>
         <article><small>CUSTOMER ACTIONS</small><strong>{openHomeownerTasks.length}</strong></article>
         <article><small>PROJECT PILOT TASKS</small><strong>{openConciergeTasks.length}</strong></article>
         <article><small>PAYMENT</small><strong>{request?.payment_status === "paid" ? `$${(Number(request?.service_fee_cents || 0) / 100).toFixed(0)} Paid` : (request?.payment_status || "—")}</strong></article>
@@ -537,7 +675,7 @@ export default function PermitConciergeAdminCase() {
           <label><span>Plain-English customer summary</span><textarea rows="3" value={correctionSummary} onChange={(event) => setCorrectionSummary(event.target.value)} placeholder="What Project Pilot is doing about it." /></label>
           <label><span>Response due date</span><input type="date" value={correctionDue} onChange={(event) => setCorrectionDue(event.target.value)} /></label>
           <button type="button" onClick={addCorrection} disabled={saving || !correctionNotice.trim()}>Add correction round</button>
-          <div className="permitOpsRecords">{corrections.map((item) => <article key={item.id}><strong>Round {item.round_number} · {item.status.replaceAll("_"," ")}</strong><p>{item.plain_language_summary || item.notice_text}</p><small>{formatDate(item.received_at)}</small></article>)}</div>
+          <div className="permitOpsRecords">{corrections.map((item) => <article key={item.id}><strong>Round {item.round_number}</strong><p>{item.plain_language_summary || item.notice_text}</p><small>{formatDate(item.received_at)}</small><select value={item.status} onChange={(event) => updateCorrectionStatus(item, event.target.value)} disabled={saving}><option value="received">Received</option><option value="reviewing">Reviewing</option><option value="waiting_on_homeowner">Waiting on homeowner</option><option value="response_ready">Response ready</option><option value="resubmitted">Resubmitted</option><option value="resolved">Resolved</option></select></article>)}</div>
         </section>
 
         <section className="conciergeAdminPanel">
@@ -545,7 +683,7 @@ export default function PermitConciergeAdminCase() {
           <label><span>Inspection type</span><input value={inspectionType} onChange={(event) => setInspectionType(event.target.value)} placeholder="Footing, framing, final…" /></label>
           <label><span>Scheduled date/time</span><input type="datetime-local" value={inspectionDate} onChange={(event) => setInspectionDate(event.target.value)} /></label>
           <button type="button" onClick={addInspection} disabled={saving || !inspectionType.trim()}>Add inspection</button>
-          <div className="permitOpsRecords">{inspections.map((item) => <article key={item.id}><strong>{item.inspection_type} · {item.status.replaceAll("_"," ")}</strong><p>{item.result_notes || item.homeowner_preparation || "No result notes yet."}</p><small>{item.scheduled_at ? formatDate(item.scheduled_at) : "Not scheduled"}</small></article>)}</div>
+          <div className="permitOpsRecords">{inspections.map((item) => <article key={item.id}><strong>{item.inspection_type}</strong><p>{item.result_notes || item.homeowner_preparation || "No result notes yet."}</p><small>{item.scheduled_at ? formatDate(item.scheduled_at) : "Not scheduled"}</small><select value={item.status} onChange={(event) => updateInspectionStatus(item, event.target.value)} disabled={saving}><option value="not_ready">Not ready</option><option value="ready_to_schedule">Ready to schedule</option><option value="scheduled">Scheduled</option><option value="passed">Passed</option><option value="failed">Failed / correction</option><option value="not_required">Not required</option><option value="cancelled">Cancelled</option></select></article>)}</div>
         </section>
       </div>
 

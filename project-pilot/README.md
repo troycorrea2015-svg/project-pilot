@@ -1,63 +1,66 @@
-# Project Pilot 4.2 — Modern Easy Complete Service
+# Project Pilot 4.4 — Permit Progress & Completion Release
 
-This is the **complete Project Pilot application**, not an incremental patch. It keeps the full 4.1 free-first revenue/loyalty system and adds the approved 4.2 customer experience: a warmer modern interface, the exact approved folded-blue Project Pilot logo, a project-type hero slideshow, and an adaptive permit workflow that only asks customers for plans/documents when their actual permit path needs them.
+This is the **complete Project Pilot application**, not a patch. It includes the modern 4.3 homepage/dashboard design, approved Project Pilot branding, realistic project imagery, the homepage and account-dashboard slideshows, free self-service permits, $99 Permit Concierge, referrals, contractor marketplace, admin/revenue controls, NOVA/Su guidance, Project Vision, and the cumulative Supabase setup.
 
-## Homeowner offer
+## What 4.4 fixes
 
-### Do it with Project Pilot — $0
-Homeowners can use Project Pilot without a subscription to identify the likely permit authority and official route, answer guided project questions, organize permit information, use the application builder/checklist, manage photos/documents/tasks/budgets, use NOVA/Su guidance and Project Vision, and find contractors.
+The permit experience now has **two different measurements**, so users can see what is actually happening:
 
-### Have Project Pilot handle it — $99 one time
-Permit Concierge handles the administrative permit workflow Project Pilot is legally and practically allowed to perform: jurisdiction verification, requirements review, application-information preparation, package organization, permitted filing coordination, agency follow-up, corrections, inspection coordination, and closeout tracking.
+- **Application readiness** — how complete the information/documents are before filing.
+- **Permit process progress** — Intake → Preparing → Ready to File → Submitted → Approved → Inspections → Complete.
 
-The homeowner is brought back in only for applicant-controlled actions such as a required signature, identity verification, applicant-only government portal step, direct government payment, notarization, or a document/action that must come from a licensed professional. Government fees and third-party/professional charges remain separate.
+Previously, an existing permit case could reopen on an early screen even after its database status had moved forward. Permit Concierge tasks could also be completed without automatically moving the customer-facing status. 4.4 fixes both behaviors.
 
-## Easier 4.2 permit experience
+### Paid Permit Concierge progress
 
-Project Pilot no longer treats **Upload Plans** as a universal step. The intended flow is:
+- Paid checkout now begins at **Intake Review** instead of appearing idle at “Requested.”
+- Existing paid cases run a safe progress sync when the permit workspace opens.
+- Project Pilot can automatically recognize preparation work already supported by saved project/permit data.
+- Completing a Project Pilot work-queue task advances the next task and synchronizes the customer-facing stage.
+- Completing a homeowner-required action resumes the case automatically.
+- Corrections can be moved through received/reviewing/response/resubmitted/resolved states.
+- Inspections can be moved through scheduling/result states.
+- Submission, approval, inspections, closeout, and closed status update the permit progress bar and overall project record.
+- Customer permit data refreshes while the permit workspace is open so progress does not require a manual page refresh.
 
-1. Tell us about your project.
-2. Project Pilot determines the permit route and requirements.
-3. We request only the information/files actually required for that project and jurisdiction.
-4. Project Pilot prepares the permit package or guides the free self-service path.
-5. Submit and track through review/approval.
+### Free permit path
 
-If no plan or supporting file has been confirmed as required, the customer can continue. If something is required, Project Pilot explains exactly what it is, why it is needed, and how to provide or obtain it.
+Permit Autopilot now reopens at the correct stage based on the saved case instead of always looking like it has restarted. It also shows a **Permit Journey** percentage separately from application readiness.
 
-## 4.2 interface
+## Customer permit journey
 
-- Warm/light modern design selected from the approved Option 5 direction.
-- Exact user-approved folded-ribbon blue **P** + PROJECT PILOT wordmark used as the brand source of truth.
-- Homepage hero slideshow rotates through currently supported project examples: **Kitchen, Bathroom, Deck, Addition, Shed/Garage, and Fence**.
-- Strong photography, clean cards, generous spacing, friendly copy, and strategic navy/blue accents rather than a full dark-mode site.
-- Customer-facing calls to action emphasize **Continue My Project** and the next useful action instead of permit jargon.
+1. Intake
+2. Preparing
+3. Ready to File
+4. Submitted / Agency Review
+5. Approved
+6. Inspections / Closeout
+7. Complete
 
-## Loyalty / referrals — Give $10, Get $10
-- A new eligible user who joins with a valid referral receives **$10 Project Pilot credit** toward Permit Concierge.
-- After that referred user completes a qualifying paid Concierge order, the referrer earns **$10 Project Pilot credit**.
-- Credits apply automatically at checkout.
-- Default maximum applied to one Concierge order is **$40** (configurable).
-- Eligible refunds restore used customer credit and reverse the associated referral reward.
+Project Pilot does not mark a government-controlled milestone complete unless the saved data supports it or the operator records the real-world event. Government approval, applicant-only portal actions, signatures, licensed-professional documents, and government fees remain controlled by the appropriate authority/applicant/professional.
 
-## Database installation
+## Installation
 
-For an **existing Project Pilot Supabase database**, run only:
+### If 4.2 or 4.3 is already deployed and you already ran the 4.2 Supabase upgrade
 
-`RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql`
+**No new Supabase schema migration is required for 4.4.** Replace the deployed app with the complete `project-pilot` folder in this package and redeploy Vercel.
 
-It is cumulative through migrations 015, 016, 017, and 018, so it is the recovery path even if you do not remember whether 3.6, 4.0, or 4.1 was installed.
+### If you are unsure whether the cumulative database setup was completed
 
-For a **completely new Supabase project only**, use:
+Run:
 
-`RUN_THIS_IN_SUPABASE_FRESH_4_2.sql`
+`RUN_THIS_IN_SUPABASE_4_4_UPGRADE.sql`
 
-## Before accepting real money
+It is the same cumulative database baseline carried forward under the current release name.
 
-Read:
-- `INSTALL_PROJECT_PILOT_4_2.txt`
-- `REVENUE_LAUNCH_CHECKLIST.md`
-- `OPERATIONS_PROJECT_PILOT_4_2.md`
-- `VERCEL_ENVIRONMENT_VALUES.txt`
-- `RELEASE_VALIDATION.txt`
+### Brand-new Supabase project
 
-Paid Permit Concierge is an **operated service**, not passive fulfillment. A Project Pilot operator still has to work each paid case using verified official jurisdiction information.
+Run:
+
+`RUN_THIS_IN_SUPABASE_FRESH_4_4.sql`
+
+Then configure the values in `VERCEL_ENVIRONMENT_VALUES.txt` and deploy.
+
+## Start here
+
+Read `START_HERE_PROJECT_PILOT_4_4.txt` before deployment.
