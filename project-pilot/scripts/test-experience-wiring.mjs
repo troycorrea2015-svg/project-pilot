@@ -51,10 +51,10 @@ check('admin preview reminds operator to keep customer wording clear', adminCase
 check('major permit updates can email the homeowner', adminCase.includes('emailCustomer(') && adminNotify.includes('Open your live permit status'));
 check('homeowner permit messages can notify operations', permit.includes('/api/permit-service/message-notify') && homeownerNotify.includes('PERMIT_CONCIERGE_EMAIL'));
 
-check('homepage uses clean house-only daytime hero', home.includes('/homepage-hero-house-day.jpg'));
+check('homepage uses clean house-only daytime hero', home.includes('/homepage-hero-house-clean-4-5c.jpg'));
 check('homepage active copy does not claim fabricated customer totals', !home.includes('10,000+') && !home.includes('4.9/5'));
 check('mobile homepage retains a visible start CTA', homeCss.includes('.heroHeader .navCta{display:inline-flex'));
 check('old full promotional hero is not in public assets', !fs.existsSync(path.join(root, 'public/homepage-hero-day.png')));
-check('new house-only hero exists', fs.existsSync(path.join(root, 'public/homepage-hero-house-day.jpg')));
+check('new house-only hero exists', fs.existsSync(path.join(root, 'public/homepage-hero-house-clean-4-5c.jpg')));
 
 console.log(`Experience wiring tests passed: ${tests.length}/${tests.length}`);
