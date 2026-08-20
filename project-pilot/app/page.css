@@ -34,3 +34,17 @@
 .legacyHeroImage{display:block;width:100%;height:100%;min-height:470px!important;object-fit:cover;object-position:center;box-shadow:none!important;border-radius:20px}
 @media(max-width:1050px){.heroPanel{grid-template-columns:1fr}.approvedBrand{width:232px;height:40px}.legacyHeroVisual,.legacyHeroImage{min-height:390px!important}}
 @media(max-width:760px){.approvedBrand{width:180px;height:34px}.heroHeader{min-height:62px}.heroHeader .navCta{min-height:38px;padding:0 12px}.legacyHeroVisual{border-radius:18px}.legacyHeroImage{min-height:260px!important;max-height:320px;border-radius:16px}}
+
+
+/* Project Pilot 4.5C — hero and header hard fix */
+.cleanBrand{display:flex;align-items:center;width:190px;height:28px;padding:0;background:transparent!important;border-radius:0!important;box-shadow:none!important}
+.cleanBrand img{display:block;width:100%;height:100%;object-fit:contain}
+.heroHeader{background:rgba(255,255,255,.98);border-bottom:1px solid rgba(219,228,239,.92)}
+.heroPanel{grid-template-columns:minmax(0,1fr) minmax(560px,1.02fr)!important;gap:36px!important;align-items:center!important}
+.houseHeroPanel{position:relative;display:block;min-height:470px;overflow:hidden;border:1px solid #dfe8f3;border-radius:24px;background:#edf4ff;box-shadow:0 18px 40px rgba(31,68,112,.08)!important}
+.houseHeroPhoto{display:block;width:100%;height:100%;min-height:470px;object-fit:cover;object-position:center center;border-radius:24px;box-shadow:none!important}
+.legacyHeroVisual,.approvedBrand{all:unset}
+.buildStamp{display:block;opacity:.78}
+@media (max-width:1200px){.heroPanel{grid-template-columns:minmax(0,.95fr) minmax(460px,1.05fr)!important}}
+@media (max-width:1050px){.heroPanel{grid-template-columns:1fr!important}.houseHeroPanel,.houseHeroPhoto{min-height:390px;border-radius:22px}}
+@media (max-width:760px){.cleanBrand{width:150px;height:22px}.heroHeader{gap:12px}.heroHeader .navCta{display:inline-flex;margin-left:auto}.heroPanel{padding:22px 18px!important}.houseHeroPanel{min-height:255px;border-radius:18px}.houseHeroPhoto{min-height:255px;max-height:320px;border-radius:18px}.buildStamp{padding-top:6px}}

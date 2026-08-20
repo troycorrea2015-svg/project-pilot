@@ -150,7 +150,7 @@ export default function HomePage() {
   return (
     <main className="homePage">
       <header className="heroHeader">
-        <a className="approvedBrand" href="#top" aria-label="Project Pilot home">
+        <a className="cleanBrand" href="#top" aria-label="Project Pilot home">
           <img src="/project-pilot-approved-logo.png" alt="Project Pilot" />
         </a>
         <nav>
@@ -179,8 +179,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="legacyHeroVisual" aria-label="Project Pilot homepage hero image">
-          <img className="legacyHeroImage" src="/homepage-hero-house-only-v2.jpg" alt="Bright modern home in daytime" />
+        <div className="houseHeroPanel" aria-label="Project Pilot homepage hero image">
+          <img className="houseHeroPhoto" src="/homepage-hero-house-clean-4-5c.jpg" alt="Bright modern home in daytime" />
         </div>
       </section>
 
