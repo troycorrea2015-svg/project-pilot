@@ -11,6 +11,7 @@ ad08000c2b6bb0b95ca62b96e0931e5ae44ac6d9d68810198da1dd49bd718673  ./RELEASE_VALI
 4a00843f09cdadf0d5309c39e9ba4f5ab78255ca1f714c5f72467bae87b45007  ./RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql
 b2bd0384bdb1f9dd1112e52d102f8b97ded50707fcdf42c80d95d5bf75b5f188  ./RUN_THIS_IN_SUPABASE_FRESH_4_5.sql
 4bd8df2bd8c87143efc70ad41c48d9cf456f90e4416a4366162469ee14b64101  ./START_HERE_PROJECT_PILOT_4_5.txt
+54bf3e8d23bcce3dd19ddc70f3dbba5a85cf7c4a2717e6cac494964ee6abee5a  ./START_HERE_PROJECT_PILOT_4_5A.txt
 ee7cfb305d9635579ee49605db890193008c6dae077fca36c31926048765bc04  ./VERCEL_ENVIRONMENT_VALUES.txt
 2de24be3d4041d9f9a80e2ca791d603b5cea658aed5ee117cc7432e202e1927b  ./app/admin/admin.css
 f0ae4ea49db6b4cd9757fded37db5304372dc183f36b594ef462ff4b4129e65d  ./app/admin/launch-readiness/launch-readiness.css
@@ -68,8 +69,8 @@ d6b54c19c57630f64b690a304f7eabd6c32a7331e7f1b8c38b22fdae032ce71a  ./app/loading.
 8ea0c2b71f30ce0015543a675a46ee83eb490400096100e3599524f74d3ebce3  ./app/login/page.js
 5ea101b1f0088776807935f4bf6d92cae88ffabc858bb6ede39ed26f462e55db  ./app/manifest.js
 98a6d4ecc69867db976936ec7b37176015d3f513a3618a989f8e18b35145580a  ./app/not-found.js
-7f964d0c8acb7aad3b7730735d02429463f9da8136c644df20613fbfd8c77816  ./app/page.css
-becd57ab303c296e6b4bafeb4dbdc6877cc100cee2d48975ef87080128486e09  ./app/page.js
+cfae27bf4fc80c3c5ae8586a8ddd3b25653f65b19beef582c10f765d86bd2b48  ./app/page.css
+6eddb46a077f5bde658db1234d54b39f2020a645e1ccfb5bf56e59f3e8b29ae0  ./app/page.js
 70f8dd81f620bf1ce09a6d3ff5435fb6881d6d7ef2e619f814feaebc0133ef04  ./app/page.module.css
 380917b4540aea12652bbf830a9eff7bb4e44f61beff0f1866ecbaa81d0c9e55  ./app/privacy/page.js
 bf9f06ba50d35556977ec320643cdb6dd57acfc676dd9b9fc1f1b4aab4abef27  ./app/project/[id]/page.js
@@ -159,6 +160,7 @@ dcda7284a1587fe4e61d8b559534cdbe6d1e4aaf3a7c6f117770376ce620f406  ./docs/legacy/
 c471e5a09dc51a3b681473a4de0290336dd52a7d343b5268216ab40af759c837  ./docs/legacy/RUN_THIS_IN_SUPABASE_015.sql
 2999f68e61ff2c1c246037fa16972fc1e6b844dda674cfd02727d4534814bb11  ./docs/legacy/RUN_THIS_IN_SUPABASE_016.sql
 e1dc2478a7168b6926c16955deee885cbb99bdba0507c2fadc148f6d84c75472  ./docs/legacy/RUN_THIS_IN_SUPABASE_017.sql
+527cc46e9117607841658e458d139faaf589bbc4b488bc3b99a96057980ec541  ./docs/legacy/SHA256SUMS.txt
 af2053eb690c95d915f5aea1665f756539f513314685ca2b2112d797df703cff  ./docs/legacy/SPRINT_2_6_README.txt
 b14d337b6d901c5edf5ecd9b265453c8a36fb36cd61efbdcc270c2fd66447c5a  ./docs/legacy/SPRINT_2_6_REVISED_README.txt
 323d0258e6860e5852037d80727fdc13130a8b15206bc5af4ffa4e1607bf2f82  ./docs/legacy/SPRINT_3_0A_README.txt
@@ -197,7 +199,7 @@ f919ffb0ce0e6f12a36d70be0a0493f4531dec36192da5cad7386621b56cd694  ./lib/referral
 67954a7eb43e9ee7d31c94abd3342704a50e779a5676d5811774ce5f7c22adfc  ./lib/supabase.js
 4b830ac52ad511ff9268a1aa136f0a4b8fe1c011de0363e526e4754c1576f032  ./middleware.js
 2a19430e74dcb8a7b1f16c8675d0fd5cd088fda7290ee9bdb500778b4c71c5ab  ./next.config.mjs
-26608df5aa2091f42cdff6ef85893c396c0fcae81f5accf67e876136a97b4885  ./package.json
+5dd1bfb12040b430076d3f6fc93be56654e56622361e29d358ac3d60d224a802  ./package.json
 a41951c5c1bdd2fcb8898b931be0c0b341bddb14e0d7617c9589f0bcc1bca9b9  ./public/category-addition.jpg
 dd4d3c476e9c9ce858dd09db88390c595c40b449aeeea8b6df7ea6b2c3136659  ./public/category-bathroom.jpg
 b653d793fea1317fc61dabe1eee159cc1a827f78e76c336ae9538cac2b01c9b2  ./public/category-deck.jpg

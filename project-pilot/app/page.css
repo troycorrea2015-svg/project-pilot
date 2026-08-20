@@ -12,3 +12,14 @@
 /* Project Pilot 4.5 — mobile conversion and authentic hero */
 .legacyHeroImage{width:100%;height:100%;min-height:430px;object-fit:cover;object-position:center;border-radius:18px}
 @media(max-width:760px){.heroHeader{gap:10px}.approvedBrand{width:158px}.heroHeader .navCta{display:inline-flex;margin-left:auto;min-height:40px;padding:0 12px;font-size:10px}.legacyHeroImage{min-height:300px}.legacyHeroVisual{min-height:300px}}
+
+
+/* Project Pilot 4.5A — streamlined homepage flow */
+.heroPanel{overflow:hidden;grid-template-columns:minmax(0,.9fr) minmax(460px,1.1fr);gap:28px;padding:34px}
+.legacyHeroVisual{align-self:stretch;min-height:470px;box-shadow:none;background:#eaf2ff}
+.legacyHeroImage{min-height:470px!important;border-radius:18px;box-shadow:none!important;object-fit:cover;object-position:center}
+.processSection#how{margin-top:18px}
+.homepageSliderSection{margin-top:18px}
+@media(max-width:1050px){.heroPanel{grid-template-columns:1fr 1fr;gap:22px}.legacyHeroVisual,.legacyHeroImage{min-height:390px!important}}
+@media(max-width:820px){.heroPanel{grid-template-columns:1fr;padding:22px 18px}.legacyHeroVisual{min-height:250px!important;max-height:320px}.legacyHeroImage{min-height:250px!important;height:100%!important;max-height:320px;object-position:center 45%}.heroTrustRow{margin-top:20px}}
+@media(max-width:760px){.heroPanel{margin-top:10px}.heroCopy h1{font-size:42px}.heroLead{margin-top:14px}.heroActions{margin-top:18px}.legacyHeroVisual{margin-top:4px;border-radius:16px}.legacyHeroImage{border-radius:14px}.processSection#how{margin-top:10px}}

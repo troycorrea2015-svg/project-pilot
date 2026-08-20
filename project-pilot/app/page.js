@@ -167,7 +167,7 @@ export default function HomePage() {
         <div className="heroCopy">
           <p className="eyebrow"><span>●</span> PROJECT PILOT</p>
           <h1>Your project.<span>Guided from start to finish.</span></h1>
-          <p className="heroLead">Expert guidance for planning, permits, budgets, and every step in between. Start free, stay organized, and upgrade only when you want Project Pilot to handle the permit coordination for you.</p>
+          <p className="heroLead">Tell us what you want to build or improve. Project Pilot organizes the plan, simplifies the permit path, and keeps the next action clear from day one.</p>
           <div className="heroActions">
             <a className="primaryAction" href="#access">Get Started Free</a>
             <a className="secondaryAction" href="#how">Learn More <span>→</span></a>
@@ -184,14 +184,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="promiseStrip">
-        <article><span>◇</span><div><strong>Trusted guidance</strong><small>Plain-language answers and clear next steps.</small></div></article>
-        <article><span>▣</span><div><strong>Permit process simplified</strong><small>We determine what your project actually needs.</small></div></article>
-        <article><span>◷</span><div><strong>Save time & stress</strong><small>Keep tasks, files, costs, and updates together.</small></div></article>
-        <article><span>♧</span><div><strong>Help when you need it</strong><small>Free self-service or $99 Concierge.</small></div></article>
+      <section className="processSection" id="how">
+        <div className="sectionHeading"><p className="eyebrow">HOW IT WORKS</p><h2>Tell us what you’re building. Project Pilot figures out the rest.</h2></div>
+        <div className="processSteps">
+          <article><span>1</span><strong>Tell us about the project</strong><p>Choose a project type, location, and a few details.</p></article>
+          <article><span>2</span><strong>We check the requirements</strong><p>Project Pilot determines the permit route and what information or documents are actually needed.</p></article>
+          <article><span>3</span><strong>Continue with only the next action</strong><p>If a plan, survey, signature, or other item is required, we explain why and help you get it.</p></article>
+          <article><span>4</span><strong>Submit & track approval</strong><p>Use the free guided path or let Permit Concierge handle the administrative coordination.</p></article>
+        </div>
       </section>
 
-      <section className="homepageSliderSection" aria-label="Project types slideshow">
+
+      <section className="homepageSliderSection" id="projects" aria-label="Project types slideshow">
         <div className="sectionHeading centerHeading">
           <p className="eyebrow">POPULAR PROJECT TYPES</p>
           <h2>See the kinds of projects Project Pilot supports.</h2>
@@ -233,7 +237,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="valueSection" id="how">
+      <section className="valueSection">
         <div className="sectionHeading centerHeading">
           <p className="eyebrow">ONE PLACE FOR THE WHOLE PROJECT</p>
           <h2>Everything you need, without making the experience complicated.</h2>
@@ -244,26 +248,6 @@ export default function HomePage() {
           <article><span className="featureIcon">✓</span><h3>Permit Done Right</h3><p>We identify the likely permit route, prepare the information, and only ask you for documents your specific project needs.</p></article>
           <article><span className="featureIcon">◔</span><h3>Track Progress</h3><p>See what is finished, what is waiting, and exactly what needs your attention next.</p></article>
           <article><span className="featureIcon">♙</span><h3>Trusted Pros</h3><p>Find contractors and professionals when your project needs expertise outside Project Pilot.</p></article>
-        </div>
-      </section>
-
-      <section className="processSection">
-        <div className="sectionHeading"><p className="eyebrow">HOW IT WORKS</p><h2>Tell us what you’re building. Project Pilot figures out the rest.</h2></div>
-        <div className="processSteps">
-          <article><span>1</span><strong>Tell us about the project</strong><p>Choose a project type, location, and a few details.</p></article>
-          <article><span>2</span><strong>We check the requirements</strong><p>Project Pilot determines the permit route and what information or documents are actually needed.</p></article>
-          <article><span>3</span><strong>Continue with only the next action</strong><p>If a plan, survey, signature, or other item is required, we explain why and help you get it.</p></article>
-          <article><span>4</span><strong>Submit & track approval</strong><p>Use the free guided path or let Permit Concierge handle the administrative coordination.</p></article>
-        </div>
-      </section>
-
-      <section className="popularSection" id="projects">
-        <div className="sectionHeading centerHeading"><p className="eyebrow">POPULAR PROJECT TYPES</p><h2>Start with the project you actually want to complete.</h2></div>
-        <div className="popularGrid">
-          {popularProjects.map((slide) => (
-            <a href="#access" className="popularCard" key={slide.key}><img src={slide.image} alt="" /><strong>{slide.title}</strong><span>Start this project →</span></a>
-          ))}
-          <a href="#access" className="popularCard popularMore"><span className="plusCircle">+</span><strong>Custom Project</strong><span>Tell us what you’re building →</span></a>
         </div>
       </section>
 
