@@ -180,7 +180,7 @@ export default function HomePage() {
         </div>
 
         <div className="legacyHeroVisual" aria-label="Project Pilot homepage hero image">
-          <img className="legacyHeroImage" src="/homepage-hero-house-day.jpg" alt="Bright modern home in daytime" />
+          <img className="legacyHeroImage" src="/homepage-hero-house-only-v2.jpg" alt="Bright modern home in daytime" />
         </div>
       </section>
 
