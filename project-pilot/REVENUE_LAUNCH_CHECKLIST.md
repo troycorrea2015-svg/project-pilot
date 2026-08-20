@@ -1,4 +1,4 @@
-# Project Pilot 4.2 Revenue Launch Checklist
+# Project Pilot 4.5 Revenue Launch Checklist
 
 ## Free experience
 - [ ] A homeowner can create a project without paying.
@@ -8,8 +8,8 @@
 - [ ] The customer can start free and upgrade later without recreating the project.
 
 ## Paid Concierge
-- [ ] Run `RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql` successfully.
-- [ ] Deploy the entire 4.2 source tree.
+- [ ] Run `RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql` successfully.
+- [ ] Deploy the entire 4.5 source tree.
 - [ ] Complete a $99-base-price Stripe TEST checkout.
 - [ ] Confirm payment activates the correct case and operating work queue.
 - [ ] Confirm Admin Financials shows the actual amount collected after any Project Pilot credit.

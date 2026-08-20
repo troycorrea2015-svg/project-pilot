@@ -3,6 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import {
+  effectivePermitServiceStatus,
+  permitProgressPercent,
+  projectPilotWorkForPermitStatus,
+  homeownerActionSummary,
+  nextCheckpointForPermitStatus,
+  nextUpdateExpectationForPermitStatus,
+} from "../../lib/permit-progress";
 import "./dashboard.css";
 
 const FLIGHT_STAGES = [
@@ -194,12 +202,24 @@ function formatUpdatedDate(value) {
   }).format(date);
 }
 
+function formatDashboardDateTime(value) {
+  if (!value) return "Recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function buildPilotBriefing(project) {
   if (!project) {
     return {
       objective: "Create your first project",
       message:
-        "Start with the project idea. Project Assistant will turn it into a clear project plan and keep the next action visible.",
+        "Start with the project idea. Su will turn it into a clear project plan and keep the next action visible.",
       estimate: "About 3 minutes",
     };
   }
@@ -259,6 +279,9 @@ export default function DashboardPage() {
   const [showFirstRunGuide, setShowFirstRunGuide] = useState(false);
   const [referral, setReferral] = useState(null);
   const [referralNotice, setReferralNotice] = useState("");
+  const [permitRequests, setPermitRequests] = useState([]);
+  const [permitTasks, setPermitTasks] = useState([]);
+  const [permitEvents, setPermitEvents] = useState([]);
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardForm, setWizardForm] = useState({
     title: "",
@@ -333,6 +356,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
+        .order("updated_at", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (!mounted) return;
@@ -343,6 +367,40 @@ export default function DashboardPage() {
         );
       } else {
         setProjects(data || []);
+      }
+
+      try {
+        const { data: requestRows } = await supabase
+          .from("permit_concierge_requests")
+          .select("id,project_id,status,current_phase,payment_status,case_number,agency_name,agency_url,assigned_to,concierge_summary,customer_action_reason,updated_at,service_started_at,requested_at")
+          .eq("user_id", currentUser.id)
+          .order("updated_at", { ascending: false });
+        const requests = requestRows || [];
+        if (mounted) setPermitRequests(requests);
+
+        const requestIds = requests.map((item) => item.id).filter(Boolean);
+        if (requestIds.length) {
+          const [taskResult, eventResult] = await Promise.all([
+            supabase
+              .from("permit_concierge_tasks")
+              .select("id,request_id,project_id,assigned_to,title,plain_language,status,due_at,sort_order,updated_at")
+              .in("request_id", requestIds)
+              .order("sort_order", { ascending: true }),
+            supabase
+              .from("permit_concierge_events")
+              .select("id,request_id,project_id,title,detail,event_type,visible_to_homeowner,created_at")
+              .in("request_id", requestIds)
+              .eq("visible_to_homeowner", true)
+              .order("created_at", { ascending: false })
+              .limit(30),
+          ]);
+          if (mounted) {
+            setPermitTasks(taskResult.data || []);
+            setPermitEvents(eventResult.data || []);
+          }
+        }
+      } catch {
+        // Permit status enrichment should never prevent the dashboard from opening.
       }
 
       setLoading(false);
@@ -365,6 +423,55 @@ export default function DashboardPage() {
   // The welcome guide is now opt-in. The main dashboard itself is the guided experience.
 
   useEffect(() => {
+    if (!user?.id) return undefined;
+    let active = true;
+
+    async function refreshPermitStatus() {
+      try {
+        const { data: requestRows } = await supabase
+          .from("permit_concierge_requests")
+          .select("id,project_id,status,current_phase,payment_status,case_number,agency_name,agency_url,assigned_to,concierge_summary,customer_action_reason,updated_at,service_started_at,requested_at")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false });
+        if (!active) return;
+        const requests = requestRows || [];
+        setPermitRequests(requests);
+        const requestIds = requests.map((item) => item.id).filter(Boolean);
+        if (!requestIds.length) {
+          setPermitTasks([]);
+          setPermitEvents([]);
+          return;
+        }
+        const [taskResult, eventResult] = await Promise.all([
+          supabase
+            .from("permit_concierge_tasks")
+            .select("id,request_id,project_id,assigned_to,title,plain_language,status,due_at,sort_order,updated_at")
+            .in("request_id", requestIds)
+            .order("sort_order", { ascending: true }),
+          supabase
+            .from("permit_concierge_events")
+            .select("id,request_id,project_id,title,detail,event_type,visible_to_homeowner,created_at")
+            .in("request_id", requestIds)
+            .eq("visible_to_homeowner", true)
+            .order("created_at", { ascending: false })
+            .limit(30),
+        ]);
+        if (!active) return;
+        setPermitTasks(taskResult.data || []);
+        setPermitEvents(eventResult.data || []);
+      } catch {
+        // Keep the last known status if a background refresh fails.
+      }
+    }
+
+    const timer = window.setInterval(refreshPermitStatus, 30000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     if (dashboardSliderPaused) return undefined;
     const timer = window.setInterval(() => {
       setDashboardSlideIndex((current) => (current + 1) % PROJECT_CATEGORIES.length);
@@ -385,6 +492,21 @@ export default function DashboardPage() {
   }, [projects]);
 
   const primaryProject = projects[0] || null;
+  const primaryPermitRequest = useMemo(
+    () => permitRequests.find((item) => item.project_id === primaryProject?.id && ["paid", "waived"].includes(String(item.payment_status || "").toLowerCase())) || null,
+    [permitRequests, primaryProject?.id]
+  );
+  const primaryPermitTasks = useMemo(
+    () => permitTasks.filter((item) => item.request_id === primaryPermitRequest?.id),
+    [permitTasks, primaryPermitRequest?.id]
+  );
+  const primaryPermitEvents = useMemo(
+    () => permitEvents.filter((item) => item.request_id === primaryPermitRequest?.id).slice(0, 3),
+    [permitEvents, primaryPermitRequest?.id]
+  );
+  const primaryPermitStatus = primaryPermitRequest ? effectivePermitServiceStatus(primaryPermitRequest.status, primaryPermitTasks) : "";
+  const primaryPermitProgress = primaryPermitRequest ? permitProgressPercent(primaryPermitStatus, primaryPermitTasks) : 0;
+  const primaryNeedsAction = primaryPermitTasks.some((task) => task.assigned_to === "homeowner" && !["completed", "cancelled"].includes(String(task.status || "").toLowerCase())) || primaryPermitStatus === "waiting_on_homeowner";
   const pilotBriefing = useMemo(
     () => buildPilotBriefing(primaryProject),
     [primaryProject]
@@ -818,8 +940,8 @@ export default function DashboardPage() {
         <div className="sidebarStatus">
           <span className="statusDot" />
           <div>
-            <strong>Project Assistant ready</strong>
-            <small>Ask for help on any page</small>
+            <strong>Su is ready</strong>
+            <small>Ask about your project on any page</small>
           </div>
         </div>
 
@@ -897,6 +1019,70 @@ export default function DashboardPage() {
             <strong>Action needed</strong>
             <span>{dashboardError}</span>
           </div>
+        )}
+
+        {primaryProject && (
+          <section className={`projectCommandCenter ${primaryNeedsAction ? "needsAction" : "pilotHandling"}`} aria-label="Current project status">
+            <div className="projectCommandTop">
+              <div>
+                <p>{primaryPermitRequest ? "CURRENT PERMIT + PROJECT STATUS" : "CURRENT PROJECT STATUS"}</p>
+                <h2>{primaryNeedsAction ? "One thing needs you." : primaryPermitRequest ? "You’re all set. Project Pilot is moving this forward." : "Here’s exactly what happens next."}</h2>
+                <span>{primaryProject.title} · {primaryProject.location_label || primaryProject.address || "Location not added"}</span>
+              </div>
+              <div className={`commandStatusPill ${primaryNeedsAction ? "warning" : "ready"}`}>
+                <b>{primaryNeedsAction ? "!" : "✓"}</b>
+                <span>{primaryNeedsAction ? "Action needed" : primaryPermitRequest ? "Project Pilot working" : "Ready for next step"}</span>
+              </div>
+            </div>
+
+            <div className="projectCommandGrid">
+              <article>
+                <small>WHAT’S HAPPENING</small>
+                <strong>{primaryPermitRequest ? projectPilotWorkForPermitStatus(primaryPermitStatus, primaryPermitTasks) : primaryProject.status || "Project planning"}</strong>
+              </article>
+              <article className={primaryNeedsAction ? "customerAction" : "customerClear"}>
+                <small>WHAT YOU NEED TO DO</small>
+                <strong>{primaryPermitRequest ? homeownerActionSummary(primaryPermitTasks, primaryPermitStatus) : primaryProject.next_step || "Open the project to continue."}</strong>
+              </article>
+              <article>
+                <small>NEXT CHECKPOINT</small>
+                <strong>{primaryPermitRequest ? nextCheckpointForPermitStatus(primaryPermitStatus) : pilotBriefing.objective}</strong>
+              </article>
+              <article>
+                <small>NEXT UPDATE</small>
+                <strong>{primaryPermitRequest ? nextUpdateExpectationForPermitStatus(primaryPermitStatus, primaryPermitTasks) : "After you complete the next guided project step"}</strong>
+              </article>
+            </div>
+
+            {primaryPermitRequest ? (
+              <div className="permitCommandProgress">
+                <div><span>Permit progress</span><strong>{primaryPermitProgress}%</strong></div>
+                <div className="permitCommandBar"><i style={{ width: `${primaryPermitProgress}%` }} /></div>
+                <small>Last updated {formatDashboardDateTime(primaryPermitEvents[0]?.created_at || primaryPermitRequest.updated_at)}</small>
+              </div>
+            ) : (
+              <div className="permitCommandProgress">
+                <div><span>Project progress</span><strong>{clampProgress(primaryProject.progress)}%</strong></div>
+                <div className="permitCommandBar"><i style={{ width: `${clampProgress(primaryProject.progress)}%` }} /></div>
+                <small>Last updated {formatDashboardDateTime(primaryProject.updated_at || primaryProject.created_at)}</small>
+              </div>
+            )}
+
+            {primaryPermitEvents.length > 0 && (
+              <div className="commandRecentUpdates">
+                <span>RECENT UPDATE</span>
+                <strong>{primaryPermitEvents[0].title}</strong>
+                <p>{primaryPermitEvents[0].detail}</p>
+              </div>
+            )}
+
+            <div className="projectCommandActions">
+              <button type="button" onClick={() => router.push(`/project/${primaryProject.id}?tab=${primaryPermitRequest ? "permits" : "overview"}`)}>
+                {primaryPermitRequest ? "Open Permit Status" : "Continue My Project"} →
+              </button>
+              <button className="commandSecondary" type="button" onClick={() => router.push(`/project/${primaryProject.id}?tab=pilot`)}>Ask Su What’s Next</button>
+            </div>
+          </section>
         )}
 
         <section className="suStartCard" id="start-with-su" aria-label="Start or continue with Su">
@@ -1004,7 +1190,7 @@ export default function DashboardPage() {
               <div className="emptyProjectIcon">P</div>
               <h3>No projects yet.</h3>
               <p>
-                Start your first project and Project Assistant will guide you through each step from the initial idea to completion.
+                Start your first project and Su will guide you through each step from the initial idea to completion.
               </p>
               <button type="button" onClick={focusProjectIdea} disabled={creating}>
                 {creating ? "Starting…" : "Tell Su My Project Idea"}

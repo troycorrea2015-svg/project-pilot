@@ -1,0 +1,19 @@
+PROJECT PILOT 4.4A VALIDATION
+
+Validation performed against the exact packaged source tree before final ZIP creation.
+
+PASS — Permit progress unit/state tests: 21/21.
+PASS — Permit workflow wiring checks: 23/23.
+PASS — Real /api/permit-service/sync route executed against an in-memory Supabase-style data store.
+       Verified transitions: ready to file 55% -> homeowner pause/resume -> submitted 72% -> corrections 76% -> approved 86% -> inspections 92% -> closed 100%.
+PASS — Closed permit updates the project status to "Permit Complete" while preserving overall project progress as a separate measurement.
+PASS — Homeowner-visible progress events are created during synchronization.
+PASS — 33 server/API/library JavaScript files passed Node syntax checking.
+PASS — Relative import scan found 0 missing local imports.
+PASS — Required Project Pilot logo, homepage hero, and project slideshow image assets are present.
+PASS — ZIP archive integrity test completed without compressed-file errors.
+
+LIMITATION
+A full Next.js production build could not be executed in this environment because npm registry DNS access failed with EAI_AGAIN while retrieving dependencies. The package therefore still requires a successful Vercel build/deploy as the final framework/browser integration gate.
+
+The permit workflow cannot truthfully advance through government-controlled events (official submission, approval, inspection results, closeout) until those events actually occur or an operator records them. Project Pilot preparation work and saved-data synchronization do advance automatically where supported.

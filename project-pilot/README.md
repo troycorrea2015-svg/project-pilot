@@ -1,66 +1,78 @@
-# Project Pilot 4.4 — Permit Progress & Completion Release
+# Project Pilot 4.5 — Consumer Command Center Release
 
-This is the **complete Project Pilot application**, not a patch. It includes the modern 4.3 homepage/dashboard design, approved Project Pilot branding, realistic project imagery, the homepage and account-dashboard slideshows, free self-service permits, $99 Permit Concierge, referrals, contractor marketplace, admin/revenue controls, NOVA/Su guidance, Project Vision, and the cumulative Supabase setup.
+Project Pilot 4.5 is the complete application, not a patch. It keeps everything in the tested 4.4A permit-progress release and adds a major homeowner-experience layer designed around one rule:
 
-## What 4.4 fixes
+> The customer should always know what is happening, what Project Pilot is doing, and whether they personally need to do anything.
 
-The permit experience now has **two different measurements**, so users can see what is actually happening:
+## What changed in 4.5
 
-- **Application readiness** — how complete the information/documents are before filing.
-- **Permit process progress** — Intake → Preparing → Ready to File → Submitted → Approved → Inspections → Complete.
+### Homeowner dashboard
+The signed-in dashboard now leads with a Current Project Status command center for the most recently active project. It shows:
 
-Previously, an existing permit case could reopen on an early screen even after its database status had moved forward. Permit Concierge tasks could also be completed without automatically moving the customer-facing status. 4.4 fixes both behaviors.
+- What is happening now
+- What Project Pilot is doing
+- What the homeowner needs to do
+- The next checkpoint
+- What will trigger the next update
+- Current permit or project progress
+- The latest visible permit update
+- One clear button to continue
 
-### Paid Permit Concierge progress
+If Permit Concierge owns the next action, the dashboard says so directly instead of making the homeowner hunt for a task.
 
-- Paid checkout now begins at **Intake Review** instead of appearing idle at “Requested.”
-- Existing paid cases run a safe progress sync when the permit workspace opens.
-- Project Pilot can automatically recognize preparation work already supported by saved project/permit data.
-- Completing a Project Pilot work-queue task advances the next task and synchronizes the customer-facing stage.
-- Completing a homeowner-required action resumes the case automatically.
-- Corrections can be moved through received/reviewing/response/resubmitted/resolved states.
-- Inspections can be moved through scheduling/result states.
-- Submission, approval, inspections, closeout, and closed status update the permit progress bar and overall project record.
-- Customer permit data refreshes while the permit workspace is open so progress does not require a manual page refresh.
+### Permit Concierge customer experience
+Active Permit Concierge cases now show a customer command center before the technical details:
 
-### Free permit path
+- “Nothing needed from you” or “Action needed”
+- Current Project Pilot work
+- Current homeowner responsibility
+- Next permit checkpoint
+- Next-update expectation without inventing government timelines
+- Last updated time
+- Case number and coordinator
+- Official permit starting point / jurisdiction context
+- Recent customer-visible timeline updates
 
-Permit Autopilot now reopens at the correct stage based on the saved case instead of always looking like it has restarted. It also shows a **Permit Journey** percentage separately from application readiness.
+The 7-stage permit journey remains:
 
-## Customer permit journey
+Intake → Preparing → Ready to File → Submitted → Approved → Inspections → Complete
 
-1. Intake
-2. Preparing
-3. Ready to File
-4. Submitted / Agency Review
-5. Approved
-6. Inspections / Closeout
-7. Complete
+### Su context
+Su now automatically resolves the most recently active project when asked from the dashboard. When Permit Concierge is active, Su receives the saved permit-service status and task context so questions such as “What’s happening?” and “Do I need to do anything?” can be answered from the real project state.
 
-Project Pilot does not mark a government-controlled milestone complete unless the saved data supports it or the operator records the real-world event. Government approval, applicant-only portal actions, signatures, licensed-professional documents, and government fees remain controlled by the appropriate authority/applicant/professional.
+### Customer communication
+When Resend is configured:
 
-## Installation
+- Major admin permit status changes can email the homeowner.
+- Homeowner-action requests can email the homeowner.
+- Permit Concierge messages can email the homeowner.
+- Correction and meaningful inspection updates can email the homeowner.
+- A homeowner message from the permit workspace can notify the Permit Concierge operating inbox.
 
-### If 4.2 or 4.3 is already deployed and you already ran the 4.2 Supabase upgrade
+In-app records remain the source of truth if email delivery is unavailable.
 
-**No new Supabase schema migration is required for 4.4.** Replace the deployed app with the complete `project-pilot` folder in this package and redeploy Vercel.
+### Admin experience
+The Permit Concierge workbench now includes a Customer Experience Preview. Before leaving a case, the operator can see the same four questions the homeowner cares about: what Project Pilot is doing, what the homeowner needs to do, the next checkpoint, and the next-update expectation.
 
-### If you are unsure whether the cumulative database setup was completed
+### Homepage and mobile
+The approved Project Pilot hero direction remains, but the active hero now uses the daytime house photography without baked-in fabricated ratings, city counts, or project counts. The homepage slideshow remains. The signed-in dashboard slideshow remains. The mobile header keeps a visible Start CTA instead of hiding every conversion action.
 
-Run:
+## Database
+Project Pilot 4.5 introduces **no new database schema objects beyond the 4.4 baseline**.
 
-`RUN_THIS_IN_SUPABASE_4_4_UPGRADE.sql`
+If you already ran the 4.4 cumulative Supabase upgrade, do not run another migration just for 4.5. Deploy the full 4.5 application and redeploy Vercel.
 
-It is the same cumulative database baseline carried forward under the current release name.
+For an older or uncertain database, use:
 
-### Brand-new Supabase project
+`RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql`
 
-Run:
+For a brand-new database, use:
 
-`RUN_THIS_IN_SUPABASE_FRESH_4_4.sql`
+`RUN_THIS_IN_SUPABASE_FRESH_4_5.sql`
 
-Then configure the values in `VERCEL_ENVIRONMENT_VALUES.txt` and deploy.
+These carry forward the same cumulative schema baseline under the current release name.
 
-## Start here
+## Before live paid traffic
+Read `START_HERE_PROJECT_PILOT_4_5.txt` and `RELEASE_VALIDATION_4_5.txt`.
 
-Read `START_HERE_PROJECT_PILOT_4_4.txt` before deployment.
+Project Pilot must not claim that a government-controlled milestone occurred until the real event is recorded. Government approvals, applicant-only identity/signature actions, professional seals, and government payments remain controlled by the appropriate authority, applicant, or licensed professional.

@@ -1,0 +1,25 @@
+PROJECT PILOT 4.5 VALIDATION
+
+Completed in build workspace:
+- Permit progress tests: 21/21 passed.
+- Permit workflow wiring tests: 23/23 passed.
+- Consumer experience wiring tests: 29/29 passed.
+- TypeScript parser pass across app/components/lib JS+JSX: 0 syntax errors.
+- Relative import scan: 0 missing relative imports.
+- CSS-module class check for Permit Concierge and Permit Autopilot: 0 missing classes.
+- New email-notification API routes present and wired.
+- Homeowner dashboard 30-second permit-state refresh present.
+- Active permit workspace 15-second refresh preserved.
+- Homepage active source contains no fabricated 10,000+ / 4.9/5 claims.
+- Old full promotional hero moved out of active public assets.
+
+Production-build limitation:
+A real Next.js production build could not be run in this workspace because dependencies are not bundled and npm registry access is unavailable. Offline installation also failed because @supabase/supabase-js was not present in the local npm cache.
+
+Required deployment gate:
+- Successful Vercel build.
+- Real/test Supabase project opens without schema errors.
+- Stripe TEST Permit Concierge checkout succeeds.
+- Permit status progresses visibly.
+- Customer/operator message and email paths work with production environment values.
+- Mobile dashboard/permit/homepage check on a real browser.

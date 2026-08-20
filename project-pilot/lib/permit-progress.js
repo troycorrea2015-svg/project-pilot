@@ -187,3 +187,63 @@ export function serviceStatusFromPermitCaseStatus(status) {
   if (value === "cancelled") return "cancelled";
   return "intake_review";
 }
+
+export function projectPilotWorkForPermitStatus(status, tasks = []) {
+  const value = effectivePermitServiceStatus(status, tasks);
+  const activeTask = (tasks || [])
+    .filter((task) => task.assigned_to === "concierge" && !["completed", "cancelled"].includes(normalized(task.status)))
+    .sort((a, b) => {
+      const aActive = normalized(a.status) === "in_progress" ? 0 : 1;
+      const bActive = normalized(b.status) === "in_progress" ? 0 : 1;
+      if (aActive !== bActive) return aActive - bActive;
+      return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+    })[0];
+
+  if (activeTask?.plain_language) return activeTask.plain_language;
+  if (activeTask?.title) return activeTask.title;
+  return serviceSummaryForStatus(value);
+}
+
+export function nextCheckpointForPermitStatus(status) {
+  const value = normalized(status);
+  if (["requested", "intake_review"].includes(value)) return "Permit route and requirement review completed";
+  if (value === "preparing") return "Application package reaches filing readiness";
+  if (value === "waiting_on_homeowner") return "Your required action is completed";
+  if (value === "ready_for_submission") return "Official filing step begins";
+  if (value === "filing") return "Submission is accepted by the permit authority";
+  if (value === "submitted") return "The authority posts a review result or requests changes";
+  if (value === "corrections") return "Correction response is resubmitted and accepted for review";
+  if (value === "approved") return "Required inspection plan is confirmed";
+  if (value === "inspections") return "Required inspections are passed or marked not required";
+  if (value === "closeout") return "Final permit closeout is recorded";
+  if (value === "closed") return "Permit record is complete";
+  if (value === "cancelled") return "Permit Concierge is inactive";
+  return "The next permit milestone is confirmed";
+}
+
+export function nextUpdateExpectationForPermitStatus(status, tasks = []) {
+  const value = effectivePermitServiceStatus(status, tasks);
+  const homeownerTask = (tasks || [])
+    .filter((task) => task.assigned_to === "homeowner" && !["completed", "cancelled"].includes(normalized(task.status)))
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))[0];
+
+  if (homeownerTask?.due_at) return `After your required action is completed (due ${new Date(homeownerTask.due_at).toLocaleDateString()})`;
+  if (value === "waiting_on_homeowner") return "As soon as your highlighted action is completed";
+  if (["requested", "intake_review", "preparing", "ready_for_submission", "filing"].includes(value)) return "When Project Pilot completes the current permit work item";
+  if (value === "submitted") return "When the permit authority posts an update, decision, or correction request";
+  if (value === "corrections") return "When the correction response moves back into agency review";
+  if (value === "approved") return "When inspection requirements or scheduling are confirmed";
+  if (value === "inspections") return "After the next inspection result is recorded";
+  if (value === "closeout") return "When final closeout is confirmed";
+  if (value === "closed") return "No further permit update is required";
+  return "When the next permit milestone changes";
+}
+
+export function homeownerActionSummary(tasks = [], status = "") {
+  const open = (tasks || [])
+    .filter((task) => task.assigned_to === "homeowner" && !["completed", "cancelled"].includes(normalized(task.status)))
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+  if (open.length) return open[0].plain_language || open[0].title || "Complete the highlighted permit action.";
+  if (effectivePermitServiceStatus(status, tasks) === "waiting_on_homeowner") return "Complete the highlighted applicant-controlled action.";
+  return "Nothing right now — Project Pilot owns the next permit action.";
+}

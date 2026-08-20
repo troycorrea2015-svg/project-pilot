@@ -173,14 +173,14 @@ export default function HomePage() {
             <a className="secondaryAction" href="#how">Learn More <span>→</span></a>
           </div>
           <div className="heroTrustRow legacyTrustRow">
-            <div><b>✓</b><span><strong>Permit Experts</strong><small>We simplify the paperwork and the next step.</small></span></div>
+            <div><b>✓</b><span><strong>Permit guidance</strong><small>Clear requirements, official starting points, and the next step.</small></span></div>
             <div><b>✓</b><span><strong>Trusted Process</strong><small>Clear, organized, and homeowner-friendly from day one.</small></span></div>
             <div><b>✓</b><span><strong>Built for Homeowners</strong><small>Use it free to plan, then upgrade only if you want hands-on help.</small></span></div>
           </div>
         </div>
 
         <div className="legacyHeroVisual" aria-label="Project Pilot homepage hero image">
-          <img className="legacyHeroImage" src="/homepage-hero-day.png" alt="Project Pilot hero showing a bright modern home and Project Pilot brand message" />
+          <img className="legacyHeroImage" src="/homepage-hero-house-day.jpg" alt="Bright modern home in daytime" />
         </div>
       </section>
 
@@ -271,7 +271,7 @@ export default function HomePage() {
         <aside className="previewSidebar">
           <div className="previewLogo"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></div>
           <nav><span className="active">Dashboard</span><span>My Project</span><span>Progress</span><span>Messages</span><span>Files</span><span>Contractors</span><span>Help</span></nav>
-          <div className="previewAssistant"><strong>NOVA</strong><small>Ask anything about your project</small></div>
+          <div className="previewAssistant"><strong>SU</strong><small>Ask anything about your project</small></div>
         </aside>
         <div className="previewMain">
           <header><div><small>WELCOME BACK</small><h2>Your project is moving forward.</h2></div><button type="button">+ New Project</button></header>
@@ -287,7 +287,7 @@ export default function HomePage() {
       <section className="pricingSection" id="pricing">
         <div className="sectionHeading"><p className="eyebrow">SIMPLE PRICING</p><h2>Use Project Pilot free. Pay only when you want us to take over the permit coordination.</h2><p>Government permit fees and any required licensed-professional services are separate because they are controlled by the jurisdiction or professional—not Project Pilot.</p></div>
         <div className="pricingCards">
-          <article className="pricingCard"><span>DO IT WITH PROJECT PILOT</span><strong>$0</strong><h3>Free Self-Service</h3><p>Permit route, project questions, requirement checklist, application preparation, documents, NOVA guidance, planning tools, and contractor search.</p><a href="#access">Start Free</a></article>
+          <article className="pricingCard"><span>DO IT WITH PROJECT PILOT</span><strong>$0</strong><h3>Free Self-Service</h3><p>Permit route, project questions, requirement checklist, application preparation, documents, Su guidance, planning tools, and contractor search.</p><a href="#access">Start Free</a></article>
           <article className="pricingCard featuredPricing"><span>HAVE US HANDLE IT</span><strong>${permitConciergePrice.toFixed(0)}</strong><h3>Permit Concierge</h3><p>Project Pilot coordinates the administrative permit work. You step back in only for applicant-controlled signatures, identity checks, professional documents, approvals, or government payments.</p><a href="#access">Start My Project</a></article>
         </div>
       </section>

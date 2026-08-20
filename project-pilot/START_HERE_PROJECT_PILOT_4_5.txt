@@ -1,0 +1,66 @@
+PROJECT PILOT 4.5 — START HERE
+
+THIS IS A FULL APPLICATION ZIP, NOT A PATCH.
+
+1. DATABASE
+If you already deployed 4.4/4.4A and ran its cumulative Supabase upgrade successfully:
+- No new SQL is required for 4.5.
+
+If you are unsure whether the cumulative Project Pilot database setup was completed:
+- Run RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql in the correct Supabase project.
+
+For a brand-new Supabase database:
+- Run RUN_THIS_IN_SUPABASE_FRESH_4_5.sql.
+
+2. DEPLOY
+Replace the deployed application with the complete project-pilot folder from this ZIP.
+Do not overlay older sprint ZIPs afterward.
+Redeploy on Vercel.
+
+3. REQUIRED PRODUCTION ENVIRONMENT
+Confirm the existing values in VERCEL_ENVIRONMENT_VALUES.txt.
+For the best Permit Concierge experience, also confirm:
+- RESEND_API_KEY
+- MARKETPLACE_FROM_EMAIL
+- PERMIT_CONCIERGE_EMAIL
+
+4. TEST THE CUSTOMER EXPERIENCE
+Create/open a project and confirm:
+- Dashboard shows a Current Project Status command center.
+- It clearly distinguishes Project Pilot work from homeowner work.
+- Homepage slideshow still works.
+- Account dashboard slideshow still works.
+- Ask Su from the dashboard can use the active project context.
+
+5. TEST A PAID/WAIVED PERMIT CASE
+Open Project > Permits and confirm:
+- “Nothing needed from you” appears when there is no homeowner task.
+- “Action needed” appears only when there is an actual homeowner-controlled task.
+- Permit progress shows Intake → Preparing → Ready to File → Submitted → Approved → Inspections → Complete.
+- Last update, next checkpoint, next-update trigger, and recent updates are visible.
+- Official permit source/jurisdiction context is visible.
+
+6. TEST OPERATIONS
+Admin > Permit Concierge > Open workbench:
+- Customer Experience Preview is visible.
+- Complete a Project Pilot task and confirm customer status/progress advances.
+- Add a homeowner task and confirm the case becomes waiting on homeowner.
+- Complete the homeowner task from the customer permit page and confirm work resumes.
+- Send a coordinator message and confirm it appears for the homeowner.
+
+7. EMAIL TEST
+With Resend configured:
+- Send an admin Permit Concierge message and confirm the customer receives the email.
+- Send a homeowner permit message and confirm the Permit Concierge inbox is notified.
+
+8. RUN INCLUDED SELF-TESTS
+From the project root:
+  npm run test:core
+
+Expected current results:
+- Permit progress: 21/21
+- Permit wiring: 23/23
+- Experience wiring: 29/29
+
+9. LIVE-PAYMENT GATE
+Do not enable broad live paid traffic until Vercel builds successfully and a Stripe TEST checkout plus the complete Permit Concierge status/update workflow passes in the deployed environment.

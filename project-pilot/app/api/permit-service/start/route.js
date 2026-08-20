@@ -147,7 +147,7 @@ export async function POST(request) {
           homeowner_notes: homeownerNotes,
           authorization_scope: "full_service_permit_coordination",
           authorization_confirmed_at: now,
-          terms_version: "4.2",
+          terms_version: "4.5",
           payment_status: "pending",
           service_fee_cents: priceCents,
           requested_at: now,
@@ -161,7 +161,7 @@ export async function POST(request) {
     if (requestError || !conciergeRequest) {
       const message = String(requestError?.message || "");
       if (message.includes("payment_status") || message.includes("service_fee_cents") || message.includes("permit_service_orders")) {
-        return NextResponse.json({ error: "Project Pilot revenue migration is missing. Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql, then retry." }, { status: 409 });
+        return NextResponse.json({ error: "Project Pilot revenue migration is missing. Run RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql, then retry." }, { status: 409 });
       }
       throw requestError || new Error("The permit service request could not be created.");
     }
@@ -178,7 +178,7 @@ export async function POST(request) {
           permit_case_id: permitCase.id,
           project_id: project.id,
           user_id: user.id,
-          authorization_version: "4.2",
+          authorization_version: "4.5",
           signer_name: signerName,
           signer_email: contactEmail,
           scopes: {

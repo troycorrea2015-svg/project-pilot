@@ -1,12 +1,16 @@
 {
   "name": "project-pilot",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:permit": "node scripts/test-permit-progress.mjs",
+    "test:permit-wiring": "node scripts/test-permit-wiring.mjs",
+    "test:core": "npm run test:permit && npm run test:permit-wiring && npm run test:experience",
+    "test:experience": "node scripts/test-experience-wiring.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.57.4",

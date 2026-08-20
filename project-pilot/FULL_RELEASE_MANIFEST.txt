@@ -1,52 +1,48 @@
-PROJECT PILOT 4.4 — FULL RELEASE MANIFEST
-=========================================
-Release: 4.4.0 Permit Progress & Completion Release
-Release date: August 18, 2026
-Package type: FULL cumulative application release — NOT A PATCH
+PROJECT PILOT 4.5 — FULL RELEASE MANIFEST
 
-PRIMARY INSTALL GUIDE
----------------------
-START_HERE_PROJECT_PILOT_4_4.txt
+Release: 4.5.0 Consumer Command Center Release
+Type: Full application ZIP, not a patch
+Base: Tested Project Pilot 4.4A Permit Progress release
+
+PRIMARY EXPERIENCE CHANGES
+- Dashboard Current Project Status command center
+- Clear Project Pilot-owned vs homeowner-owned actions
+- Next checkpoint + event-based next-update expectation
+- Live/recent Permit Concierge updates on dashboard
+- 30-second dashboard permit-state refresh
+- Permit “Right Now” customer command center
+- Official permit source/jurisdiction transparency
+- Recent permit timeline surfaced directly to customer
+- Customer Experience Preview in admin workbench
+- Dashboard-aware Su context using most recently active project
+- Permit Concierge context supplied to Su
+- Server-side customer permit update email endpoint
+- Homeowner-message notification to Permit Concierge inbox
+- Project Overview distinguishes “Project Pilot is working” from “Your Next Step”
+- Daytime house-only homepage hero with illustrative traction metrics removed from active public assets
+- Homepage slideshow retained
+- Account dashboard slideshow retained
+- Mobile Start CTA retained
 
 DATABASE
---------
-Already on 4.2/4.3 with the cumulative SQL successfully installed: no new SQL required.
-Recovery/existing database: RUN_THIS_IN_SUPABASE_4_4_UPGRADE.sql
-Brand-new database: RUN_THIS_IN_SUPABASE_FRESH_4_4.sql
+- No schema changes beyond Project Pilot 4.4.
+- Existing 4.4/4.4A installs require no new SQL.
+- Recovery alias: RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql
+- Fresh database: RUN_THIS_IN_SUPABASE_FRESH_4_5.sql
 
-4.4 WORKFLOW FIXES
-------------------
-- Paid Permit Concierge progress: Intake → Preparing → Ready to File → Submitted → Approved → Inspections → Complete.
-- Existing paid cases synchronize their saved permit state when opened.
-- Permit Concierge task completion advances visible workflow state.
-- Homeowner task completion resumes the paid workflow automatically.
-- Free Permit Autopilot restores the correct saved step.
-- Application readiness and permit-process completion are no longer presented as the same metric.
-- Correction and inspection operating states can be updated through the Admin workbench.
-- Permit progress updates the overall project status/progress.
+SELF-TESTS
+- npm run test:permit
+- npm run test:permit-wiring
+- npm run test:experience
+- npm run test:core
 
-KEY 4.4 FILES
--------------
-lib/permit-progress.js
-app/api/permit-service/sync/route.js
-components/FullServicePermitStart.js
-components/FullServicePermitStart.module.css
-components/PermitAutopilot.js
-components/PermitAutopilot.module.css
-app/admin/permit-concierge/[id]/page.js
-lib/permit-service-server.js
+CURRENT VALIDATION
+- Permit progress: 21/21
+- Permit wiring: 23/23
+- Experience wiring: 29/29
+- JS/JSX parser errors: 0
+- Missing relative imports: 0
+- Missing checked CSS-module classes: 0
 
-CARRIED FORWARD
----------------
-- Approved folded-blue Project Pilot logo/branding.
-- Restored bright daytime homepage hero.
-- Homepage project slideshow.
-- Account dashboard project slideshow.
-- More realistic project imagery.
-- Free self-service permit path.
-- $99 Permit Concierge.
-- Give $10 / Get $10 loyalty credits.
-- Contractor marketplace and introduction revenue.
-- Stripe payment confirmation/webhooks/refunds.
-- Admin/revenue controls.
-- NOVA/Su, Project Vision, project files, planning, estimates, contractor finder, messages, and support.
+PRODUCTION GATE
+A successful Vercel build and deployed browser test remain required because npm dependencies could not be restored in this isolated workspace.

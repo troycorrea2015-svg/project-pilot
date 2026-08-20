@@ -13,6 +13,10 @@ import {
   projectProgressForPermitStatus,
   projectStatusForPermitStatus,
   serviceSummaryForStatus,
+  projectPilotWorkForPermitStatus,
+  homeownerActionSummary,
+  nextCheckpointForPermitStatus,
+  nextUpdateExpectationForPermitStatus,
 } from "../../../../lib/permit-progress";
 
 const STATUSES = [
@@ -112,6 +116,22 @@ export default function PermitConciergeAdminCase() {
       visible_to_homeowner: visible,
       created_by: user?.id || null,
     });
+  }
+
+  async function emailCustomer(subject, message) {
+    if (!request?.id || !message) return;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+      await fetch("/api/admin/permit-service/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ requestId: request.id, subject, message }),
+      });
+    } catch {
+      // In-app status and timeline remain authoritative when email is unavailable.
+    }
   }
 
   async function syncProjectPermitState(nextStatus, nextActionOverride = "") {
@@ -314,7 +334,10 @@ export default function PermitConciergeAdminCase() {
     await syncProjectPermitState(status, casePatch.next_action);
 
     if (previousStatus !== status) {
-      await addEvent(`Permit status: ${STATUSES.find(([key]) => key === status)?.[1] || status}`, summary.trim() || "The permit case moved to the next operating stage.", "status_change", true);
+      const statusLabel = STATUSES.find(([key]) => key === status)?.[1] || status;
+      const customerMessage = summary.trim() || serviceSummaryForStatus(status);
+      await addEvent(`Permit status: ${statusLabel}`, customerMessage, "status_change", true);
+      await emailCustomer(`Project Pilot permit update — ${statusLabel}`, `${customerMessage}\n\nNext checkpoint: ${nextCheckpointForPermitStatus(status)}.`);
     }
     setSaving(false);
     await loadCase();
@@ -355,7 +378,9 @@ export default function PermitConciergeAdminCase() {
         setStatus("waiting_on_homeowner");
         setCustomerActionReason(newTaskText.trim() || title);
         await supabase.from("permit_concierge_requests").update({ status: "waiting_on_homeowner", customer_action_reason: newTaskText.trim() || title, updated_at: now }).eq("id", request.id);
-        await addEvent("Homeowner action required", newTaskText.trim() || title, "homeowner_action", true);
+        const actionMessage = newTaskText.trim() || title;
+        await addEvent("Homeowner action required", actionMessage, "homeowner_action", true);
+        await emailCustomer("Action needed for your Project Pilot permit", `${actionMessage}${newTaskDue ? `\n\nRequested by: ${newTaskDue}.` : ""}`);
       }
     }
     setSaving(false);
@@ -457,7 +482,8 @@ export default function PermitConciergeAdminCase() {
       setMessageText("");
       await supabase.from("permit_concierge_requests").update({ last_concierge_message_at: now, updated_at: now }).eq("id", request.id);
       await addEvent("Update from Permit Concierge", body, "message", true);
-      setNotice("Message sent to the homeowner.");
+      await emailCustomer("New Project Pilot permit update", body);
+      setNotice("Message sent to the homeowner and email notification queued when configured.");
     }
     setSaving(false);
   }
@@ -482,7 +508,9 @@ export default function PermitConciergeAdminCase() {
       setError(correctionError.message);
     } else {
       await supabase.from("permit_concierge_requests").update({ status: "corrections", current_phase: "corrections", updated_at: new Date().toISOString() }).eq("id", request.id);
-      await addEvent(`Correction round ${roundNumber} received`, correctionSummary.trim() || "Project Pilot is reviewing the agency comments and preparing the response.", "correction", true);
+      const correctionMessage = correctionSummary.trim() || "The permit authority sent review comments. Project Pilot is reviewing them and preparing the response.";
+      await addEvent(`Correction round ${roundNumber} received`, correctionMessage, "correction", true);
+      await emailCustomer("Permit review update — Project Pilot is handling corrections", `${correctionMessage}\n\nYou only need to act if Project Pilot sends you a specific applicant-controlled request.`);
       setCorrectionNotice("");
       setCorrectionSummary("");
       setCorrectionDue("");
@@ -531,7 +559,9 @@ export default function PermitConciergeAdminCase() {
       setSaving(false);
       return;
     }
-    await addEvent(`Inspection ${item.inspection_type}: ${nextStatus.replaceAll("_", " ")}`, item.result_notes || "Inspection status updated.", "inspection_progress", true);
+    const inspectionStatusMessage = item.result_notes || `Inspection status changed to ${nextStatus.replaceAll("_", " ")}.`;
+    await addEvent(`Inspection ${item.inspection_type}: ${nextStatus.replaceAll("_", " ")}`, inspectionStatusMessage, "inspection_progress", true);
+    if (["passed", "failed"].includes(nextStatus)) await emailCustomer(`Inspection ${nextStatus === "passed" ? "passed" : "needs follow-up"} — ${item.inspection_type}`, inspectionStatusMessage);
     const nextInspections = inspections.map((entry) => entry.id === item.id ? { ...entry, status: nextStatus } : entry);
     const allFinished = nextInspections.length > 0 && nextInspections.every((entry) => ["passed", "not_required", "cancelled"].includes(entry.status));
     const nextCaseStatus = allFinished ? "closeout" : "inspections";
@@ -561,7 +591,9 @@ export default function PermitConciergeAdminCase() {
       setError(inspectionError.message);
     } else {
       await supabase.from("permit_concierge_requests").update({ status: "inspections", current_phase: "inspections", updated_at: new Date().toISOString() }).eq("id", request.id);
-      await addEvent(`Inspection: ${inspectionType.trim()}`, inspectionDate ? `Scheduled for ${formatDate(inspectionDate)}.` : "Ready to schedule.", "inspection", true);
+      const inspectionMessage = inspectionDate ? `${inspectionType.trim()} inspection scheduled for ${formatDate(inspectionDate)}.` : `${inspectionType.trim()} inspection is ready to schedule.`;
+      await addEvent(`Inspection: ${inspectionType.trim()}`, inspectionMessage, "inspection", true);
+      if (inspectionDate) await emailCustomer("Project Pilot inspection update", inspectionMessage);
       setInspectionType("");
       setInspectionDate("");
       setNotice("Inspection added.");
@@ -575,6 +607,10 @@ export default function PermitConciergeAdminCase() {
 
   const adminEffectiveStatus = effectivePermitServiceStatus(status, tasks);
   const adminPermitProgress = permitProgressPercent(adminEffectiveStatus, tasks);
+  const customerViewWork = projectPilotWorkForPermitStatus(adminEffectiveStatus, tasks);
+  const customerViewAction = homeownerActionSummary(tasks, adminEffectiveStatus);
+  const customerViewCheckpoint = nextCheckpointForPermitStatus(adminEffectiveStatus);
+  const customerViewNextUpdate = nextUpdateExpectationForPermitStatus(adminEffectiveStatus, tasks);
 
   return (
     <main className="conciergeAdminPage">
@@ -602,6 +638,17 @@ export default function PermitConciergeAdminCase() {
       <section className={`permitOpsBanner ${openHomeownerTasks.length ? "needsCustomer" : "handling"}`}>
         <strong>{openHomeownerTasks.length ? "Customer action is blocking the case" : "Project Pilot owns the next action"}</strong>
         <span>{openHomeownerTasks.length ? customerActionReason || openHomeownerTasks[0]?.plain_language || openHomeownerTasks[0]?.title : summary || "Keep the case moving until a government-controlled applicant step is required."}</span>
+      </section>
+
+      <section className="customerExperiencePreview">
+        <div className="customerExperienceHeading"><div><p>CUSTOMER EXPERIENCE PREVIEW</p><h2>What the homeowner understands right now.</h2></div><span>{openHomeownerTasks.length ? "Action needed from customer" : "Nothing needed from customer"}</span></div>
+        <div className="customerExperienceGrid">
+          <article><small>PROJECT PILOT IS DOING</small><strong>{customerViewWork}</strong></article>
+          <article className={openHomeownerTasks.length ? "previewNeedsAction" : "previewClear"}><small>HOMEOWNER NEEDS TO DO</small><strong>{customerViewAction}</strong></article>
+          <article><small>NEXT CHECKPOINT</small><strong>{customerViewCheckpoint}</strong></article>
+          <article><small>NEXT UPDATE EXPECTATION</small><strong>{customerViewNextUpdate}</strong></article>
+        </div>
+        <p className="customerExperienceRule">If this preview is vague, stale, or asks the homeowner to understand permit jargon, update the case summary/tasks before leaving the workbench.</p>
       </section>
 
       <div className="conciergeAdminGrid">

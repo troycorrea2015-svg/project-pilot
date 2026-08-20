@@ -8,8 +8,8 @@ import { readAssistantStream } from "../lib/assistant-stream";
 const PAGE_GUIDANCE = {
   dashboard: {
     title: "Your Dashboard",
-    explanation: "This page is the simple starting point for Project Pilot. Describe a new project in one sentence or continue an existing project with Su.",
-    next: "If you are starting, type what you want to build, repair, or improve. If you already have a project, choose Continue with Su.",
+    explanation: "This dashboard shows what is happening, what Project Pilot is doing, and whether anything needs you. Su automatically uses your most recently active project when you ask from here.",
+    next: "Check the Current Project Status card first. If it says nothing is needed from you, you can leave the permit work with Project Pilot and wait for the next update.",
     links: [
       { label: "Go to My Projects", href: "/dashboard#projects" },
       { label: "Open Help Center", href: "/help" },
@@ -90,6 +90,7 @@ export default function GuidanceAssistant() {
   const [applying, setApplying] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [navigation, setNavigation] = useState(null);
+  const [contextProjectId, setContextProjectId] = useState("");
   const [error, setError] = useState("");
 
   const guidance = useMemo(() => PAGE_GUIDANCE[getPageKey(pathname)], [pathname]);
@@ -126,7 +127,7 @@ export default function GuidanceAssistant() {
           Accept: "application/x-ndjson",
         },
         body: JSON.stringify({
-          projectId: projectIdFromPath(pathname),
+          projectId: projectIdFromPath(pathname) || contextProjectId,
           pagePath: pathname,
           message: cleanPrompt,
           stream: true,
@@ -140,6 +141,7 @@ export default function GuidanceAssistant() {
       setAnswer(payload?.message?.message || "Su could not prepare an answer.");
       setPendingAction(payload?.action || null);
       setNavigation(payload?.navigation || null);
+      if (payload?.project?.id) setContextProjectId(payload.project.id);
       if (payload?.navigation?.auto && payload.navigation.href) {
         window.setTimeout(() => followNavigation(payload.navigation), 300);
       }
@@ -175,7 +177,7 @@ export default function GuidanceAssistant() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          projectId: projectIdFromPath(pathname),
+          projectId: projectIdFromPath(pathname) || contextProjectId,
           pagePath: pathname,
           confirmAction: pendingAction,
         }),
@@ -205,7 +207,7 @@ export default function GuidanceAssistant() {
         aria-controls="project-assistant-panel"
       >
         <span>S</span>
-        <strong>Need help?</strong>
+        <strong>Ask Su</strong>
       </button>
 
       {open && (
@@ -225,7 +227,8 @@ export default function GuidanceAssistant() {
             <p>Tell Su what you are trying to do. Su can explain the next step, update approved project details, and give you a direct button to the Project Pilot screen you need.</p>
 
             <div className="assistantQuickActions">
-              <button type="button" onClick={() => askSu("Explain this page using my saved account or project context. Tell me what matters most right now.")} disabled={loading}>Explain this page</button>
+              <button type="button" onClick={() => askSu("What is Project Pilot doing for my active project right now? Use my saved project and permit status. Tell me whether anything is waiting on me.")} disabled={loading}>What’s happening?</button>
+              <button type="button" onClick={() => askSu("Do I personally need to do anything right now for my active project or permit? If not, tell me that clearly and tell me what Project Pilot is doing next.")} disabled={loading}>Do I need to do anything?</button>
               <button type="button" onClick={() => askSu("What is my single best next step here, based on my saved project progress? Tell me the exact Project Pilot section where I should do it.")} disabled={loading}>Show my next step</button>
             </div>
 

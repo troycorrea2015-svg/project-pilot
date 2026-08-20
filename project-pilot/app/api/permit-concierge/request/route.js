@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Project Pilot 4.2 keeps the pre-payment Sprint 3.1C concierge intake route retired.
+// Project Pilot 4.5 keeps the pre-payment Sprint 3.1C concierge intake route retired.
 // Full-Service Permit Concierge must start through /api/permit-service/start so
 // Stripe confirmation, authorization, revenue accounting, and the operating
 // workflow are created as one auditable transaction.
