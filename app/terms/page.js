@@ -57,7 +57,7 @@ export default function TermsPage() {
         <h2>13. Changes</h2>
         <p>Project Pilot may update these terms as services, fees, referral programs, and laws change. The price and material scope of a paid service will be shown before checkout. Material changes to contractor introduction fees will be shown before a contractor accepts a new introduction.</p>
 
-        <div className="releaseNotice"><strong>Business review recommended</strong><p>These terms support the operating workflow in Project Pilot 4.2. A qualified attorney should review them for the final business entity, launch jurisdictions, refund practices, referral program, and applicable consumer-protection requirements before broad paid advertising.</p></div>
+        <div className="releaseNotice"><strong>Business review recommended</strong><p>These terms support the operating workflow in Project Pilot 4.5. A qualified attorney should review them for the final business entity, launch jurisdictions, refund practices, referral program, and applicable consumer-protection requirements before broad paid advertising.</p></div>
       </article>
     </main>
   );

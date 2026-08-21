@@ -1,0 +1,9 @@
+Project Pilot 4.5B homepage fixes
+
+Changes:
+1. Replaced the hero image reference with a cache-busting house-only asset (homepage-hero-house-only-v2.jpg) so the hero no longer appears to show the repeated Project Pilot mockup image on the right.
+2. Simplified the top-left logo presentation by removing the extra dark pill styling and letting the approved logo display cleanly on its own.
+3. Kept the daytime house image in the hero, while preserving the rest of the streamlined homepage flow and the homepage/dashboard slideshows.
+
+Deployment note:
+If you previously deployed 4.5 or 4.5A, redeploy this version so the new asset path breaks browser/Vercel image caching.

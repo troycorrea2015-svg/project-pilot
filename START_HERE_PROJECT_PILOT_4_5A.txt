@@ -1,0 +1,15 @@
+PROJECT PILOT 4.5A — HOMEPAGE FLOW CORRECTION
+
+This is a full application package based on Project Pilot 4.5.
+
+Homepage changes:
+- Keeps the daytime home image in the main hero.
+- Removes the redundant trust strip directly below the hero.
+- Moves How It Works directly after the hero so the page progresses instead of repeating the introduction.
+- Keeps the homepage project slideshow.
+- Removes the second duplicate project-type card grid because the slideshow already performs that job.
+- Keeps the signed-in account dashboard slideshow.
+- Tightens mobile hero height and spacing so the house image remains prominent without feeling like a second hero.
+
+No new Supabase migration is required if Project Pilot 4.5 is already installed.
+Deploy the full project-pilot folder and redeploy in Vercel.

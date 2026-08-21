@@ -1,4 +1,4 @@
-PROJECT PILOT 4.2 — VERCEL ENVIRONMENT VALUES
+PROJECT PILOT 4.5 — VERCEL ENVIRONMENT VALUES
 ==============================================
 Add these in Vercel > Project Pilot > Settings > Environment Variables.
 Apply to Production (and Preview where you test). Do not put real secrets in GitHub.

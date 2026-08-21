@@ -1,0 +1,23 @@
+PROJECT PILOT 4.4 — RELEASE VALIDATION
+======================================
+
+Validated in this workspace:
+- 31 server-side JavaScript files under app/api and lib passed `node --check` with 0 syntax failures.
+- Relative-import scan across all JavaScript files found 0 missing local imports.
+- Live-secret pattern scan found no bundled Stripe live/test keys or obvious service-role credential values.
+- node_modules is not bundled in the release.
+- New permit progress route and shared permit-progress library passed direct Node syntax checks.
+- Existing 4.2 cumulative Supabase schema remains the database baseline; 4.4 introduces no new tables/columns.
+
+Workflow corrections included:
+- Existing Permit Autopilot cases reopen at their saved stage.
+- Paid Permit Concierge cases synchronize stale status when opened.
+- Customer-facing permit process percentage and milestones are separate from application-readiness percentage.
+- Admin work-queue completion advances visible permit progress.
+- Homeowner task completion resumes the workflow.
+- Corrections and inspections can be advanced through Admin and synchronize project/permit state.
+- Permit progress is written back to the project status/progress/next-step fields.
+
+Production-build limitation:
+- `npm install` dependency retrieval did not finish within the available workspace timeout, so a full `next build` could not be executed here.
+- A successful Vercel production deployment remains the final executable build gate.

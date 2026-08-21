@@ -919,6 +919,10 @@ export default function ProjectWorkspacePage() {
   const professionalEstimate = calculateProjectEstimate(estimateProject, estimateForm, "pro");
   const diyEstimate = calculateProjectEstimate(estimateProject, estimateForm, "diy");
   const recommendedArea = recommendedProjectArea(project, permitChecked);
+  const projectPilotOwnsNextAction = Boolean(
+    project?.next_step && /^project pilot\b/i.test(String(project.next_step).trim())
+  );
+  const permitWorkIsActive = projectPilotOwnsNextAction && /permit/i.test(String(project?.status || "") + " " + String(project?.next_step || ""));
 
   if (loading) {
     return <main className="workspaceLoading">Opening your project…</main>;
@@ -1012,14 +1016,14 @@ export default function ProjectWorkspacePage() {
 
         {activeTab === "overview" && (
           <div className="workspaceContent overviewContent simpleOverviewContent">
-            <section className="guidedNextStepHero">
+            <section className={`guidedNextStepHero ${projectPilotOwnsNextAction ? "pilotOwnedNextStep" : ""}`}>
               <div className="guidedNextStepCopy">
-                <p>YOUR NEXT STEP</p>
+                <p>{projectPilotOwnsNextAction ? "PROJECT PILOT IS WORKING" : "YOUR NEXT STEP"}</p>
                 <h1>{project.next_step || recommendedArea.description}</h1>
-                <span>You do not need to decide which Project Pilot tool to use. This button opens the place where you can complete the next action.</span>
+                <span>{projectPilotOwnsNextAction ? "Nothing is being assigned to you by this status. Project Pilot owns the current action and will surface a clear request if your signature, identity, payment, document, or other applicant-controlled step becomes necessary." : "You do not need to decide which Project Pilot tool to use. This button opens the place where you can complete the next action."}</span>
                 <div className="guidedNextStepActions">
-                  <button type="button" onClick={() => recommendedArea.tab === "contractors" ? router.push(`/contractors?project=${project.id}`) : setActiveTab(recommendedArea.tab)}>{recommendedArea.label} →</button>
-                  <button type="button" className="guidedSecondary" onClick={() => setActiveTab("pilot")}>Ask Su instead</button>
+                  <button type="button" onClick={() => permitWorkIsActive ? setActiveTab("permits") : recommendedArea.tab === "contractors" ? router.push(`/contractors?project=${project.id}`) : setActiveTab(recommendedArea.tab)}>{permitWorkIsActive ? "View Permit Status" : recommendedArea.label} →</button>
+                  <button type="button" className="guidedSecondary" onClick={() => setActiveTab("pilot")}>{projectPilotOwnsNextAction ? "Ask Su what’s happening" : "Ask Su instead"}</button>
                 </div>
               </div>
               <div className="guidedProgressBadge">
@@ -1335,6 +1339,7 @@ export default function ProjectWorkspacePage() {
               user={user}
               onOpenAssistant={() => setActiveTab("pilot")}
               onOpenDetails={() => document.getElementById("permit-details")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              onProjectUpdated={(updatedProject) => setProject(updatedProject)}
             />
 
             <details className="permitDetailsDisclosure" id="permit-details">
@@ -1348,6 +1353,7 @@ export default function ProjectWorkspacePage() {
                   user={user}
                   permitResult={permitResult}
                   onOpenDocuments={() => setActiveTab("documents")}
+                  onProjectUpdated={(updatedProject) => setProject(updatedProject)}
                 />
 
                 {permitResult && (

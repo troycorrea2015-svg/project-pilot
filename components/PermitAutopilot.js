@@ -14,6 +14,13 @@ import {
 } from "../lib/permit-autopilot";
 import PermitConcierge from "./PermitConcierge";
 import styles from "./PermitAutopilot.module.css";
+import {
+  nextActionForPermitStatus,
+  permitCaseJourneyPercent,
+  projectProgressForPermitStatus,
+  projectStatusForPermitStatus,
+  serviceStatusFromPermitCaseStatus,
+} from "../lib/permit-progress";
 
 const STEPS = [
   ["route", "1", "Permit Route"],
@@ -56,7 +63,7 @@ function appendActivity(current, event) {
   ].slice(-100);
 }
 
-export default function PermitAutopilot({ project, user, permitResult, onOpenDocuments }) {
+export default function PermitAutopilot({ project, user, permitResult, onOpenDocuments, onProjectUpdated }) {
   const [permitCase, setPermitCase] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [activeStep, setActiveStep] = useState("route");
@@ -155,16 +162,29 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
           : message
       );
     } else if (caseResult.data) {
-      setPermitCase(caseResult.data);
-      setAnswers(caseResult.data.answers || {});
-      setDocumentLinks(caseResult.data.document_links || {});
-      setAuthorizationName(caseResult.data.authorization_name || "");
-      setAuthorizationChecked(Boolean(caseResult.data.authorization_confirmed_at));
-      setApplicationReference(caseResult.data.application_reference || "");
-      setGovernmentFeeAmount(caseResult.data.government_fee_amount ?? "");
-      setGovernmentFeeStatus(caseResult.data.government_fee_status || "unknown");
-      setNextAction(caseResult.data.next_action || "");
-      setNextActionDue(caseResult.data.next_action_due || "");
+      const loadedCase = caseResult.data;
+      const loadedAnswers = loadedCase.answers || {};
+      const loadedDocumentLinks = loadedCase.document_links || {};
+      setPermitCase(loadedCase);
+      setAnswers(loadedAnswers);
+      setDocumentLinks(loadedDocumentLinks);
+      setAuthorizationName(loadedCase.authorization_name || "");
+      setAuthorizationChecked(Boolean(loadedCase.authorization_confirmed_at));
+      setApplicationReference(loadedCase.application_reference || "");
+      setGovernmentFeeAmount(loadedCase.government_fee_amount ?? "");
+      setGovernmentFeeStatus(loadedCase.government_fee_status || "unknown");
+      setNextAction(loadedCase.next_action || "");
+      setNextActionDue(loadedCase.next_action_due || "");
+
+      const loadedReadiness = calculatePermitReadiness({
+        permitCase: { ...loadedCase, answers: loadedAnswers, document_links: loadedDocumentLinks },
+        blueprint,
+      });
+      const laterStatuses = new Set(["authorized", "concierge_requested", "submitted", "correction_required", "approved", "inspection", "closed"]);
+      if (laterStatuses.has(String(loadedCase.status || "").toLowerCase())) setActiveStep("track");
+      else if (loadedReadiness.missingAnswers.length) setActiveStep("interview");
+      else if (loadedReadiness.missingDocuments.length) setActiveStep("documents");
+      else setActiveStep("review");
     }
 
     if (!documentResult.error) setDocuments(documentResult.data || []);
@@ -250,6 +270,25 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
     setPermitCase(data);
     if (data.answers) setAnswers(data.answers);
     if (data.document_links) setDocumentLinks(data.document_links);
+
+    if (patch.status) {
+      const serviceStatus = serviceStatusFromPermitCaseStatus(data.status);
+      const targetProgress = projectProgressForPermitStatus(serviceStatus);
+      const { data: updatedProject } = await supabase
+        .from("projects")
+        .update({
+          progress: Math.max(Number(project?.progress || 0), targetProgress),
+          status: projectStatusForPermitStatus(serviceStatus),
+          next_step: data.next_action || nextActionForPermitStatus(serviceStatus),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", project.id)
+        .eq("user_id", user.id)
+        .select("*")
+        .single();
+      if (updatedProject && typeof onProjectUpdated === "function") onProjectUpdated(updatedProject);
+    }
+
     setNotice(successMessage);
     setSaving("");
     return data;
@@ -625,19 +664,21 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
     return <section className={styles.loading}>Opening Permit Autopilot…</section>;
   }
 
+  const journeyPercent = permitCase ? permitCaseJourneyPercent(permitCase.status) : 0;
+
   return (
     <section className={styles.autopilot}>
       <header className={styles.hero}>
         <div>
-          <p>SPRINT 3.1 · PERMIT AUTOPILOT</p>
+          <p>PERMIT AUTOPILOT</p>
           <h2>Su walks the homeowner through the permit process one step at a time.</h2>
           <span>No permit jargon and no giant form all at once. Project Pilot asks one clear question, explains why it matters, checks what your jurisdiction actually requires, and only asks for plans or files when they are needed.</span>
         </div>
         {permitCase ? (
           <div className={styles.scoreCard}>
-            <strong>{readiness.score}%</strong>
-            <span>Permit readiness</span>
-            <small>{statusLabel(permitCase.status)}</small>
+            <strong>{journeyPercent}%</strong>
+            <span>Permit journey</span>
+            <small>{readiness.score}% application ready · {statusLabel(permitCase.status)}</small>
           </div>
         ) : (
           <button type="button" onClick={startAutopilot} disabled={saving === "start" || !permitResult}>
@@ -671,6 +712,12 @@ export default function PermitAutopilot({ project, user, permitResult, onOpenDoc
               </button>
             ))}
           </nav>
+
+          <div className={styles.journeyProgress}>
+            <div><strong>Permit process progress</strong><span>{statusLabel(permitCase.status)}</span></div>
+            <div className={styles.journeyTrack}><span style={{ width: `${journeyPercent}%` }} /></div>
+            <b>{journeyPercent}%</b>
+          </div>
 
           {activeStep === "route" && (
             <div className={styles.panel}>

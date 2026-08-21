@@ -10,7 +10,7 @@ const TOPICS = [
   { title: "Check permits and approvals", description: "Project Pilot helps identify the likely office, official resources, and supporting documents. Always confirm final requirements with the governing authority.", action: "Open a Project", href: "/dashboard#projects" },
   { title: "Compare project costs", description: "Use planning ranges to compare a professional route with a do-it-yourself route before requesting real quotes.", action: "Open a Project", href: "/dashboard#projects" },
   { title: "Organize files and documents", description: "Store plans, photos, estimates, approvals, contracts, receipts, and inspection records with the correct project.", action: "Open a Project", href: "/dashboard#projects" },
-  { title: "Get help from Project Assistant", description: "Use the Need help? button on any page to explain the screen, define a term, or show the next step.", action: "Try the Help Button", href: "/help" },
+  { title: "Get help from Project Assistant", description: "Use the Ask Su button on any page to explain the screen, define a term, or show the next step.", action: "Ask Su", href: "/help" },
 ];
 
 const TERMS = [
@@ -20,7 +20,7 @@ const TERMS = [
   ["Jurisdiction", "The government office responsible for the project location."],
   ["Inspection", "An official review that checks whether completed work follows approved plans and safety requirements."],
   ["Project Plan", "The step-by-step path for moving a project from idea to completion. Project Pilot also calls this the Flight Plan."],
-  ["Project Assistant", "The guided help system that explains pages, terms, and next actions. Project Pilot also calls this Pilot."],
+  ["Su", "Project Pilot’s guided assistant. Su explains pages, uses your saved project context, and helps identify the next action."],
 ];
 
 export default function HelpPage() {
@@ -49,7 +49,7 @@ export default function HelpPage() {
         <div>
           <p>HELP CENTER</p>
           <h1>Clear answers without the jargon.</h1>
-          <span>Search for a task or unfamiliar term. Project Assistant is also available from the Need help? button on every signed-in page.</span>
+          <span>Search for a task or unfamiliar term. Su is also available from the Ask Su button on every signed-in page.</span>
         </div>
         <label>
           <span>What do you need help with?</span>
@@ -68,7 +68,7 @@ export default function HelpPage() {
               <button type="button" onClick={() => router.push(topic.href)}>{topic.action} →</button>
             </article>
           ))}
-          {!filteredTopics.length && <div className="helpEmpty">No task matched that search. Try a shorter word or use Project Assistant.</div>}
+          {!filteredTopics.length && <div className="helpEmpty">No task matched that search. Try a shorter word or ask Su.</div>}
         </div>
 
         <div className="helpSectionHeading termsHeading"><p>PLAIN-LANGUAGE GLOSSARY</p><h2>Common project terms explained.</h2></div>

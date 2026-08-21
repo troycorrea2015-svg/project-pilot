@@ -1,0 +1,25 @@
+PROJECT PILOT 4.5E — IMPORTANT DEPLOYMENT INSTRUCTION
+
+This ZIP is intentionally packaged WITHOUT a project-pilot parent folder.
+
+After extracting it, you should immediately see:
+- app/
+- public/
+- components/
+- lib/
+- package.json
+- next.config.mjs
+
+These files belong at the ROOT of the GitHub repository that Vercel builds.
+Do NOT upload this entire extracted folder as a new subfolder inside the repo.
+
+After committing, Vercel Build Logs MUST show:
+  > project-pilot@4.5.4 build
+  > next build --no-lint
+
+If Vercel still shows project-pilot@4.2.0, stop: the repository root was not replaced and Vercel is still building the old source.
+
+Homepage verification:
+- Right hero = house-only photo, no Project Pilot promo graphic embedded in the image.
+- Top-left header logo = transparent/light-header logo, no dark navy pill.
+- Footer = Homepage build 4.5E.

@@ -1,0 +1,45 @@
+PROJECT PILOT 4.4 — START HERE
+================================
+
+THIS IS A FULL RELEASE, NOT A PATCH.
+
+WHAT TO DEPLOY
+--------------
+Replace the application with the entire `project-pilot` folder from this ZIP, then redeploy the Vercel project.
+
+SUPABASE
+--------
+You said the 4.2 cumulative Supabase SQL was already added.
+If that completed successfully, DO NOT run another migration just for 4.4. This update changes application workflow logic and does not require a new schema.
+
+If you are unsure whether the cumulative setup actually completed, run:
+  RUN_THIS_IN_SUPABASE_4_4_UPGRADE.sql
+
+For a completely empty/new Supabase project only:
+  RUN_THIS_IN_SUPABASE_FRESH_4_4.sql
+
+WHAT CHANGED
+------------
+- Permit Concierge now shows real process progress instead of only preparation/readiness.
+- Existing paid cases synchronize forward when opened.
+- Paid cases start at Intake Review immediately after payment confirmation.
+- Work-queue task completion advances the next task and the visible permit stage.
+- Homeowner-controlled task completion automatically resumes the permit workflow.
+- Corrections and inspections now have operating status controls in Admin.
+- Free Permit Autopilot opens at the saved stage instead of appearing to restart.
+- Permit status synchronizes into the overall project status/progress.
+- Customer permit workspace refreshes active case data automatically while open.
+
+IMPORTANT OPERATING BOUNDARY
+----------------------------
+The progress engine reports real saved work/state. It does not fake government submission, approval, inspection results, signatures, or professional documents. A paid Permit Concierge case still requires actual Project Pilot operations work for steps that cannot be completed from saved project data or an authorized integration.
+
+AFTER DEPLOYMENT
+----------------
+1. Open an existing paid Permit Concierge project.
+2. Open its Permits tab.
+3. Confirm the new Permit Process Progress tracker appears.
+4. Existing paid cases should move from stale Requested state into Intake Review / Preparing when supported by saved data.
+5. In Admin > Permit Concierge, complete one Project Pilot task and verify the progress advances.
+6. If the case has already been submitted/approved, record that real status and confirm the customer view updates.
+7. Do not enable live payment collection until the Vercel production deployment succeeds and the launch-readiness checks are green.

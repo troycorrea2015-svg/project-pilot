@@ -3,6 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import styles from "./FullServicePermitStart.module.css";
+import {
+  effectivePermitServiceStatus,
+  permitProgressPercent,
+  permitProgressStageIndex,
+  PERMIT_PROGRESS_STAGES,
+  projectPilotWorkForPermitStatus,
+  nextCheckpointForPermitStatus,
+  nextUpdateExpectationForPermitStatus,
+  homeownerActionSummary,
+} from "../lib/permit-progress";
 
 const STATUS_COPY = {
   requested: ["Project Pilot has your permit", "We are starting jurisdiction and application review."],
@@ -42,6 +52,7 @@ export default function FullServicePermitStart({
   compact = false,
   onOpenAssistant,
   onOpenDetails,
+  onProjectUpdated,
 }) {
   const [permitCase, setPermitCase] = useState(existingPermitCase);
   const [request, setRequest] = useState(null);
@@ -68,6 +79,42 @@ export default function FullServicePermitStart({
     loadCase();
   }, [project?.id, user?.id, existingPermitCase?.id]);
 
+  useEffect(() => {
+    if (!request?.id || !project?.id || !["paid", "waived"].includes(String(request.payment_status || "").toLowerCase())) return undefined;
+    let cancelled = false;
+
+    async function syncProgress() {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) return;
+        const response = await fetch("/api/permit-service/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ projectId: project.id }),
+        });
+        if (!response.ok || cancelled) return;
+        const payload = await response.json().catch(() => ({}));
+        if (payload.request) setRequest(payload.request);
+        if (payload.permitCase) setPermitCase(payload.permitCase);
+        if (payload.project && typeof onProjectUpdated === "function") onProjectUpdated(payload.project);
+        if (Array.isArray(payload.tasks)) setTasks(payload.tasks);
+      } catch {
+        // Progress syncing is best-effort. The existing case remains usable if it fails.
+      }
+    }
+
+    syncProgress();
+    const timer = window.setInterval(async () => {
+      if (cancelled) return;
+      await loadCase(true);
+    }, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [request?.id, request?.payment_status, project?.id]);
+
   const homeownerTasks = useMemo(
     () => tasks.filter((task) => task.assigned_to === "homeowner" && !["completed", "cancelled"].includes(task.status)),
     [tasks]
@@ -78,13 +125,13 @@ export default function FullServicePermitStart({
   );
   const completedTasks = useMemo(() => tasks.filter((task) => task.status === "completed"), [tasks]);
 
-  async function loadCase() {
+  async function loadCase(silent = false) {
     if (!project?.id || !user?.id) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError("");
 
     try {
@@ -127,7 +174,7 @@ export default function FullServicePermitStart({
     if (requestError) {
       const message = String(requestError.message || "");
       if (message.includes("permit_concierge_requests")) {
-        setError("Permit Concierge is not installed yet. Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql in Supabase, then refresh.");
+        setError("Permit Concierge is not installed yet. Run RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql in Supabase, then refresh.");
       } else {
         setError(message);
       }
@@ -228,8 +275,30 @@ export default function FullServicePermitStart({
       setError(updateError.message);
       return;
     }
+
     setTasks((current) => current.map((item) => (item.id === task.id ? data : item)));
-    setNotice("Done. Project Pilot can see that you completed the required action.");
+    setNotice("Done. Project Pilot is resuming the permit workflow now.");
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token) {
+        const response = await fetch("/api/permit-service/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ projectId: project.id }),
+        });
+        if (response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          if (payload.request) setRequest(payload.request);
+          if (payload.permitCase) setPermitCase(payload.permitCase);
+          if (payload.project && typeof onProjectUpdated === "function") onProjectUpdated(payload.project);
+          if (Array.isArray(payload.tasks)) setTasks(payload.tasks);
+        }
+      }
+    } catch {
+      await loadCase(true);
+    }
   }
 
   async function sendMessage() {
@@ -260,6 +329,20 @@ export default function FullServicePermitStart({
       setMessages((current) => [...current, data]);
       setMessageText("");
       await supabase.from("permit_concierge_requests").update({ last_homeowner_message_at: now, updated_at: now }).eq("id", request.id);
+      setNotice("Message sent to Permit Concierge.");
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (token) {
+          await fetch("/api/permit-service/message-notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ requestId: request.id, message: body }),
+          });
+        }
+      } catch {
+        // The saved in-app message remains the source of truth if email notification is unavailable.
+      }
     }
     setSending(false);
   }
@@ -363,8 +446,19 @@ export default function FullServicePermitStart({
     );
   }
 
-  const status = STATUS_COPY[request.status] || STATUS_COPY.requested;
-  const needsCustomer = homeownerTasks.length > 0 || request.status === "waiting_on_homeowner";
+  const effectiveStatus = effectivePermitServiceStatus(request.status, tasks);
+  const status = STATUS_COPY[effectiveStatus] || STATUS_COPY.requested;
+  const needsCustomer = homeownerTasks.length > 0 || effectiveStatus === "waiting_on_homeowner";
+  const progressPercent = permitProgressPercent(effectiveStatus, tasks);
+  const progressStageIndex = permitProgressStageIndex(effectiveStatus, tasks);
+  const latestEvent = events.find((event) => event.visible_to_homeowner !== false) || null;
+  const currentProjectPilotWork = projectPilotWorkForPermitStatus(effectiveStatus, tasks);
+  const customerActionSummary = homeownerActionSummary(tasks, effectiveStatus);
+  const nextCheckpoint = nextCheckpointForPermitStatus(effectiveStatus);
+  const nextUpdateExpectation = nextUpdateExpectationForPermitStatus(effectiveStatus, tasks);
+  const lastUpdatedAt = latestEvent?.created_at || request.updated_at || request.service_started_at || request.requested_at;
+  const officialPortal = request.agency_url || permitCase?.application_url || "";
+  const sourceCheckedAt = project?.permit_checked_at || permitCase?.updated_at || request.updated_at;
 
   return (
     <section className={`${styles.activeCard} ${needsCustomer ? styles.customerNeeded : styles.projectPilotHandling} ${compact ? styles.compact : ""}`}>
@@ -379,11 +473,61 @@ export default function FullServicePermitStart({
 
       {error && <div className={styles.error}>{error}</div>}
       {notice && <div className={styles.notice}>{notice}</div>}
-      {request.concierge_summary && <div className={styles.summary}><strong>Latest update</strong><p>{request.concierge_summary}</p></div>}
+
+      <section className={styles.customerCommandCenter} aria-label="Current permit status">
+        <div className={styles.commandCenterHeading}>
+          <div>
+            <p>RIGHT NOW</p>
+            <h3>{needsCustomer ? "Project Pilot is waiting only on you." : "You’re all set. Project Pilot has the next action."}</h3>
+          </div>
+          <span className={needsCustomer ? styles.actionNeededPill : styles.noActionPill}>{needsCustomer ? "Action needed" : "Nothing needed from you"}</span>
+        </div>
+        <div className={styles.commandCenterGrid}>
+          <article>
+            <small>WHAT PROJECT PILOT IS DOING</small>
+            <strong>{currentProjectPilotWork}</strong>
+          </article>
+          <article className={needsCustomer ? styles.commandNeedsAction : styles.commandNoAction}>
+            <small>WHAT YOU NEED TO DO</small>
+            <strong>{customerActionSummary}</strong>
+          </article>
+          <article>
+            <small>NEXT CHECKPOINT</small>
+            <strong>{nextCheckpoint}</strong>
+          </article>
+          <article>
+            <small>NEXT UPDATE</small>
+            <strong>{nextUpdateExpectation}</strong>
+          </article>
+        </div>
+        <div className={styles.updateMeta}>
+          <span><b>Last updated</b> {formatDate(lastUpdatedAt) || "Recently"}</span>
+          <span><b>Case</b> {request.case_number || "Permit case"}</span>
+          <span><b>Coordinator</b> {request.assigned_to || "Project Pilot operations"}</span>
+        </div>
+      </section>
+
+      {request.concierge_summary && <div className={styles.summary}><strong>Latest Project Pilot update</strong><p>{request.concierge_summary}</p></div>}
+
+      <section className={styles.permitProgress} aria-label="Permit process progress">
+        <div className={styles.progressHeader}>
+          <div><p>PERMIT PROCESS PROGRESS</p><h3>{progressPercent}% complete</h3></div>
+          <span>{completedTasks.length} of {tasks.length || 0} tracked permit tasks complete</span>
+        </div>
+        <div className={styles.progressBar}><span style={{ width: `${progressPercent}%` }} /></div>
+        <div className={styles.progressMilestones}>
+          {PERMIT_PROGRESS_STAGES.map((stage, index) => (
+            <div className={index < progressStageIndex ? styles.milestoneDone : index === progressStageIndex ? styles.milestoneActive : ""} key={stage.key}>
+              <b>{index < progressStageIndex ? "✓" : index + 1}</b>
+              <small>{stage.label}</small>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className={styles.caseStats}>
         <article><small>CASE</small><strong>{request.case_number || "Permit case"}</strong></article>
-        <article><small>STATUS</small><strong>{String(request.status || "requested").replaceAll("_", " ")}</strong></article>
+        <article><small>STATUS</small><strong>{String(effectiveStatus || "requested").replaceAll("_", " ")}</strong></article>
         <article><small>JURISDICTION</small><strong>{request.agency_name || permitCase?.jurisdiction || project?.jurisdiction || "Being verified"}</strong></article>
         <article><small>COORDINATOR</small><strong>{request.assigned_to || "Assignment pending"}</strong></article>
       </div>
@@ -406,10 +550,33 @@ export default function FullServicePermitStart({
         </section>
       )}
 
+      <section className={styles.permitTrustPanel}>
+        <div>
+          <p>OFFICIAL PERMIT SOURCE</p>
+          <h3>{request.agency_name || permitCase?.jurisdiction || project?.jurisdiction || "Permit authority being verified"}</h3>
+          <span>{officialPortal ? "Project Pilot has saved the official permit starting point for this case." : "Project Pilot is verifying the governing authority and official filing route before relying on it."}</span>
+          {sourceCheckedAt && <small>Project information last checked {formatDate(sourceCheckedAt)}</small>}
+        </div>
+        {officialPortal && <a href={officialPortal} target="_blank" rel="noreferrer">Open official source ↗</a>}
+      </section>
+
+      {events.length > 0 && (
+        <section className={styles.recentUpdates}>
+          <div className={styles.recentUpdatesHeading}><p>RECENT PERMIT UPDATES</p><span>Visible activity from your case</span></div>
+          <div>
+            {events.slice(0, 3).map((event) => (
+              <article key={event.id}>
+                <span className={styles.updateDot} />
+                <div><strong>{event.title}</strong><p>{event.detail}</p><small>{formatDate(event.created_at)}</small></div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className={styles.actionRow}>
-        {typeof onOpenAssistant === "function" && <button type="button" className={styles.secondaryButton} onClick={onOpenAssistant}>Ask Su about this case</button>}
+        {typeof onOpenAssistant === "function" && <button type="button" className={styles.secondaryButton} onClick={onOpenAssistant}>Ask Su about this permit</button>}
         {typeof onOpenDetails === "function" && <button type="button" className={styles.secondaryButton} onClick={onOpenDetails}>See permit details</button>}
-        {request.agency_url && <a className={styles.secondaryLink} href={request.agency_url} target="_blank" rel="noreferrer">Official permit portal ↗</a>}
       </div>
 
       <details className={styles.details}>

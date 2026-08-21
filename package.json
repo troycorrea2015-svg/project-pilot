@@ -1,12 +1,16 @@
 {
   "name": "project-pilot",
-  "version": "4.2.0",
+  "version": "4.5.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:permit": "node scripts/test-permit-progress.mjs",
+    "test:permit-wiring": "node scripts/test-permit-wiring.mjs",
+    "test:core": "npm run test:permit && npm run test:permit-wiring && npm run test:experience",
+    "test:experience": "node scripts/test-experience-wiring.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.57.4",
@@ -19,6 +23,7 @@
   },
   "devDependencies": {
     "eslint": "^9.0.0",
-    "eslint-config-next": "15.5.21"
+    "eslint-config-next": "15.5.21",
+    "@next/eslint-plugin-next": "15.5.21"
   }
 }

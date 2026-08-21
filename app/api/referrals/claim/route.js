@@ -22,7 +22,7 @@ export async function POST(request) {
   } catch (error) {
     const message = String(error?.message || "");
     if (message.includes("referral_codes") || message.includes("permit_service_credit_ledger")) {
-      return NextResponse.json({ error: "Project Pilot loyalty migration is missing. Run RUN_THIS_IN_SUPABASE_4_2_UPGRADE.sql." }, { status: 409 });
+      return NextResponse.json({ error: "Project Pilot loyalty migration is missing. Run RUN_THIS_IN_SUPABASE_4_5_UPGRADE.sql." }, { status: 409 });
     }
     return NextResponse.json({ error: error?.message || "Referral could not be applied." }, { status: 500 });
   }

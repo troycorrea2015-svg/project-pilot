@@ -1,0 +1,14 @@
+Project Pilot 4.5C — Hero + Header Hard Fix
+
+Purpose:
+This release aggressively corrects the homepage issues that were still visible after 4.5B.
+
+What changed:
+1. The homepage hero now uses a new asset path: /homepage-hero-house-clean-4-5c.jpg
+   This is intended to break caching and ensure the right-side hero shows only the house image.
+2. The right-side hero classes were changed to houseHeroPanel / houseHeroPhoto so the homepage cannot keep inheriting the older promo-style visual treatment.
+3. The top-left logo container was changed from approvedBrand to cleanBrand and forced to render without the dark pill background.
+4. A visible footer stamp now reads "Homepage build 4.5C" so you can confirm the live site actually updated.
+
+Deployment note:
+Replace the full project with this package and redeploy. If Vercel still serves the old page, clear deployment cache and confirm the footer shows Homepage build 4.5C.

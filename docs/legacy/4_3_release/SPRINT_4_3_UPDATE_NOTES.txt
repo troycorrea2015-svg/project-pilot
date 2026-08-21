@@ -1,0 +1,20 @@
+Project Pilot 4.3 update
+
+This package includes:
+1. Homepage hero updated to restore the classic Project Pilot message with a brighter daytime presentation.
+2. Homepage slideshow preserved and presented as a dedicated project-type showcase section.
+3. Dashboard slideshow added so signed-in users can browse common project types from the account dashboard.
+4. Public website imagery refreshed with more realistic project visuals.
+5. Admin styling corrected so the revenue-launch banner remains readable in the production/light state.
+6. Admin warning handling softened so optional Permit Concierge / loyalty reporting tables do not block the rest of the admin experience.
+
+Key files updated:
+- app/page.js
+- app/page.css
+- app/dashboard/page.js
+- app/dashboard/dashboard.css
+- app/admin/page.js
+- app/admin/admin.css
+- public/*.jpg and public/homepage-hero-day.png
+
+After uploading this project to Vercel / your hosting workflow, redeploy the app so the homepage, dashboard slideshow, and admin styling changes appear live.

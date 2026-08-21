@@ -150,8 +150,8 @@ export default function HomePage() {
   return (
     <main className="homePage">
       <header className="heroHeader">
-        <a className="approvedBrand" href="#top" aria-label="Project Pilot home">
-          <img src="/project-pilot-approved-logo.png" alt="Project Pilot" />
+        <a className="cleanBrand" href="#top" aria-label="Project Pilot home">
+          <img src="/project-pilot-header-logo.png" alt="Project Pilot" />
         </a>
         <nav>
           <a href="#how">How It Works</a>
@@ -167,31 +167,35 @@ export default function HomePage() {
         <div className="heroCopy">
           <p className="eyebrow"><span>●</span> PROJECT PILOT</p>
           <h1>Your project.<span>Guided from start to finish.</span></h1>
-          <p className="heroLead">Expert guidance for planning, permits, budgets, and every step in between. Start free, stay organized, and upgrade only when you want Project Pilot to handle the permit coordination for you.</p>
+          <p className="heroLead">Tell us what you want to build or improve. Project Pilot organizes the plan, simplifies the permit path, and keeps the next action clear from day one.</p>
           <div className="heroActions">
             <a className="primaryAction" href="#access">Get Started Free</a>
             <a className="secondaryAction" href="#how">Learn More <span>→</span></a>
           </div>
           <div className="heroTrustRow legacyTrustRow">
-            <div><b>✓</b><span><strong>Permit Experts</strong><small>We simplify the paperwork and the next step.</small></span></div>
+            <div><b>✓</b><span><strong>Permit guidance</strong><small>Clear requirements, official starting points, and the next step.</small></span></div>
             <div><b>✓</b><span><strong>Trusted Process</strong><small>Clear, organized, and homeowner-friendly from day one.</small></span></div>
             <div><b>✓</b><span><strong>Built for Homeowners</strong><small>Use it free to plan, then upgrade only if you want hands-on help.</small></span></div>
           </div>
         </div>
 
-        <div className="legacyHeroVisual" aria-label="Project Pilot homepage hero image">
-          <img className="legacyHeroImage" src="/homepage-hero-day.png" alt="Project Pilot hero showing a bright modern home and Project Pilot brand message" />
+        <div className="houseHeroPanel" aria-label="Project Pilot homepage hero image">
+          <img className="houseHeroPhoto" src="/homepage-hero-house-4-5e.jpg" alt="Bright modern home in daytime" />
         </div>
       </section>
 
-      <section className="promiseStrip">
-        <article><span>◇</span><div><strong>Trusted guidance</strong><small>Plain-language answers and clear next steps.</small></div></article>
-        <article><span>▣</span><div><strong>Permit process simplified</strong><small>We determine what your project actually needs.</small></div></article>
-        <article><span>◷</span><div><strong>Save time & stress</strong><small>Keep tasks, files, costs, and updates together.</small></div></article>
-        <article><span>♧</span><div><strong>Help when you need it</strong><small>Free self-service or $99 Concierge.</small></div></article>
+      <section className="processSection" id="how">
+        <div className="sectionHeading"><p className="eyebrow">HOW IT WORKS</p><h2>Tell us what you’re building. Project Pilot figures out the rest.</h2></div>
+        <div className="processSteps">
+          <article><span>1</span><strong>Tell us about the project</strong><p>Choose a project type, location, and a few details.</p></article>
+          <article><span>2</span><strong>We check the requirements</strong><p>Project Pilot determines the permit route and what information or documents are actually needed.</p></article>
+          <article><span>3</span><strong>Continue with only the next action</strong><p>If a plan, survey, signature, or other item is required, we explain why and help you get it.</p></article>
+          <article><span>4</span><strong>Submit & track approval</strong><p>Use the free guided path or let Permit Concierge handle the administrative coordination.</p></article>
+        </div>
       </section>
 
-      <section className="homepageSliderSection" aria-label="Project types slideshow">
+
+      <section className="homepageSliderSection" id="projects" aria-label="Project types slideshow">
         <div className="sectionHeading centerHeading">
           <p className="eyebrow">POPULAR PROJECT TYPES</p>
           <h2>See the kinds of projects Project Pilot supports.</h2>
@@ -233,7 +237,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="valueSection" id="how">
+      <section className="valueSection">
         <div className="sectionHeading centerHeading">
           <p className="eyebrow">ONE PLACE FOR THE WHOLE PROJECT</p>
           <h2>Everything you need, without making the experience complicated.</h2>
@@ -247,31 +251,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="processSection">
-        <div className="sectionHeading"><p className="eyebrow">HOW IT WORKS</p><h2>Tell us what you’re building. Project Pilot figures out the rest.</h2></div>
-        <div className="processSteps">
-          <article><span>1</span><strong>Tell us about the project</strong><p>Choose a project type, location, and a few details.</p></article>
-          <article><span>2</span><strong>We check the requirements</strong><p>Project Pilot determines the permit route and what information or documents are actually needed.</p></article>
-          <article><span>3</span><strong>Continue with only the next action</strong><p>If a plan, survey, signature, or other item is required, we explain why and help you get it.</p></article>
-          <article><span>4</span><strong>Submit & track approval</strong><p>Use the free guided path or let Permit Concierge handle the administrative coordination.</p></article>
-        </div>
-      </section>
-
-      <section className="popularSection" id="projects">
-        <div className="sectionHeading centerHeading"><p className="eyebrow">POPULAR PROJECT TYPES</p><h2>Start with the project you actually want to complete.</h2></div>
-        <div className="popularGrid">
-          {popularProjects.map((slide) => (
-            <a href="#access" className="popularCard" key={slide.key}><img src={slide.image} alt="" /><strong>{slide.title}</strong><span>Start this project →</span></a>
-          ))}
-          <a href="#access" className="popularCard popularMore"><span className="plusCircle">+</span><strong>Custom Project</strong><span>Tell us what you’re building →</span></a>
-        </div>
-      </section>
-
       <section className="dashboardPreview" aria-label="Project Pilot dashboard preview">
         <aside className="previewSidebar">
           <div className="previewLogo"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></div>
           <nav><span className="active">Dashboard</span><span>My Project</span><span>Progress</span><span>Messages</span><span>Files</span><span>Contractors</span><span>Help</span></nav>
-          <div className="previewAssistant"><strong>NOVA</strong><small>Ask anything about your project</small></div>
+          <div className="previewAssistant"><strong>SU</strong><small>Ask anything about your project</small></div>
         </aside>
         <div className="previewMain">
           <header><div><small>WELCOME BACK</small><h2>Your project is moving forward.</h2></div><button type="button">+ New Project</button></header>
@@ -287,7 +271,7 @@ export default function HomePage() {
       <section className="pricingSection" id="pricing">
         <div className="sectionHeading"><p className="eyebrow">SIMPLE PRICING</p><h2>Use Project Pilot free. Pay only when you want us to take over the permit coordination.</h2><p>Government permit fees and any required licensed-professional services are separate because they are controlled by the jurisdiction or professional—not Project Pilot.</p></div>
         <div className="pricingCards">
-          <article className="pricingCard"><span>DO IT WITH PROJECT PILOT</span><strong>$0</strong><h3>Free Self-Service</h3><p>Permit route, project questions, requirement checklist, application preparation, documents, NOVA guidance, planning tools, and contractor search.</p><a href="#access">Start Free</a></article>
+          <article className="pricingCard"><span>DO IT WITH PROJECT PILOT</span><strong>$0</strong><h3>Free Self-Service</h3><p>Permit route, project questions, requirement checklist, application preparation, documents, Su guidance, planning tools, and contractor search.</p><a href="#access">Start Free</a></article>
           <article className="pricingCard featuredPricing"><span>HAVE US HANDLE IT</span><strong>${permitConciergePrice.toFixed(0)}</strong><h3>Permit Concierge</h3><p>Project Pilot coordinates the administrative permit work. You step back in only for applicant-controlled signatures, identity checks, professional documents, approvals, or government payments.</p><a href="#access">Start My Project</a></article>
         </div>
       </section>
@@ -316,6 +300,7 @@ export default function HomePage() {
         <div className="footerBrand"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></div>
         <p>Projects made easier—from the first idea through permit approval.</p>
         <small>Project Pilot provides planning, organization, permit guidance, and administrative coordination. Government approvals, legal signatures, professional seals, and licensed-professional determinations remain with the appropriate applicant, authority, or professional.</small>
+        <small className="buildStamp">Homepage build 4.5E</small>
       </footer>
     </main>
   );

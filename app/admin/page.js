@@ -251,7 +251,7 @@ export default function AdminPage() {
         {error && <div className="adminError" role="alert">{error}</div>}
         {notice && <div className="adminNotice" role="status">{notice}</div>}
 
-        <section className="adminBetaBanner productionBanner"><div><strong>Project Pilot 4.2 free-first revenue controls are installed.</strong><span>Revenue can come from paid Permit Concierge coordination and contractor introduction fees. Stripe live mode and the matching Vercel switches must be enabled before charging.</span></div><b>{money(totalRevenueCents)} collected</b></section>
+        <section className="adminBetaBanner productionBanner"><div><strong>Project Pilot 4.5 customer-experience, permit-progress, and revenue controls are installed.</strong><span>Revenue can come from paid Permit Concierge coordination and contractor introduction fees. Stripe live mode and the matching Vercel switches must be enabled before charging.</span></div><b>{money(totalRevenueCents)} collected</b></section>
 
         <section className="launchReadinessPanel">
           <div><p>REVENUE LAUNCH STATUS</p><h2>{launchHealth.paymentsEnabled && launchHealth.mode === "Live" ? "Live payments are enabled" : "Complete the remaining launch connections"}</h2><span>Configuration checks show whether the automated introduction-fee system can collect money.</span></div>

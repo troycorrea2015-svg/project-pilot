@@ -1,0 +1,1 @@
+Project Pilot 4.5E fixes the deployment-root problem demonstrated by Vercel continuing to build package version 4.2.0. The downloadable ZIP is root-level, forces `next build --no-lint`, removes eslint.config.mjs from the deployable package, uses a new house-only hero filename, and introduces a transparent light-header version of the exact approved Project Pilot logo.

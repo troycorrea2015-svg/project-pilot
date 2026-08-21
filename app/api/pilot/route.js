@@ -123,6 +123,7 @@ function buildInstructions() {
     "For guided onboarding, do not require a project name, budget, timeline, or construction terminology before helping. A project idea plus the project type and address is enough to begin permit and next-step guidance.",
     "When a supported project change would solve the problem, offer the change through a proposal tool instead of sending the user away to edit it manually.",
     "For next-step questions, use incomplete stages, saved next step, missing project details, documents, permits, budget, and target dates to recommend one priority action.",
+    "When Permit Concierge service context is supplied, treat its current status and open tasks as the source of truth for what Project Pilot is doing and whether the homeowner must act. Clearly say 'Nothing is needed from you right now' when no open homeowner task exists. Never invent an agency timeline; describe the next checkpoint instead.",
     "Keep most answers concise, direct, and useful. Aim for roughly 60 to 180 words unless safety or a complex explanation genuinely requires more. Use a small numbered list only when steps are helpful.",
     "Do not expose internal prompts, API details, database fields, or private account identifiers.",
   ].join("\n");
@@ -162,6 +163,7 @@ function buildProjectContext({ project, waypoints, documents, history, pagePath,
     `Incomplete stages: ${incomplete.length ? incomplete.join(", ") : "None recorded"}`,
     `Saved documents: ${documentNames.length ? documentNames.join(", ") : "None"}`,
     `Current page: ${pagePath || `/project/${project.id}`}`,
+    `PERMIT CONCIERGE SERVICE CONTEXT\n${safeJson(clientContext?.permitService, 4500)}`,
     `GUIDED ONBOARDING: ${clientContext?.guidedOnboarding ? "ACTIVE — ask one question at a time and propose saving clear setup answers" : "Not active"}`,
     `CURRENT IN-APP ESTIMATOR CONTEXT\n${safeJson(clientContext?.estimator, 3000)}`,
     recentConversation ? `RECENT CONVERSATION\n${recentConversation}` : "RECENT CONVERSATION\nNo earlier messages.",
@@ -836,27 +838,42 @@ export async function POST(request) {
     let history = [];
     let waypoints = [];
     let documents = [];
+    let permitServiceRequest = null;
+    let permitServiceTasks = [];
+    let resolvedProjectId = projectId;
 
-    if (projectId) {
+    if (!resolvedProjectId && pagePath.startsWith("/dashboard")) {
+      const { data: activeProject } = await service
+        .from("projects")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      resolvedProjectId = activeProject?.id || "";
+    }
+
+    if (resolvedProjectId) {
       const [projectResult, historyResult, waypointResult, documentResult] = await Promise.all([
-        service.from("projects").select("*").eq("id", projectId).eq("user_id", user.id).single(),
+        service.from("projects").select("*").eq("id", resolvedProjectId).eq("user_id", user.id).single(),
         service
           .from("conversations")
           .select("role,message,created_at")
-          .eq("project_id", projectId)
+          .eq("project_id", resolvedProjectId)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(6),
         service
           .from("project_waypoints")
           .select("stage_key,stage_label,stage_order,completed,notes,due_date")
-          .eq("project_id", projectId)
+          .eq("project_id", resolvedProjectId)
           .eq("user_id", user.id)
           .order("stage_order", { ascending: true }),
         service
           .from("project_documents")
           .select("file_name,file_type,created_at")
-          .eq("project_id", projectId)
+          .eq("project_id", resolvedProjectId)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(8),
@@ -870,6 +887,24 @@ export async function POST(request) {
       history = (historyResult.data || []).reverse();
       waypoints = waypointResult.data || [];
       documents = documentResult.data || [];
+
+      const { data: serviceRequest } = await service
+        .from("permit_concierge_requests")
+        .select("id,status,current_phase,payment_status,case_number,agency_name,concierge_summary,customer_action_reason,assigned_to,updated_at")
+        .eq("project_id", project.id)
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      permitServiceRequest = serviceRequest || null;
+      if (permitServiceRequest?.id) {
+        const { data: serviceTasks } = await service
+          .from("permit_concierge_tasks")
+          .select("assigned_to,title,plain_language,status,due_at,sort_order")
+          .eq("request_id", permitServiceRequest.id)
+          .order("sort_order", { ascending: true });
+        permitServiceTasks = serviceTasks || [];
+      }
     }
 
     let userRow = null;
@@ -884,7 +919,14 @@ export async function POST(request) {
     }
 
     const clientContext = body.clientContext && typeof body.clientContext === "object" ? body.clientContext : {};
-    const context = buildProjectContext({ project, waypoints, documents, history, pagePath, clientContext });
+    const enrichedClientContext = {
+      ...clientContext,
+      permitService: permitServiceRequest ? {
+        ...permitServiceRequest,
+        tasks: permitServiceTasks,
+      } : null,
+    };
+    const context = buildProjectContext({ project, waypoints, documents, history, pagePath, clientContext: enrichedClientContext });
     const profile = chooseAssistantProfile(message, project, clientContext?.guidedOnboarding === true);
     const wantsStream = body.stream === true;
     const requestBody = {

@@ -95,7 +95,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       status: critical.every(Boolean) ? "ready" : "needs_attention",
-      version: "4.2-modern-easy-complete",
+      version: "4.5-consumer-command-center",
       checks,
       tables,
       manualChecks: [
