@@ -57,6 +57,6 @@ check('mobile homepage retains a visible start CTA', homeCss.includes('.heroHead
 check('old full promotional hero is not in public assets', !fs.existsSync(path.join(root, 'public/homepage-hero-day.png')));
 check('new house-only hero exists', fs.existsSync(path.join(root, 'public/homepage-hero-house-4-5e.jpg')));
 check('light-header logo exists', fs.existsSync(path.join(root, 'public/project-pilot-header-logo.png')) && home.includes('/project-pilot-header-logo.png'));
-check('homepage carries 4.5E deployment marker', home.includes('Homepage build 4.5E'));
+check('homepage carries 4.5F deployment marker', home.includes('Homepage build 4.5F'));
 
 console.log(`Experience wiring tests passed: ${tests.length}/${tests.length}`);

@@ -1,0 +1,19 @@
+Project Pilot 4.5F — Standard Upload Package
+
+This package contains the same 4.5E hero, logo, permit, experience, and Vercel build fixes, but restores the ZIP structure used by previous Project Pilot downloads.
+
+ZIP structure:
+project-pilot/
+  app/
+  public/
+  components/
+  lib/
+  package.json
+  next.config.mjs
+  ...
+
+Internal package version: 4.5.5
+Build command: next build --no-lint
+Homepage footer marker: Homepage build 4.5F
+
+Use this ZIP with the same upload workflow you used for earlier Project Pilot releases.

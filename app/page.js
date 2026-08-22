@@ -300,7 +300,7 @@ export default function HomePage() {
         <div className="footerBrand"><img src="/project-pilot-approved-logo.png" alt="Project Pilot" /></div>
         <p>Projects made easier—from the first idea through permit approval.</p>
         <small>Project Pilot provides planning, organization, permit guidance, and administrative coordination. Government approvals, legal signatures, professional seals, and licensed-professional determinations remain with the appropriate applicant, authority, or professional.</small>
-        <small className="buildStamp">Homepage build 4.5E</small>
+        <small className="buildStamp">Homepage build 4.5F</small>
       </footer>
     </main>
   );
